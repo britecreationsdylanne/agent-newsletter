@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BriteCo Brief - Newsletter Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-teal: #037E7F;
+            --primary-orange: #FE8916;
+            --dark-navy: #282D3E;
+            --light-gray: #f6f6f6;
+            --text-dark: #3B3B3B;
+            --accent-cyan: #31D7CA;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--dark-navy) 0%, #1a1f2e 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-teal);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 70px);
+        }
+
+        .sidebar h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark-navy);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-teal);
+        }
+
+        .section-nav {
+            list-style: none;
+        }
+
+        .section-nav li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            border: 1px solid #e0e0e0;
+        }
+
+        .section-nav li:hover {
+            background: var(--light-gray);
+        }
+
+        .section-nav li.active {
+            background: var(--primary-teal);
+            color: white;
+            border-color: var(--primary-teal);
+        }
+
+        .section-nav li.completed {
+            border-color: var(--accent-cyan);
+        }
+
+        .section-nav li.completed::after {
+            content: '✓';
+            margin-left: auto;
+            color: var(--accent-cyan);
+        }
+
+        .section-nav li.active.completed::after {
+            color: white;
+        }
+
+        .section-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--dark-navy);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-nav li.active .section-number {
+            background: white;
+            color: var(--primary-teal);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            max-height: calc(100vh - 70px);
+        }
+
+        .section-panel {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .section-panel.active {
+            display: block;
+        }
+
+        .section-panel h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark-navy);
+            margin-bottom: 20px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--dark-navy);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-teal);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-teal);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #026566;
+        }
+
+        .btn-secondary {
+            background: var(--dark-navy);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #1a1f2e;
+        }
+
+        .btn-orange {
+            background: var(--primary-orange);
+            color: white;
+        }
+
+        .btn-orange:hover {
+            background: #e57a0e;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-teal);
+            color: var(--primary-teal);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-teal);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Research Results */
+        .research-results {
+            margin-top: 20px;
+        }
+
+        .result-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .result-card:hover {
+            border-color: var(--primary-teal);
+            box-shadow: 0 2px 8px rgba(3, 126, 127, 0.1);
+        }
+
+        .result-card.selected {
+            border-color: var(--primary-teal);
+            background: rgba(3, 126, 127, 0.05);
+        }
+
+        .result-card h4 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark-navy);
+            margin-bottom: 8px;
+        }
+
+        .result-card p {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .result-card .source {
+            font-size: 12px;
+            color: var(--primary-teal);
+        }
+
+        /* Preview Area */
+        .preview-container {
+            width: 400px;
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 70px);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-teal);
+        }
+
+        .preview-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark-navy);
+        }
+
+        .preview-frame {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .preview-frame iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-teal);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e0e0e0;
+            border-top-color: var(--primary-teal);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Image Preview */
+        .image-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        /* Content Editor */
+        .content-editor {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .content-editor h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark-navy);
+        }
+
+        /* Article Selection */
+        .article-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .article-checkbox input[type="checkbox"] {
+            margin-top: 4px;
+        }
+
+        .article-checkbox .article-info {
+            flex: 1;
+        }
+
+        .article-checkbox .article-title {
+            font-weight: 600;
+            color: var(--dark-navy);
+            margin-bottom: 4px;
+        }
+
+        .article-checkbox .article-source {
+            font-size: 12px;
+            color: var(--primary-teal);
+        }
+
+        /* Team Member Checkboxes */
+        .team-member-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .team-member-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .team-member-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Export Actions */
+        .export-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .export-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .export-card:hover {
+            border-color: var(--primary-teal);
+            box-shadow: 0 2px 8px rgba(3, 126, 127, 0.1);
+        }
+
+        .export-card .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .export-card h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-navy);
+            margin-bottom: 5px;
+        }
+
+        .export-card p {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            font-weight: 500;
+            color: #888;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--primary-teal);
+        }
+
+        .tab.active {
+            color: var(--primary-teal);
+            border-bottom-color: var(--primary-teal);
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .preview-container {
+                width: 350px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .preview-container {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>The BriteCo Brief</h1>
+        <div class="header-actions">
+            <button class="btn btn-outline" onclick="previewNewsletter()">Preview</button>
+            <button class="btn btn-orange" onclick="showExportOptions()">Export & Send</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <h2>Newsletter Sections</h2>
+            <ul class="section-nav">
+                <li class="active" onclick="showSection('intro')">
+                    <span class="section-number">1</span>
+                    <span>Introduction</span>
+                </li>
+                <li onclick="showSection('brite-spot')">
+                    <span class="section-number">2</span>
+                    <span>The Brite Spot</span>
+                </li>
+                <li onclick="showSection('curious-claims')">
+                    <span class="section-number">3</span>
+                    <span>Curious Claims</span>
+                </li>
+                <li onclick="showSection('news-roundup')">
+                    <span class="section-number">4</span>
+                    <span>News Roundup</span>
+                </li>
+                <li onclick="showSection('insurnews')">
+                    <span class="section-number">5</span>
+                    <span>InsurNews Spotlight</span>
+                </li>
+                <li onclick="showSection('agent-advantage')">
+                    <span class="section-number">6</span>
+                    <span>Agent Advantage</span>
+                </li>
+                <li onclick="showSection('export')">
+                    <span class="section-number">7</span>
+                    <span>Review & Export</span>
+                </li>
+            </ul>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                <h2>Quick Actions</h2>
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="runBrandCheck()">
+                        Run Brand Check
+                    </button>
+                    <button class="btn btn-outline" style="width: 100%;" onclick="resetNewsletter()">
+                        Start Over
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <!-- Section 1: Introduction -->
+            <div id="section-intro" class="section-panel active">
+                <h3>Newsletter Introduction</h3>
+                <p style="color: #666; margin-bottom: 20px;">Write a brief intro (1-4 sentences) highlighting what's in this issue.</p>
+
+                <div class="form-group">
+                    <label>Subject Line</label>
+                    <input type="text" id="subjectLine" placeholder="e.g., The BriteCo Brief: January 2026">
+                </div>
+
+                <div class="form-group">
+                    <label>Preheader Text</label>
+                    <input type="text" id="preheader" placeholder="Preview text shown in email clients...">
+                    <p class="form-hint">This appears after the subject line in email previews (50-100 characters)</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Newsletter Highlights (for AI to reference)</label>
+                    <textarea id="introHighlights" placeholder="List what's in this issue:&#10;- Survey winners announced&#10;- Homeowners insurance crisis update&#10;- Tips for handling claims..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Special Announcement (optional)</label>
+                    <input type="text" id="introAnnouncement" placeholder="Any contests, surveys, or special callouts?">
+                </div>
+
+                <div class="form-group">
+                    <label>CTA Button Text</label>
+                    <input type="text" id="introCTAText" placeholder="e.g., TAKE THE SURVEY">
+                </div>
+
+                <div class="form-group">
+                    <label>CTA Button URL</label>
+                    <input type="text" id="introCTAUrl" placeholder="https://...">
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="generateIntro()">Generate Introduction</button>
+                    <button class="btn btn-outline" onclick="showSection('brite-spot')">Next Section →</button>
+                </div>
+
+                <div class="content-editor" id="introEditor" style="display: none;">
+                    <h4>Generated Introduction</h4>
+                    <textarea id="introContent" rows="4"></textarea>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="saveIntro()">Save & Continue</button>
+                </div>
+            </div>
+
+            <!-- Section 2: The Brite Spot -->
+            <div id="section-brite-spot" class="section-panel">
+                <h3>The Brite Spot</h3>
+                <p style="color: #666; margin-bottom: 20px;">Announce a new feature, tool, product, or company news. Max 100 words.</p>
+
+                <div class="form-group">
+                    <label>Sub-header Title (max 15 words)</label>
+                    <input type="text" id="briteSpotTitle" placeholder="e.g., And the Winners Are...">
+                </div>
+
+                <div class="form-group">
+                    <label>Topic/Announcement</label>
+                    <textarea id="briteSpotTopic" placeholder="What are you announcing? New product, contest winners, feature update..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Additional Details (optional)</label>
+                    <textarea id="briteSpotDetails" placeholder="Any specific details, names, stats to include..."></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="generateBriteSpot()">Generate Content</button>
+                    <button class="btn btn-secondary" onclick="generateImage('brite_spot')">Generate Image</button>
+                </div>
+
+                <div class="content-editor" id="briteSpotEditor" style="display: none;">
+                    <h4>Generated Content</h4>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="briteSpotTitleFinal">
+                    </div>
+                    <div class="form-group">
+                        <label>Body</label>
+                        <textarea id="briteSpotBody" rows="4"></textarea>
+                    </div>
+                </div>
+
+                <div class="image-preview" id="briteSpotImagePreview"></div>
+
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button class="btn btn-outline" onclick="showSection('intro')">← Previous</button>
+                    <button class="btn btn-outline" onclick="showSection('curious-claims')">Next Section →</button>
+                </div>
+            </div>
+
+            <!-- Section 3: Curious Claims -->
+            <div id="section-curious-claims" class="section-panel">
+                <h3>Curious Claims</h3>
+                <p style="color: #666; margin-bottom: 20px;">Feature an interesting, unusual, or outrageous claims story.</p>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="showClaimsTab('research')">Research Stories</div>
+                    <div class="tab" onclick="showClaimsTab('manual')">Manual Entry</div>
+                </div>
+
+                <div id="claimsResearchTab">
+                    <button class="btn btn-primary" onclick="researchClaims()">Search for Claims Stories</button>
+
+                    <div class="research-results" id="claimsResults"></div>
+                </div>
+
+                <div id="claimsManualTab" style="display: none;">
+                    <div class="form-group">
+                        <label>Story Headline</label>
+                        <input type="text" id="claimsHeadline" placeholder="Catchy headline for the story">
+                    </div>
+                    <div class="form-group">
+                        <label>Story Summary</label>
+                        <textarea id="claimsSummary" placeholder="What happened? The key details..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Source URL</label>
+                        <input type="text" id="claimsSourceUrl" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>Source Name</label>
+                        <input type="text" id="claimsSourceName" placeholder="e.g., Insurance Journal">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="generateCuriousClaims()">Generate Content</button>
+                    <button class="btn btn-secondary" onclick="generateImage('curious_claims')">Generate Image</button>
+                </div>
+
+                <div class="content-editor" id="curiousClaimsEditor" style="display: none;">
+                    <h4>Generated Content</h4>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="curiousClaimsTitleFinal">
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea id="curiousClaimsContent" rows="6"></textarea>
+                    </div>
+                </div>
+
+                <div class="image-preview" id="curiousClaimsImagePreview"></div>
+
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button class="btn btn-outline" onclick="showSection('brite-spot')">← Previous</button>
+                    <button class="btn btn-outline" onclick="showSection('news-roundup')">Next Section →</button>
+                </div>
+            </div>
+
+            <!-- Section 4: News Roundup -->
+            <div id="section-news-roundup" class="section-panel">
+                <h3>Insurance News Roundup</h3>
+                <p style="color: #666; margin-bottom: 20px;">5 quick headline-style news items with links.</p>
+
+                <button class="btn btn-primary" onclick="researchRoundup()">Search for News Items</button>
+
+                <div class="research-results" id="roundupResults"></div>
+
+                <div class="content-editor" id="roundupEditor" style="display: none;">
+                    <h4>Selected News Items (edit as needed)</h4>
+                    <div id="roundupItemsEditor"></div>
+                </div>
+
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button class="btn btn-outline" onclick="showSection('curious-claims')">← Previous</button>
+                    <button class="btn btn-outline" onclick="showSection('insurnews')">Next Section →</button>
+                </div>
+            </div>
+
+            <!-- Section 5: InsurNews Spotlight -->
+            <div id="section-insurnews" class="section-panel">
+                <h3>InsurNews Spotlight</h3>
+                <p style="color: #666; margin-bottom: 20px;">In-depth coverage of a major insurance news topic with multiple sources.</p>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="showInsurnewsTab('topics')">1. Select Topic</div>
+                    <div class="tab" onclick="showInsurnewsTab('articles')">2. Select Articles</div>
+                    <div class="tab" onclick="showInsurnewsTab('content')">3. Generate Content</div>
+                </div>
+
+                <div id="insurnewsTopicsTab">
+                    <button class="btn btn-primary" onclick="researchTopics()">Search for Topics</button>
+
+                    <div class="research-results" id="topicsResults"></div>
+                </div>
+
+                <div id="insurnewsArticlesTab" style="display: none;">
+                    <p style="margin-bottom: 15px;"><strong>Selected Topic:</strong> <span id="selectedTopicDisplay">None selected</span></p>
+                    <button class="btn btn-primary" onclick="researchArticles()">Find Supporting Articles</button>
+
+                    <div class="research-results" id="articlesResults"></div>
+                </div>
+
+                <div id="insurnewsContentTab" style="display: none;">
+                    <p style="margin-bottom: 15px;"><strong>Selected Articles:</strong> <span id="selectedArticlesCount">0</span></p>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="generateInsurnews()">Generate Content</button>
+                        <button class="btn btn-secondary" onclick="generateImage('insurnews')">Generate Image</button>
+                    </div>
+
+                    <div class="content-editor" id="insurnewsEditor" style="display: none;">
+                        <h4>Generated Content</h4>
+                        <div class="form-group">
+                            <label>Main Title</label>
+                            <input type="text" id="insurnewsTitleFinal">
+                        </div>
+                        <div class="form-group">
+                            <label>Introduction</label>
+                            <textarea id="insurnewsIntro" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Full Content (with H3 sections)</label>
+                            <textarea id="insurnewsFullContent" rows="10"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="image-preview" id="insurnewsImagePreview"></div>
+                </div>
+
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button class="btn btn-outline" onclick="showSection('news-roundup')">← Previous</button>
+                    <button class="btn btn-outline" onclick="showSection('agent-advantage')">Next Section →</button>
+                </div>
+            </div>
+
+            <!-- Section 6: Agent Advantage -->
+            <div id="section-agent-advantage" class="section-panel">
+                <h3>Agent Advantage</h3>
+                <p style="color: #666; margin-bottom: 20px;">5 actionable tips for insurance agents with mini-titles.</p>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="showAgentTab('research')">Research Tips</div>
+                    <div class="tab" onclick="showAgentTab('manual')">Manual Entry</div>
+                </div>
+
+                <div id="agentResearchTab">
+                    <div class="form-group">
+                        <label>Topic Hint (optional)</label>
+                        <input type="text" id="agentTopicHint" placeholder="e.g., client retention, claims handling, sales...">
+                    </div>
+                    <button class="btn btn-primary" onclick="researchAgentTips()">Search for Tip Topics</button>
+
+                    <div class="research-results" id="agentTipsResults"></div>
+                </div>
+
+                <div id="agentManualTab" style="display: none;">
+                    <div class="form-group">
+                        <label>Section Title (max 15 words)</label>
+                        <input type="text" id="agentTitle" placeholder="e.g., 5 Ways to Strengthen Client Relationships">
+                    </div>
+                    <div class="form-group">
+                        <label>Brief Description</label>
+                        <textarea id="agentDescription" placeholder="What angle are you taking with these tips?"></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="generateAgentAdvantage()">Generate Content</button>
+                    <button class="btn btn-secondary" onclick="generateImage('agent_advantage')">Generate Image</button>
+                </div>
+
+                <div class="content-editor" id="agentAdvantageEditor" style="display: none;">
+                    <h4>Generated Content</h4>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="agentTitleFinal">
+                    </div>
+                    <div class="form-group">
+                        <label>Introduction</label>
+                        <textarea id="agentIntro" rows="2"></textarea>
+                    </div>
+                    <div id="agentTipsEditor"></div>
+                    <div class="form-group">
+                        <label>Closing (optional)</label>
+                        <textarea id="agentClosing" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="image-preview" id="agentAdvantageImagePreview"></div>
+
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button class="btn btn-outline" onclick="showSection('insurnews')">← Previous</button>
+                    <button class="btn btn-outline" onclick="showSection('export')">Review & Export →</button>
+                </div>
+            </div>
+
+            <!-- Section 7: Review & Export -->
+            <div id="section-export" class="section-panel">
+                <h3>Review & Export</h3>
+                <p style="color: #666; margin-bottom: 20px;">Review your newsletter and choose how to export or send it.</p>
+
+                <div class="content-editor" style="display: block; margin-bottom: 20px;">
+                    <h4>Brand Check Results</h4>
+                    <div id="brandCheckResults">
+                        <p style="color: #888;">Click "Run Brand Check" to review your content.</p>
+                    </div>
+                </div>
+
+                <h4 style="margin-bottom: 15px;">Export Options</h4>
+                <div class="export-actions">
+                    <div class="export-card" onclick="sendToTeam()">
+                        <div class="icon">📧</div>
+                        <h4>Send to Team</h4>
+                        <p>Email preview to team members</p>
+                    </div>
+                    <div class="export-card" onclick="downloadHTML()">
+                        <div class="icon">⬇️</div>
+                        <h4>Download HTML</h4>
+                        <p>Save as HTML file</p>
+                    </div>
+                    <div class="export-card" onclick="exportToDocs()">
+                        <div class="icon">📄</div>
+                        <h4>Export to Docs</h4>
+                        <p>Save to Google Docs</p>
+                    </div>
+                </div>
+
+                <div id="teamSendPanel" style="display: none; margin-top: 20px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <h4 style="margin-bottom: 15px;">Send Preview to Team</h4>
+                    <div class="team-member-list" id="teamMemberList"></div>
+                    <div class="form-group">
+                        <label>Add Custom Email</label>
+                        <input type="email" id="customTeamEmail" placeholder="email@example.com">
+                    </div>
+                    <button class="btn btn-primary" onclick="confirmSendToTeam()">Send Preview</button>
+                </div>
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <h4 style="margin-bottom: 15px;">Send to Ontraport</h4>
+                    <p style="color: #666; margin-bottom: 15px;">Send the final newsletter to your agent contact lists (Objects 10004 & 10007)</p>
+                    <button class="btn btn-orange" onclick="sendToOntraport()">Send to Ontraport</button>
+                </div>
+
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button class="btn btn-outline" onclick="showSection('agent-advantage')">← Previous</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Preview Panel -->
+        <aside class="preview-container">
+            <div class="preview-header">
+                <h2>Live Preview</h2>
+                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="refreshPreview()">Refresh</button>
+            </div>
+            <div class="preview-frame">
+                <iframe id="previewFrame" srcdoc="<p style='padding:20px;color:#888;'>Preview will appear here...</p>"></iframe>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // ============================================================================
+        // STATE MANAGEMENT
+        // ============================================================================
+
+        const newsletterState = {
+            intro: { content: '', cta: { text: '', url: '' } },
+            briteSpot: { title: '', body: '', image: '' },
+            curiousClaims: { title: '', content: '', image: '' },
+            newsRoundup: { items: [] },
+            insurnews: { title: '', intro: '', sections: [], implications: '', image: '' },
+            agentAdvantage: { title: '', intro: '', tips: [], closing: '', image: '' },
+            subject: '',
+            preheader: ''
+        };
+
+        let selectedTopic = null;
+        let selectedArticles = [];
+        let selectedClaimStory = null;
+        let selectedAgentTopic = null;
+        let teamMembers = [];
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load team members
+            try {
+                const response = await fetch('/api/team-members');
+                const data = await response.json();
+                if (data.success) {
+                    teamMembers = data.team_members;
+                }
+            } catch (e) {
+                console.error('Failed to load team members:', e);
+            }
+        });
+
+        // ============================================================================
+        // NAVIGATION
+        // ============================================================================
+
+        function showSection(sectionId) {
+            // Update nav
+            document.querySelectorAll('.section-nav li').forEach(li => li.classList.remove('active'));
+            event.target.closest('li')?.classList.add('active') ||
+                document.querySelector(`.section-nav li[onclick*="${sectionId}"]`)?.classList.add('active');
+
+            // Update panels
+            document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById(`section-${sectionId}`).classList.add('active');
+        }
+
+        function showClaimsTab(tab) {
+            document.querySelectorAll('#section-curious-claims .tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('claimsResearchTab').style.display = tab === 'research' ? 'block' : 'none';
+            document.getElementById('claimsManualTab').style.display = tab === 'manual' ? 'block' : 'none';
+        }
+
+        function showInsurnewsTab(tab) {
+            document.querySelectorAll('#section-insurnews .tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('insurnewsTopicsTab').style.display = tab === 'topics' ? 'block' : 'none';
+            document.getElementById('insurnewsArticlesTab').style.display = tab === 'articles' ? 'block' : 'none';
+            document.getElementById('insurnewsContentTab').style.display = tab === 'content' ? 'block' : 'none';
+        }
+
+        function showAgentTab(tab) {
+            document.querySelectorAll('#section-agent-advantage .tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('agentResearchTab').style.display = tab === 'research' ? 'block' : 'none';
+            document.getElementById('agentManualTab').style.display = tab === 'manual' ? 'block' : 'none';
+        }
+
+        // ============================================================================
+        // API CALLS - RESEARCH
+        // ============================================================================
+
+        async function researchTopics() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Searching...';
+
+            try {
+                const response = await fetch('/api/research-topics', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    displayTopicResults(data.topics);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error researching topics: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Search for Topics';
+        }
+
+        function displayTopicResults(topics) {
+            const container = document.getElementById('topicsResults');
+            container.innerHTML = topics.map((topic, i) => `
+                <div class="result-card ${selectedTopic === i ? 'selected' : ''}" onclick="selectTopic(${i}, this)">
+                    <h4>${topic.topic}</h4>
+                    <p>${topic.description}</p>
+                    <p class="source">Relevance: ${topic.relevance}</p>
+                </div>
+            `).join('');
+
+            window.topicData = topics;
+        }
+
+        function selectTopic(index, element) {
+            document.querySelectorAll('#topicsResults .result-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedTopic = window.topicData[index];
+            document.getElementById('selectedTopicDisplay').textContent = selectedTopic.topic;
+
+            // Auto-advance to articles tab
+            showInsurnewsTab('articles');
+            document.querySelectorAll('#section-insurnews .tab')[1].click();
+        }
+
+        async function researchArticles() {
+            if (!selectedTopic) {
+                alert('Please select a topic first');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Searching...';
+
+            try {
+                const response = await fetch('/api/research-articles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: selectedTopic.topic })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    displayArticleResults(data.articles);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error researching articles: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Find Supporting Articles';
+        }
+
+        function displayArticleResults(articles) {
+            const container = document.getElementById('articlesResults');
+            container.innerHTML = articles.map((article, i) => `
+                <div class="article-checkbox">
+                    <input type="checkbox" id="article-${i}" onchange="toggleArticle(${i})">
+                    <div class="article-info">
+                        <div class="article-title">${article.title}</div>
+                        <p style="font-size: 13px; color: #666;">${article.summary}</p>
+                        <div class="article-source">${article.source}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            window.articleData = articles;
+            selectedArticles = [];
+            updateSelectedArticlesCount();
+        }
+
+        function toggleArticle(index) {
+            const article = window.articleData[index];
+            const checkbox = document.getElementById(`article-${index}`);
+
+            if (checkbox.checked) {
+                selectedArticles.push(article);
+            } else {
+                selectedArticles = selectedArticles.filter(a => a.title !== article.title);
+            }
+
+            updateSelectedArticlesCount();
+        }
+
+        function updateSelectedArticlesCount() {
+            document.getElementById('selectedArticlesCount').textContent = selectedArticles.length;
+        }
+
+        async function researchClaims() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Searching...';
+
+            try {
+                const response = await fetch('/api/research-claims', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    displayClaimsResults(data.claims);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error researching claims: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Search for Claims Stories';
+        }
+
+        function displayClaimsResults(claims) {
+            const container = document.getElementById('claimsResults');
+            container.innerHTML = claims.map((claim, i) => `
+                <div class="result-card ${selectedClaimStory === i ? 'selected' : ''}" onclick="selectClaim(${i}, this)">
+                    <h4>${claim.headline}</h4>
+                    <p>${claim.summary}</p>
+                    <p class="source">${claim.source} | ${claim.claim_type}</p>
+                </div>
+            `).join('');
+
+            window.claimsData = claims;
+        }
+
+        function selectClaim(index, element) {
+            document.querySelectorAll('#claimsResults .result-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedClaimStory = window.claimsData[index];
+        }
+
+        async function researchRoundup() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Searching...';
+
+            try {
+                const response = await fetch('/api/research-roundup', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    displayRoundupResults(data.items);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error researching roundup: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Search for News Items';
+        }
+
+        function displayRoundupResults(items) {
+            const container = document.getElementById('roundupResults');
+            container.innerHTML = items.map((item, i) => `
+                <div class="article-checkbox">
+                    <input type="checkbox" id="roundup-${i}" checked onchange="toggleRoundupItem(${i})">
+                    <div class="article-info">
+                        <div class="article-title">${item.headline}</div>
+                        <div class="article-source">${item.source}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            window.roundupData = items;
+            newsletterState.newsRoundup.items = [...items];
+
+            // Show editor
+            document.getElementById('roundupEditor').style.display = 'block';
+            updateRoundupEditor();
+        }
+
+        function toggleRoundupItem(index) {
+            const checkbox = document.getElementById(`roundup-${index}`);
+            if (checkbox.checked) {
+                newsletterState.newsRoundup.items.push(window.roundupData[index]);
+            } else {
+                const item = window.roundupData[index];
+                newsletterState.newsRoundup.items = newsletterState.newsRoundup.items.filter(i => i.headline !== item.headline);
+            }
+            updateRoundupEditor();
+        }
+
+        function updateRoundupEditor() {
+            const container = document.getElementById('roundupItemsEditor');
+            container.innerHTML = newsletterState.newsRoundup.items.map((item, i) => `
+                <div class="form-group">
+                    <label>Item ${i + 1}</label>
+                    <input type="text" value="${item.headline}" onchange="updateRoundupItem(${i}, this.value)">
+                    <input type="text" value="${item.url || ''}" placeholder="URL" style="margin-top: 5px;" onchange="updateRoundupItemUrl(${i}, this.value)">
+                </div>
+            `).join('');
+        }
+
+        function updateRoundupItem(index, value) {
+            newsletterState.newsRoundup.items[index].headline = value;
+        }
+
+        function updateRoundupItemUrl(index, value) {
+            newsletterState.newsRoundup.items[index].url = value;
+        }
+
+        async function researchAgentTips() {
+            const btn = event.target;
+            const topicHint = document.getElementById('agentTopicHint').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Searching...';
+
+            try {
+                const response = await fetch('/api/research-agent-tips', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: topicHint })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    displayAgentTipsResults(data.tips);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error researching tips: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Search for Tip Topics';
+        }
+
+        function displayAgentTipsResults(tips) {
+            const container = document.getElementById('agentTipsResults');
+            container.innerHTML = tips.map((tip, i) => `
+                <div class="result-card ${selectedAgentTopic === i ? 'selected' : ''}" onclick="selectAgentTopic(${i}, this)">
+                    <h4>${tip.title}</h4>
+                    <p>${tip.angle}</p>
+                    <p class="source">Relevance: ${tip.relevance}</p>
+                </div>
+            `).join('');
+
+            window.agentTipsData = tips;
+        }
+
+        function selectAgentTopic(index, element) {
+            document.querySelectorAll('#agentTipsResults .result-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedAgentTopic = window.agentTipsData[index];
+        }
+
+        // ============================================================================
+        // API CALLS - CONTENT GENERATION
+        // ============================================================================
+
+        async function generateIntro() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+            const highlights = document.getElementById('introHighlights').value.split('\n').filter(h => h.trim());
+            const announcement = document.getElementById('introAnnouncement').value;
+
+            try {
+                const response = await fetch('/api/generate-intro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ highlights, announcement })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('introContent').value = data.content;
+                    document.getElementById('introEditor').style.display = 'block';
+                    newsletterState.intro.content = data.content;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error generating intro: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Generate Introduction';
+        }
+
+        function saveIntro() {
+            newsletterState.intro.content = document.getElementById('introContent').value;
+            newsletterState.intro.cta.text = document.getElementById('introCTAText').value;
+            newsletterState.intro.cta.url = document.getElementById('introCTAUrl').value;
+            newsletterState.subject = document.getElementById('subjectLine').value;
+            newsletterState.preheader = document.getElementById('preheader').value;
+
+            markSectionComplete('intro');
+            showSection('brite-spot');
+        }
+
+        async function generateBriteSpot() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+            const title = document.getElementById('briteSpotTitle').value;
+            const topic = document.getElementById('briteSpotTopic').value;
+            const details = document.getElementById('briteSpotDetails').value;
+
+            try {
+                const response = await fetch('/api/generate-brite-spot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, topic, details })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('briteSpotTitleFinal').value = data.content.title;
+                    document.getElementById('briteSpotBody').value = data.content.body;
+                    document.getElementById('briteSpotEditor').style.display = 'block';
+
+                    newsletterState.briteSpot.title = data.content.title;
+                    newsletterState.briteSpot.body = data.content.body;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error generating Brite Spot: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Generate Content';
+        }
+
+        async function generateCuriousClaims() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+            let story = selectedClaimStory;
+
+            // Check manual entry if no selection
+            if (!story) {
+                const headline = document.getElementById('claimsHeadline').value;
+                const summary = document.getElementById('claimsSummary').value;
+                if (headline && summary) {
+                    story = {
+                        headline,
+                        summary,
+                        source: document.getElementById('claimsSourceName').value,
+                        url: document.getElementById('claimsSourceUrl').value
+                    };
+                }
+            }
+
+            if (!story) {
+                alert('Please select or enter a claims story');
+                btn.disabled = false;
+                btn.innerHTML = 'Generate Content';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/generate-curious-claims', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ story })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('curiousClaimsTitleFinal').value = data.content.title;
+                    document.getElementById('curiousClaimsContent').value = data.content.paragraphs.join('\n\n');
+                    document.getElementById('curiousClaimsEditor').style.display = 'block';
+
+                    newsletterState.curiousClaims.title = data.content.title;
+                    newsletterState.curiousClaims.content = data.content.paragraphs.join('\n\n');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error generating Curious Claims: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Generate Content';
+        }
+
+        async function generateInsurnews() {
+            if (!selectedTopic || selectedArticles.length === 0) {
+                alert('Please select a topic and at least one article');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+            try {
+                const response = await fetch('/api/generate-insurnews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: selectedTopic.topic, articles: selectedArticles })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('insurnewsTitleFinal').value = data.content.title;
+                    document.getElementById('insurnewsIntro').value = data.content.intro;
+
+                    // Format sections for display
+                    let fullContent = '';
+                    data.content.sections.forEach(section => {
+                        fullContent += `### ${section.heading}\n\n${section.content}\n\n`;
+                    });
+                    fullContent += `### Implications for Agents\n\n${data.content.agent_implications}`;
+
+                    document.getElementById('insurnewsFullContent').value = fullContent;
+                    document.getElementById('insurnewsEditor').style.display = 'block';
+
+                    newsletterState.insurnews = data.content;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error generating InsurNews: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Generate Content';
+        }
+
+        async function generateAgentAdvantage() {
+            let topic = selectedAgentTopic;
+
+            // Check manual entry
+            if (!topic) {
+                const title = document.getElementById('agentTitle').value;
+                const description = document.getElementById('agentDescription').value;
+                if (title) {
+                    topic = { title, angle: description, key_points: [], relevance: '' };
+                }
+            }
+
+            if (!topic) {
+                alert('Please select or enter a topic');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+            try {
+                const response = await fetch('/api/generate-agent-advantage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('agentTitleFinal').value = data.content.title;
+                    document.getElementById('agentIntro').value = data.content.intro;
+                    document.getElementById('agentClosing').value = data.content.closing || '';
+
+                    // Display tips
+                    const tipsContainer = document.getElementById('agentTipsEditor');
+                    tipsContainer.innerHTML = data.content.tips.map((tip, i) => `
+                        <div class="form-group" style="border-left: 3px solid var(--accent-cyan); padding-left: 15px;">
+                            <label>Tip ${i + 1} Title</label>
+                            <input type="text" value="${tip.mini_title}" id="agentTip${i}Title">
+                            <label style="margin-top: 10px;">Content</label>
+                            <textarea rows="2" id="agentTip${i}Content">${tip.content}</textarea>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('agentAdvantageEditor').style.display = 'block';
+
+                    newsletterState.agentAdvantage = data.content;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error generating Agent Advantage: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Generate Content';
+        }
+
+        // ============================================================================
+        // IMAGE GENERATION
+        // ============================================================================
+
+        async function generateImage(section) {
+            let prompt = '';
+            let previewContainer = '';
+
+            switch (section) {
+                case 'brite_spot':
+                    prompt = document.getElementById('briteSpotTitleFinal')?.value || document.getElementById('briteSpotTitle').value;
+                    previewContainer = 'briteSpotImagePreview';
+                    break;
+                case 'curious_claims':
+                    prompt = document.getElementById('curiousClaimsTitleFinal')?.value || selectedClaimStory?.headline || '';
+                    previewContainer = 'curiousClaimsImagePreview';
+                    break;
+                case 'insurnews':
+                    prompt = document.getElementById('insurnewsTitleFinal')?.value || selectedTopic?.topic || '';
+                    previewContainer = 'insurnewsImagePreview';
+                    break;
+                case 'agent_advantage':
+                    prompt = document.getElementById('agentTitleFinal')?.value || selectedAgentTopic?.title || '';
+                    previewContainer = 'agentAdvantageImagePreview';
+                    break;
+            }
+
+            if (!prompt) {
+                alert('Please generate content first to create an image prompt');
+                return;
+            }
+
+            const container = document.getElementById(previewContainer);
+            container.innerHTML = '<div class="loading"><span class="spinner"></span> Generating image...</div>';
+
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, section })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    container.innerHTML = `<img src="${data.image_url}" alt="Generated image">`;
+
+                    // Save to state
+                    if (section === 'brite_spot') newsletterState.briteSpot.image = data.image_url;
+                    if (section === 'curious_claims') newsletterState.curiousClaims.image = data.image_url;
+                    if (section === 'insurnews') newsletterState.insurnews.image = data.image_url;
+                    if (section === 'agent_advantage') newsletterState.agentAdvantage.image = data.image_url;
+                } else {
+                    container.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                }
+            } catch (e) {
+                container.innerHTML = `<p style="color: red;">Error: ${e.message}</p>`;
+            }
+        }
+
+        // ============================================================================
+        // BRAND CHECK
+        // ============================================================================
+
+        async function runBrandCheck() {
+            const container = document.getElementById('brandCheckResults');
+            container.innerHTML = '<div class="loading"><span class="spinner"></span> Running brand check...</div>';
+
+            try {
+                const response = await fetch('/api/brand-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: newsletterState })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const result = data.result;
+                    container.innerHTML = `
+                        <div style="margin-bottom: 15px;">
+                            <strong>Score: ${result.overall_score}/10</strong>
+                            <span style="color: ${result.passes ? 'green' : 'red'}; margin-left: 10px;">
+                                ${result.passes ? '✓ Passes' : '✗ Needs Review'}
+                            </span>
+                        </div>
+                        ${result.issues.length > 0 ? `
+                            <div style="margin-bottom: 15px;">
+                                <strong>Issues:</strong>
+                                <ul style="margin-top: 8px;">
+                                    ${result.issues.map(i => `<li><strong>${i.section}:</strong> ${i.issue}<br><em>Suggestion: ${i.suggestion}</em></li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        <div style="margin-bottom: 15px;">
+                            <strong>Strengths:</strong>
+                            <ul style="margin-top: 8px;">
+                                ${result.strengths.map(s => `<li>${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                }
+            } catch (e) {
+                container.innerHTML = `<p style="color: red;">Error: ${e.message}</p>`;
+            }
+        }
+
+        // ============================================================================
+        // EXPORT & SHARING
+        // ============================================================================
+
+        function sendToTeam() {
+            const panel = document.getElementById('teamSendPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+
+            // Populate team members
+            const container = document.getElementById('teamMemberList');
+            container.innerHTML = teamMembers.map((member, i) => `
+                <div class="team-member-item">
+                    <input type="checkbox" id="team-${i}" checked>
+                    <label for="team-${i}">${member.name} (${member.email})</label>
+                </div>
+            `).join('');
+        }
+
+        async function confirmSendToTeam() {
+            const recipients = [];
+
+            teamMembers.forEach((member, i) => {
+                if (document.getElementById(`team-${i}`).checked) {
+                    recipients.push(member.email);
+                }
+            });
+
+            const customEmail = document.getElementById('customTeamEmail').value;
+            if (customEmail) {
+                recipients.push(customEmail);
+            }
+
+            if (recipients.length === 0) {
+                alert('Please select at least one recipient');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/send-preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipients,
+                        subject: `Preview: ${newsletterState.subject || 'BriteCo Brief'}`,
+                        html: generateNewsletterHTML()
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`Preview sent to: ${recipients.join(', ')}`);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error sending preview: ' + e.message);
+            }
+        }
+
+        async function downloadHTML() {
+            const html = generateNewsletterHTML();
+
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `briteco-brief-${new Date().toISOString().split('T')[0]}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function exportToDocs() {
+            try {
+                const response = await fetch('/api/export-to-docs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: newsletterState,
+                        title: newsletterState.subject || `BriteCo Brief - ${new Date().toLocaleDateString()}`
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message + (data.note ? '\n\n' + data.note : ''));
+                } else {
+                    alert('Error: ' + data.error + (data.setup_instructions ? '\n\n' + data.setup_instructions : ''));
+                }
+            } catch (e) {
+                alert('Error exporting to Docs: ' + e.message);
+            }
+        }
+
+        async function sendToOntraport() {
+            if (!confirm('Are you sure you want to send this newsletter to Ontraport?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/send-to-ontraport', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        html: generateNewsletterHTML(),
+                        subject: newsletterState.subject,
+                        preheader: newsletterState.preheader
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`Newsletter ready for Ontraport!\nObjects: ${data.objects.join(', ')}\nFrom: ${data.from_email}`);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                alert('Error sending to Ontraport: ' + e.message);
+            }
+        }
+
+        // ============================================================================
+        // PREVIEW
+        // ============================================================================
+
+        function previewNewsletter() {
+            const html = generateNewsletterHTML();
+            const previewWindow = window.open('', 'Preview', 'width=700,height=900');
+            previewWindow.document.write(html);
+        }
+
+        function refreshPreview() {
+            const iframe = document.getElementById('previewFrame');
+            iframe.srcdoc = generateNewsletterHTML();
+        }
+
+        function markSectionComplete(sectionId) {
+            const navItem = document.querySelector(`.section-nav li[onclick*="${sectionId}"]`);
+            if (navItem) {
+                navItem.classList.add('completed');
+            }
+        }
+
+        function resetNewsletter() {
+            if (confirm('Are you sure you want to start over? All content will be lost.')) {
+                location.reload();
+            }
+        }
+
+        function showExportOptions() {
+            showSection('export');
+            document.querySelector('.section-nav li[onclick*="export"]').click();
+        }
+
+        // ============================================================================
+        // NEWSLETTER HTML GENERATION
+        // ============================================================================
+
+        function generateNewsletterHTML() {
+            const state = newsletterState;
+
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="date=no">
+    <meta name="format-detection" content="address=no">
+    <meta name="format-detection" content="email=no">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>${state.subject || 'The BriteCo Brief'}</title>
+    <style type="text/css">
+        body, table, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; }
+        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        body { margin: 0 !important; padding: 0 !important; width: 100% !important; font-family: 'Montserrat', Arial, Helvetica, sans-serif; }
+
+        @media (prefers-color-scheme: dark) {
+            .darkmode-bg { background-color: #1a1a1a !important; }
+            .darkmode-text { color: #f0f0f0 !important; }
+        }
+
+        @media screen and (max-width: 600px) {
+            .email-container { width: 100% !important; }
+            .mobile-padding { padding: 20px !important; }
+            .mobile-stack { display: block !important; width: 100% !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #ffffff;">
+    <!-- Preheader -->
+    <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+        ${state.preheader || 'Your insurance industry update is here.'}
+    </div>
+
+    <center style="width: 100%; background-color: #ffffff;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto; max-width: 600px;" width="100%">
+            <!-- Header -->
+            <tr>
+                <td align="center" style="padding: 35px 20px 25px;">
+                    <img src="https://brite.co/wp-content/uploads/2025/09/briteco-logo-1.png" alt="BriteCo" width="301" style="max-width: 301px; height: auto;">
+                </td>
+            </tr>
+
+            <!-- Section 1: Introduction -->
+            <tr>
+                <td style="padding: 0 15px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #282D3E; background: url(https://brite.co/wp-content/uploads/2025/09/section-1-bg.png) no-repeat center; background-size: cover;">
+                        <tr>
+                            <td style="padding: 25px 20px; text-align: center;">
+                                <h1 style="font-family: 'Montserrat', Arial, sans-serif; font-size: 40px; font-weight: 600; color: #037E7F; margin: 0 0 12px;">The BriteCo Brief</h1>
+                                <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #037E7F; margin: 0 0 25px;">
+                                    ${state.intro.content || 'Welcome to the BriteCo Brief!'}
+                                </p>
+                                ${state.intro.cta.text && state.intro.cta.url ? `
+                                <a href="${state.intro.cta.url}" style="display: inline-block; background: #FE8916; color: #ffffff; font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; padding: 11px 29px; border-radius: 10px; text-transform: uppercase;">
+                                    ${state.intro.cta.text}
+                                </a>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr><td height="25"></td></tr>
+
+            <!-- Section 2: The Brite Spot -->
+            <tr>
+                <td style="padding: 0 15px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #282D3E;">
+                        <tr>
+                            <td>
+                                <img src="https://brite.co/wp-content/uploads/2025/09/brite-spot-1.png" alt="The Brite Spot" width="100%" style="display: block;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 16px 20px 25px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td width="50%" valign="top" style="padding-right: 10px;">
+                                            <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B; margin: 0;">
+                                                ${state.briteSpot.body || 'Content coming soon...'}
+                                            </p>
+                                        </td>
+                                        <td width="50%" valign="top" align="right">
+                                            ${state.briteSpot.image ?
+                                                `<img src="${state.briteSpot.image}" alt="${state.briteSpot.title}" width="203" style="max-width: 203px; height: auto; border-radius: 4px;">` :
+                                                `<img src="https://brite.co/wp-content/uploads/2025/09/blank-image.png" alt="Image" width="203" style="max-width: 203px; height: auto;">`
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr><td height="25"></td></tr>
+
+            <!-- Section 3: Curious Claims -->
+            <tr>
+                <td style="padding: 0 15px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #282D3E;">
+                        <tr>
+                            <td>
+                                <img src="https://brite.co/wp-content/uploads/2025/09/cusrious-claims.png" alt="Curious Claims" width="100%" style="display: block;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 16px 20px 25px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td width="50%" valign="top" align="left">
+                                            ${state.curiousClaims.image ?
+                                                `<img src="${state.curiousClaims.image}" alt="${state.curiousClaims.title}" width="203" style="max-width: 203px; height: auto; border-radius: 4px;">` :
+                                                `<img src="https://brite.co/wp-content/uploads/2025/09/blank-image.png" alt="Image" width="203" style="max-width: 203px; height: auto;">`
+                                            }
+                                        </td>
+                                        <td width="50%" valign="top" style="padding-left: 10px;">
+                                            <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B; margin: 0;">
+                                                ${(state.curiousClaims.content || 'Content coming soon...').split('\n\n')[0]}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                ${state.curiousClaims.content && state.curiousClaims.content.split('\n\n').length > 1 ? `
+                                <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B; margin: 12px 0 0;">
+                                    ${state.curiousClaims.content.split('\n\n').slice(1).join('</p><p style="font-family: \'Montserrat\', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B; margin: 12px 0 0;">')}
+                                </p>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr><td height="25"></td></tr>
+
+            <!-- Section 4: Insurance News Roundup -->
+            <tr>
+                <td style="padding: 0 15px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #282D3E;">
+                        <tr>
+                            <td>
+                                <img src="https://brite.co/wp-content/uploads/2025/09/news-roundup.png" alt="Insurance News Roundup" width="100%" style="display: block;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 16px 20px 25px;">
+                                ${state.newsRoundup.items.map(item => `
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td width="31" valign="top">
+                                            <img src="https://brite.co/wp-content/uploads/2025/09/tickk.png" alt="" width="20" style="width: 20px;">
+                                        </td>
+                                        <td style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B;">
+                                            ${item.url ? `<a href="${item.url}" style="color: #008382; text-decoration: underline;">${item.headline}</a>` : item.headline}
+                                        </td>
+                                    </tr>
+                                </table>
+                                `).join('')}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr><td height="25"></td></tr>
+
+            <!-- Section 5: InsurNews Spotlight -->
+            <tr>
+                <td style="padding: 0 15px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #282D3E;">
+                        <tr>
+                            <td>
+                                <img src="https://brite.co/wp-content/uploads/2025/09/spotlight.png" alt="InsurNews Spotlight" width="100%" style="display: block;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 16px 20px 25px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td width="50%" valign="top" style="padding-right: 10px;">
+                                            <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B; margin: 0;">
+                                                ${state.insurnews.intro || 'Content coming soon...'}
+                                            </p>
+                                        </td>
+                                        <td width="50%" valign="top" align="right">
+                                            ${state.insurnews.image ?
+                                                `<img src="${state.insurnews.image}" alt="InsurNews" width="203" style="max-width: 203px; height: auto; border-radius: 4px;">` :
+                                                `<img src="https://brite.co/wp-content/uploads/2025/09/blank-image.png" alt="Image" width="203" style="max-width: 203px; height: auto;">`
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                                ${state.insurnews.sections ? state.insurnews.sections.map(section => `
+                                <h3 style="font-family: 'Montserrat', Arial, sans-serif; font-size: 20px; font-weight: 600; color: #3B3B3B; margin: 16px 0 10px;">${section.heading}</h3>
+                                <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B; margin: 0;">
+                                    ${section.content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #008382;">$1</a>')}
+                                </p>
+                                `).join('') : ''}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr><td height="25"></td></tr>
+
+            <!-- Section 6: Agent Advantage -->
+            <tr>
+                <td style="padding: 0 15px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #282D3E;">
+                        <tr>
+                            <td>
+                                <img src="https://brite.co/wp-content/uploads/2025/09/agent-advantage.png" alt="Agent Advantage" width="100%" style="display: block;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 16px 20px 25px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td width="50%" valign="top" style="padding-right: 10px;">
+                                            <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B; margin: 0;">
+                                                ${state.agentAdvantage.intro || 'Content coming soon...'}
+                                            </p>
+                                        </td>
+                                        <td width="50%" valign="top" align="right">
+                                            ${state.agentAdvantage.image ?
+                                                `<img src="${state.agentAdvantage.image}" alt="Agent Advantage" width="203" style="max-width: 203px; height: auto; border-radius: 4px;">` :
+                                                `<img src="https://brite.co/wp-content/uploads/2025/09/blank-image.png" alt="Image" width="203" style="max-width: 203px; height: auto;">`
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                                ${state.agentAdvantage.tips ? state.agentAdvantage.tips.map(tip => `
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 16px;">
+                                    <tr>
+                                        <td width="27" valign="top">
+                                            <img src="https://brite.co/wp-content/uploads/2025/09/tickk.png" alt="" width="27" style="width: 27px;">
+                                        </td>
+                                        <td style="padding-left: 10px;">
+                                            <span style="font-family: 'Montserrat', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #3B3B3B; display: block; margin-bottom: 8px;">${tip.mini_title}</span>
+                                            <span style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B;">${tip.content}</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                                `).join('') : ''}
+                                ${state.agentAdvantage.closing ? `
+                                <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; line-height: 26px; color: #3B3B3B; margin: 16px 0 0;">
+                                    ${state.agentAdvantage.closing}
+                                </p>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Spacer -->
+            <tr><td height="25"></td></tr>
+
+            <!-- Section 7: CTA Footer -->
+            <tr>
+                <td style="padding: 0 15px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: url(https://brite.co/wp-content/uploads/2025/09/section-bg.png) no-repeat center; background-size: cover;">
+                        <tr>
+                            <td style="padding: 60px 20px; text-align: center;">
+                                <h2 style="font-family: 'Montserrat', Arial, sans-serif; font-size: 32px; font-weight: 600; color: #ffffff; margin: 0 0 12px;">Wait Before You Go...</h2>
+                                <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 18px; font-weight: 500; color: #ffffff; margin: 0 0 25px;">Earn 12% recurring commissions on every policy</p>
+                                <a href="https://brite.co/agent/" style="display: inline-block; background: #FE8916; color: #ffffff; font-family: 'Montserrat', Arial, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; padding: 11px 29px; border-radius: 10px; text-transform: uppercase;">
+                                    GET APPOINTED
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+                <td style="padding: 30px 20px; text-align: center;">
+                    <p style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; color: #888888; margin: 0;">
+                        &copy; ${new Date().getFullYear()} BriteCo. All rights reserved.<br>
+                        <a href="#" style="color: #037E7F;">Unsubscribe</a> | <a href="#" style="color: #037E7F;">Privacy Policy</a>
+                    </p>
+                </td>
+            </tr>
+        </table>
+    </center>
+</body>
+</html>`;
+        }
+    </script>
+</body>
+</html>
