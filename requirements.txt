@@ -15,7 +15,7 @@ beautifulsoup4==4.12.3
 
 # Utilities
 python-dotenv==1.0.1
-pillow==10.2.0
+pillow>=10.4.0
 jinja2==3.1.3
 PyYAML>=6.0
 
