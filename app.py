@@ -115,7 +115,179 @@ def get_team_members():
     })
 
 # ============================================================================
-# ROUTES - ARTICLE SEARCH
+# ROUTES - V2 RESEARCH API (Frontend Dashboard)
+# ============================================================================
+
+@app.route('/api/v2/search-perplexity', methods=['POST'])
+def v2_search_perplexity():
+    """Perplexity Research card - searches with Perplexity AI"""
+    try:
+        data = request.json
+        query = data.get('query', 'P&C insurance news')
+        time_window = data.get('time_window', '30d')
+        exclude_urls = data.get('exclude_urls', [])
+
+        print(f"\n[V2 API] Perplexity search: {query}")
+
+        if not perplexity_client or not perplexity_client.is_available():
+            # Fallback to OpenAI search
+            print("[V2 API] Perplexity not available, using OpenAI search")
+            search_results = openai_client.search_web(
+                query=query,
+                exclude_urls=exclude_urls,
+                max_results=10
+            )
+        else:
+            search_results = perplexity_client.search(
+                query=query,
+                time_window=time_window,
+                max_results=10
+            )
+
+        # Transform results for frontend
+        results = []
+        for r in search_results:
+            results.append({
+                'title': r.get('title', ''),
+                'headline': r.get('title', ''),
+                'url': r.get('url', r.get('source_url', '')),
+                'publisher': r.get('publisher', ''),
+                'snippet': r.get('snippet', r.get('description', '')),
+                'industry_data': r.get('snippet', ''),
+                'so_what': r.get('venue_implications', 'Review this article for agent insights'),
+                'source_card': 'perplexity'
+            })
+
+        return jsonify({
+            'success': True,
+            'results': results,
+            'queries_used': [query],
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[V2 API ERROR] Perplexity search: {e}")
+        return jsonify({'success': False, 'error': str(e), 'results': []}), 500
+
+
+@app.route('/api/v2/search-insights', methods=['POST'])
+def v2_search_insights():
+    """Insight Builder card - searches multiple insurance signals"""
+    try:
+        data = request.json
+        time_window = data.get('time_window', '30d')
+        exclude_urls = data.get('exclude_urls', [])
+
+        print(f"\n[V2 API] Searching insurance market signals...")
+
+        # Insurance market signals to search
+        signals = [
+            'auto insurance rates trends',
+            'homeowners insurance claims',
+            'commercial insurance market',
+            'insurance regulations changes',
+            'insurtech technology news',
+            'P&C insurance mergers acquisitions',
+            'insurance agent commission trends',
+            'catastrophe insurance claims'
+        ]
+
+        all_results = []
+        for signal in signals[:4]:  # Limit to prevent timeout
+            try:
+                query = f"{signal} site:insurancejournal.com OR site:propertycasualty360.com"
+                results = openai_client.search_web(
+                    query=query,
+                    exclude_urls=exclude_urls,
+                    max_results=3
+                )
+                for r in results:
+                    r['signal'] = signal
+                    r['headline'] = r.get('title', '')
+                    r['industry_data'] = r.get('snippet', r.get('description', ''))
+                    r['so_what'] = 'Consider how this affects your agency and clients'
+                    all_results.append(r)
+            except Exception as e:
+                print(f"[V2 API] Signal search error for {signal}: {e}")
+
+        return jsonify({
+            'success': True,
+            'results': all_results[:15],
+            'signals_searched': signals[:4],
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[V2 API ERROR] Insights search: {e}")
+        return jsonify({'success': False, 'error': str(e), 'results': []}), 500
+
+
+@app.route('/api/v2/search-sources', methods=['POST'])
+def v2_search_sources():
+    """Source Explorer card - searches curated insurance sources"""
+    try:
+        data = request.json
+        query = data.get('query', 'insurance news')
+        source_packs = data.get('source_packs', ['insurance'])
+        exclude_urls = data.get('exclude_urls', [])
+
+        print(f"\n[V2 API] Source Explorer search: {query}, packs: {source_packs}")
+
+        # Insurance industry source packs
+        source_pack_sites = {
+            'insurance': INSURANCE_NEWS_SOURCES,
+            'claims': ['claimsjournal.com', 'propertycasualty360.com'],
+            'regulations': ['naic.org', 'insurancejournal.com', 'carriermanagement.com']
+        }
+
+        # Build site filter from selected packs
+        sites = []
+        for pack in source_packs:
+            sites.extend(source_pack_sites.get(pack, []))
+        sites = list(set(sites))  # Remove duplicates
+
+        # Build search query with site filters
+        if sites:
+            site_filter = ' OR '.join([f'site:{s}' for s in sites[:5]])
+            full_query = f"{query} ({site_filter})"
+        else:
+            full_query = query
+
+        search_results = openai_client.search_web(
+            query=full_query,
+            exclude_urls=exclude_urls,
+            max_results=15
+        )
+
+        # Transform results
+        results = []
+        for r in search_results:
+            results.append({
+                'title': r.get('title', ''),
+                'headline': r.get('title', ''),
+                'url': r.get('url', r.get('source_url', '')),
+                'publisher': r.get('publisher', ''),
+                'snippet': r.get('snippet', r.get('description', '')),
+                'industry_data': r.get('snippet', ''),
+                'so_what': 'Review this source for insights relevant to your clients',
+                'source_card': 'explorer',
+                'content_type': 'news'
+            })
+
+        return jsonify({
+            'success': True,
+            'results': results,
+            'queries_used': [full_query],
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[V2 API ERROR] Source search: {e}")
+        return jsonify({'success': False, 'error': str(e), 'results': []}), 500
+
+
+# ============================================================================
+# ROUTES - ARTICLE SEARCH (Legacy)
 # ============================================================================
 
 @app.route('/api/search-news', methods=['POST'])
