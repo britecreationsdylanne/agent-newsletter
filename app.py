@@ -1,95 +1,101 @@
 """
 BriteCo Brief - Agent Newsletter Generator
-Backend API Server
+Backend API Server - Adapted from Venue Voice structure
 """
 
 import os
-import re
+import sys
 import json
-import base64
+import re
+import requests
 import smtplib
+import base64
 from io import BytesIO
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
-from functools import wraps
-
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment
 load_dotenv()
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+# Add backend to path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
+
+from integrations.openai_client import OpenAIClient
+from integrations.gemini_client import GeminiClient
+from integrations.claude_client import ClaudeClient
+from integrations.perplexity_client import PerplexityClient
+from integrations.ontraport_client import OntraportClient
+from config.brand_guidelines import (
+    BRAND_VOICE, NEWSLETTER_GUIDELINES, INSURANCE_NEWS_SOURCES,
+    CONTENT_FILTERS, ONTRAPORT_CONFIG, TEAM_MEMBERS,
+    get_style_guide_for_prompt, get_search_sources_prompt
+)
+
+app = Flask(__name__, static_folder='.')
 CORS(app)
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
+# Helper function to safely print Unicode content on Windows
+def safe_print(text):
+    """Print text with proper encoding handling for Windows console"""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        safe_text = text.encode('ascii', errors='replace').decode('ascii')
+        print(safe_text)
 
-# Team members for sending previews
-TEAM_MEMBERS = [
-    {"name": "John Ortbal", "email": "john.ortbal@brite.co"},
-    {"name": "Stef Lynn", "email": "stef.lynn@brite.co"},
-    {"name": "Selena Fragassi", "email": "selena.fragassi@brite.co"}
-]
+# Helper function to convert HTML to plain text
+def html_to_plain_text(html_content):
+    """Convert HTML newsletter content to plain text for Ontraport"""
+    text = re.sub(r'<[^>]+>', '', html_content)
+    text = text.replace('&nbsp;', ' ')
+    text = text.replace('&amp;', '&')
+    text = text.replace('&lt;', '<')
+    text = text.replace('&gt;', '>')
+    text = text.replace('&quot;', '"')
+    text = text.replace('&#39;', "'")
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
+    return text
 
-# Insurance news sources for agent newsletters
-AGENT_NEWS_SOURCES = [
-    "insurancenewsnet.com",
-    "insurancejournal.com",
-    "businessinsurance.com",
-    "insurancebusinessmag.com/us",
-    "claimsjournal.com",
-    "forbes.com/advisor/insurance",
-    "propertycasualty360.com"
-]
+# Initialize AI clients
+openai_client = OpenAIClient()
+gemini_client = GeminiClient()
 
-# Content filters for agent newsletters
-AGENT_CONTENT_FILTERS = {
-    "include": ["property", "casualty", "P&C", "homeowners", "auto", "commercial", "claims", "agents", "brokers"],
-    "exclude": ["health insurance", "life insurance", "political", "international", "people news", "obituary", "appointment"]
-}
+# Try to initialize Claude (optional)
+try:
+    claude_client = ClaudeClient()
+    print("[OK] Claude initialized")
+except Exception as e:
+    claude_client = None
+    print(f"[WARNING] Claude not available: {e}")
 
-# Ontraport objects for agents
-ONTRAPORT_OBJECTS = ["10004", "10007"]
-ONTRAPORT_FROM_EMAIL = "agent@brite.co"
+# Initialize Perplexity client
+try:
+    perplexity_client = PerplexityClient()
+    print("[OK] Perplexity initialized")
+except Exception as e:
+    perplexity_client = None
+    print(f"[WARNING] Perplexity not available: {e}")
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-
-def safe_print(msg):
-    """Thread-safe print with timestamp"""
-    timestamp = datetime.now().strftime("%H:%M:%S")
-    print(f"[{timestamp}] {msg}", flush=True)
-
-def get_api_client(client_type):
-    """Get API client based on type"""
-    if client_type == "openai":
-        import openai
-        return openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    elif client_type == "anthropic":
-        import anthropic
-        return anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-    elif client_type == "gemini":
-        from google import genai
-        return genai.Client(api_key=os.environ.get("GOOGLE_AI_API_KEY"))
-    elif client_type == "perplexity":
-        import openai
-        return openai.OpenAI(
-            api_key=os.environ.get("PERPLEXITY_API_KEY"),
-            base_url="https://api.perplexity.ai"
-        )
-    return None
+# Initialize Ontraport client
+try:
+    ontraport_client = OntraportClient()
+    print("[OK] Ontraport initialized")
+except Exception as e:
+    ontraport_client = None
+    print(f"[WARNING] Ontraport not available: {e}")
 
 # ============================================================================
 # ROUTES - STATIC FILES
 # ============================================================================
 
 @app.route('/')
-def serve_index():
+def serve_demo():
+    """Serve the main app"""
     return send_from_directory('.', 'index.html')
 
 @app.route('/health')
@@ -102,749 +108,771 @@ def health_check():
 
 @app.route('/api/team-members', methods=['GET'])
 def get_team_members():
-    """Get list of team members for sending previews"""
-    return jsonify({"success": True, "team_members": TEAM_MEMBERS})
+    """Get list of team members for preview emails"""
+    return jsonify({
+        "success": True,
+        "team_members": TEAM_MEMBERS
+    })
 
 # ============================================================================
-# ROUTES - RESEARCH & TOPIC DISCOVERY
+# ROUTES - ARTICLE SEARCH
 # ============================================================================
 
-@app.route('/api/research-topics', methods=['POST'])
-def research_topics():
-    """
-    Scan insurance news sources for trending P&C topics.
-    Returns 5-8 topic suggestions with brief descriptions.
-    """
+@app.route('/api/search-news', methods=['POST'])
+def search_news():
+    """Search for P&C insurance news articles using OpenAI Responses API"""
     try:
-        safe_print("[API] Starting topic research...")
+        data = request.json
+        month = data.get('month', 'january')
+        exclude_urls = data.get('exclude_urls', [])
 
-        perplexity = get_api_client("perplexity")
-        if not perplexity:
-            return jsonify({"success": False, "error": "Perplexity API not configured"}), 500
+        print(f"\n[API] Searching for insurance news (month: {month})...")
 
-        # Build search query
-        sources_list = ", ".join(AGENT_NEWS_SOURCES)
+        # Build search query for P&C insurance news
+        sources_list = ' OR '.join([f'site:{s}' for s in INSURANCE_NEWS_SOURCES])
+        search_query = f"P&C insurance news {month} 2026 ({sources_list})"
 
-        prompt = f"""Search the following insurance news sources for the most relevant and trending stories from the past 2 weeks:
-{sources_list}
+        try:
+            search_results = openai_client.search_web(
+                query=search_query,
+                exclude_urls=exclude_urls,
+                max_results=15
+            )
 
-Focus ONLY on:
-- Property & Casualty (P&C) insurance topics
-- Homeowners insurance
-- Auto insurance
-- Commercial insurance
-- Claims trends
-- Agent/broker business topics
-- Industry regulations affecting P&C
+            # Transform for frontend compatibility
+            for result in search_results:
+                result['source_url'] = result.get('url', '')
 
-EXCLUDE completely:
-- Health insurance
-- Life insurance
-- Political topics or partisan content
-- International news (US only)
-- People news (appointments, obituaries)
-- Press releases
+            articles = search_results[:15]
 
-Return 6-8 distinct topic ideas as a JSON array with this format:
-[
-  {{
-    "topic": "Brief topic title (5-10 words)",
-    "description": "2-3 sentence summary of the news angle",
-    "relevance": "Why this matters for insurance agents",
-    "sources_hint": ["Source1", "Source2"]
-  }}
-]
+            if len(articles) > 0:
+                print(f"[API] Found {len(articles)} insurance news articles")
+                return jsonify({
+                    'success': True,
+                    'articles': articles,
+                    'source': 'openai_responses_api',
+                    'generated_at': datetime.now().isoformat()
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No articles found from web search',
+                    'articles': [],
+                    'generated_at': datetime.now().isoformat()
+                }), 500
 
-Return ONLY the JSON array, no other text."""
-
-        response = perplexity.chat.completions.create(
-            model="sonar-pro",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
-        )
-
-        content = response.choices[0].message.content.strip()
-
-        # Parse JSON from response
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
-
-        topics = json.loads(content)
-
-        safe_print(f"[API] Found {len(topics)} topics")
-        return jsonify({"success": True, "topics": topics})
+        except Exception as e:
+            print(f"[API ERROR] Search failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'articles': [],
+                'generated_at': datetime.now().isoformat()
+            }), 500
 
     except Exception as e:
-        safe_print(f"[API] Topic research error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"[API ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/search-claims', methods=['POST'])
+def search_claims():
+    """Search for interesting/curious claims stories"""
+    try:
+        data = request.json
+        month = data.get('month', 'january')
+        exclude_urls = data.get('exclude_urls', [])
+
+        print(f"\n[API] Searching for curious claims stories (month: {month})...")
+
+        # Build search query for unusual claims
+        search_query = f"unusual insurance claims interesting stories P&C property casualty site:claimsjournal.com OR site:insurancejournal.com OR site:propertycasualty360.com"
+
+        try:
+            search_results = openai_client.search_web(
+                query=search_query,
+                exclude_urls=exclude_urls,
+                max_results=10
+            )
+
+            for result in search_results:
+                result['source_url'] = result.get('url', '')
+
+            claims = search_results[:10]
+
+            if len(claims) > 0:
+                print(f"[API] Found {len(claims)} claims stories")
+                return jsonify({
+                    'success': True,
+                    'claims': claims,
+                    'source': 'openai_responses_api',
+                    'generated_at': datetime.now().isoformat()
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No claims stories found',
+                    'claims': [],
+                    'generated_at': datetime.now().isoformat()
+                }), 500
+
+        except Exception as e:
+            print(f"[API ERROR] Claims search failed: {e}")
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'claims': [],
+                'generated_at': datetime.now().isoformat()
+            }), 500
+
+    except Exception as e:
+        print(f"[API ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/search-tips', methods=['POST'])
+def search_tips():
+    """Search for agent tips and advice articles"""
+    try:
+        data = request.json
+        month = data.get('month', 'january')
+        exclude_urls = data.get('exclude_urls', [])
+
+        print(f"\n[API] Searching for agent tips (month: {month})...")
+
+        # Build search query for agent tips
+        search_query = f"insurance agent tips sales strategies client retention independent agent advice"
+
+        try:
+            search_results = openai_client.search_web(
+                query=search_query,
+                exclude_urls=exclude_urls,
+                max_results=15
+            )
+
+            for result in search_results:
+                result['source_url'] = result.get('url', '')
+
+            tips = search_results[:15]
+
+            if len(tips) > 0:
+                print(f"[API] Found {len(tips)} agent tip articles")
+                return jsonify({
+                    'success': True,
+                    'tips': tips,
+                    'source': 'openai_responses_api',
+                    'generated_at': datetime.now().isoformat()
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No tips found',
+                    'tips': [],
+                    'generated_at': datetime.now().isoformat()
+                }), 500
+
+        except Exception as e:
+            print(f"[API ERROR] Tips search failed: {e}")
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'tips': [],
+                'generated_at': datetime.now().isoformat()
+            }), 500
+
+    except Exception as e:
+        print(f"[API ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/search-roundup', methods=['POST'])
+def search_roundup():
+    """Search for news roundup articles (5 bullet points)"""
+    try:
+        data = request.json
+        month = data.get('month', 'january')
+        exclude_urls = data.get('exclude_urls', [])
+
+        print(f"\n[API] Searching for news roundup articles (month: {month})...")
+
+        # Build search query for general P&C news
+        sources_list = ' OR '.join([f'site:{s}' for s in INSURANCE_NEWS_SOURCES])
+        search_query = f"property casualty insurance news trends regulations {month} 2026 ({sources_list})"
+
+        try:
+            search_results = openai_client.search_web(
+                query=search_query,
+                exclude_urls=exclude_urls,
+                max_results=15
+            )
+
+            for result in search_results:
+                result['source_url'] = result.get('url', '')
+
+            roundup = search_results[:15]
+
+            if len(roundup) > 0:
+                print(f"[API] Found {len(roundup)} roundup articles")
+                return jsonify({
+                    'success': True,
+                    'articles': roundup,
+                    'source': 'openai_responses_api',
+                    'generated_at': datetime.now().isoformat()
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No roundup articles found',
+                    'articles': [],
+                    'generated_at': datetime.now().isoformat()
+                }), 500
+
+        except Exception as e:
+            print(f"[API ERROR] Roundup search failed: {e}")
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'articles': [],
+                'generated_at': datetime.now().isoformat()
+            }), 500
+
+    except Exception as e:
+        print(f"[API ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/search-spotlight', methods=['POST'])
+def search_spotlight():
+    """Search for major insurance news for InsurNews Spotlight"""
+    try:
+        data = request.json
+        month = data.get('month', 'january')
+        exclude_urls = data.get('exclude_urls', [])
+
+        print(f"\n[API] Searching for spotlight topics (month: {month})...")
+
+        # Build search query for major insurance news
+        sources_list = ' OR '.join([f'site:{s}' for s in INSURANCE_NEWS_SOURCES])
+        search_query = f"major insurance news breaking P&C industry {month} 2026 ({sources_list})"
+
+        try:
+            search_results = openai_client.search_web(
+                query=search_query,
+                exclude_urls=exclude_urls,
+                max_results=10
+            )
+
+            for result in search_results:
+                result['source_url'] = result.get('url', '')
+
+            spotlight = search_results[:10]
+
+            if len(spotlight) > 0:
+                print(f"[API] Found {len(spotlight)} spotlight topics")
+                return jsonify({
+                    'success': True,
+                    'articles': spotlight,
+                    'source': 'openai_responses_api',
+                    'generated_at': datetime.now().isoformat()
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No spotlight topics found',
+                    'articles': [],
+                    'generated_at': datetime.now().isoformat()
+                }), 500
+
+        except Exception as e:
+            print(f"[API ERROR] Spotlight search failed: {e}")
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'articles': [],
+                'generated_at': datetime.now().isoformat()
+            }), 500
+
+    except Exception as e:
+        print(f"[API ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============================================================================
+# ROUTES - RESEARCH ARTICLES
+# ============================================================================
 
 @app.route('/api/research-articles', methods=['POST'])
 def research_articles():
     """
-    Deep dive research on a selected topic.
-    Returns 4-6 articles from different sources with full details.
+    Research selected articles and produce detailed summaries using GPT.
     """
     try:
         data = request.json
-        topic = data.get('topic', '')
+        curious_claims_topic = data.get('curious_claims_topic')
+        roundup_topics = data.get('roundup_topics', [])  # List of 5 articles
+        spotlight_topic = data.get('spotlight_topic')
+        agent_tips_topics = data.get('agent_tips_topics', [])  # List of 5 tips
 
-        if not topic:
-            return jsonify({"success": False, "error": "Topic is required"}), 400
+        print(f"\n[API] Researching selected articles...")
 
-        safe_print(f"[API] Researching articles for: {topic}")
+        research_results = {}
 
-        perplexity = get_api_client("perplexity")
-        if not perplexity:
-            return jsonify({"success": False, "error": "Perplexity API not configured"}), 500
+        # Research Curious Claims (~200 words)
+        if curious_claims_topic:
+            safe_print(f"  - Researching Curious Claims: {curious_claims_topic.get('title', 'Unknown')}")
+            claims_prompt = f"""You are a senior insurance industry analyst. Research this claims story and produce a briefing (~200 words).
 
-        sources_list = ", ".join(AGENT_NEWS_SOURCES)
+Article: {curious_claims_topic.get('title', 'Unknown')}
+Source: {curious_claims_topic.get('url', 'N/A')}
+Initial Summary: {curious_claims_topic.get('description', '')}
 
-        prompt = f"""Research this insurance topic in depth: "{topic}"
+Produce a structured briefing:
 
-Search these sources: {sources_list}
+1. THE CLAIM
+What happened? Describe the unusual or interesting claim in 2-3 sentences.
 
-Find 4-6 recent articles (within past 30 days) that cover different angles of this topic.
+2. THE OUTCOME
+How was it resolved? What was the insurance company's response?
 
-For each article, provide:
-- The exact article title
-- The source website name
-- The URL (must be a real, working URL)
-- A 2-3 sentence summary of the article's key points
-- Key statistics or quotes if available
+3. AGENT TAKEAWAY
+What can insurance agents learn from this? How does it relate to client conversations?
 
-Return as JSON array:
-[
-  {{
-    "title": "Exact article headline",
-    "source": "Source name (e.g., Insurance Journal)",
-    "url": "https://full-url-to-article",
-    "summary": "2-3 sentence summary",
-    "key_points": ["Point 1", "Point 2"],
-    "date": "Publication date if available"
-  }}
-]
+Target: 150-200 words. Be engaging and informative."""
 
-IMPORTANT: Only include real articles with working URLs. Return ONLY the JSON array."""
+            claims_research = openai_client.generate_content(
+                prompt=claims_prompt,
+                model="gpt-4o",
+                temperature=0.3,
+                max_tokens=500
+            )
+            research_results['curious_claims'] = claims_research['content']
+            print(f"    Curious Claims research: {len(claims_research['content'].split())} words")
 
-        response = perplexity.chat.completions.create(
-            model="sonar-pro",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2
-        )
+        # Research News Roundup (5 bullet points, ~25 words each)
+        if roundup_topics and len(roundup_topics) > 0:
+            safe_print(f"  - Researching {len(roundup_topics)} roundup articles...")
+            roundup_items = []
+            for topic in roundup_topics[:5]:
+                safe_print(f"    - {topic.get('title', 'Unknown')[:50]}...")
+                roundup_prompt = f"""Summarize this insurance news in ONE bullet point (~25 words):
 
-        content = response.choices[0].message.content.strip()
+Article: {topic.get('title', 'Unknown')}
+Summary: {topic.get('description', '')}
+URL: {topic.get('url', 'N/A')}
 
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
+Output format: [Summary text] - [Source Name]
+Example: State Farm announces 15% rate increase in California amid wildfire concerns - Insurance Journal"""
 
-        articles = json.loads(content)
+                roundup_result = openai_client.generate_content(
+                    prompt=roundup_prompt,
+                    model="gpt-4o",
+                    temperature=0.2,
+                    max_tokens=100
+                )
+                roundup_items.append({
+                    'summary': roundup_result['content'].strip(),
+                    'url': topic.get('url', ''),
+                    'source': topic.get('publisher', '')
+                })
+            research_results['roundup'] = roundup_items
+            print(f"    Roundup research complete: {len(roundup_items)} items")
 
-        safe_print(f"[API] Found {len(articles)} articles")
-        return jsonify({"success": True, "articles": articles})
+        # Research InsurNews Spotlight (~300 words)
+        if spotlight_topic:
+            safe_print(f"  - Researching Spotlight: {spotlight_topic.get('title', 'Unknown')}")
+            spotlight_prompt = f"""You are a senior insurance industry analyst. Produce a detailed briefing (~300 words) on this major news story.
 
-    except Exception as e:
-        safe_print(f"[API] Article research error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+Article: {spotlight_topic.get('title', 'Unknown')}
+Source: {spotlight_topic.get('url', 'N/A')}
+Initial Summary: {spotlight_topic.get('description', '')}
 
-@app.route('/api/research-claims', methods=['POST'])
-def research_claims():
-    """
-    Search for interesting/unusual claims stories for Curious Claims section.
-    """
-    try:
-        safe_print("[API] Searching for curious claims stories...")
+Produce a structured briefing:
 
-        perplexity = get_api_client("perplexity")
-        if not perplexity:
-            return jsonify({"success": False, "error": "Perplexity API not configured"}), 500
+1. EXECUTIVE SUMMARY
+2-3 sentences capturing the core news and significance.
 
-        prompt = """Search for unusual, interesting, or outrageous insurance claims stories from recent news.
+2. KEY FACTS & DATA
+Bullet points with specific statistics, dates, and facts.
 
-Look for stories that are:
-- Quirky or unexpected claims
-- Large or notable settlements
-- Unusual circumstances
-- Interesting legal outcomes
-- Stories that would engage insurance professionals
+3. INDUSTRY IMPACT
+1 paragraph on broader P&C insurance industry implications.
 
-Focus on P&C claims (property, auto, liability) - NOT health or life insurance.
-US stories preferred.
+4. WHAT IT MEANS FOR AGENTS
+1 paragraph on how this affects independent insurance agents and their clients.
 
-Return 5-6 story options as JSON:
-[
-  {
-    "headline": "Catchy headline for the story",
-    "summary": "2-3 sentence summary of what happened",
-    "source": "News source name",
-    "url": "URL to the original story",
-    "claim_type": "Type of claim (auto, property, liability, etc.)",
-    "interest_factor": "What makes this story interesting"
-  }
-]
+5. ACTIONABLE INSIGHTS
+2-3 bullets on what agents should do or consider.
 
-Return ONLY the JSON array."""
+Target: 250-300 words. Be factual and cite specifics."""
 
-        response = perplexity.chat.completions.create(
-            model="sonar-pro",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.4
-        )
+            spotlight_research = openai_client.generate_content(
+                prompt=spotlight_prompt,
+                model="gpt-4o",
+                temperature=0.3,
+                max_tokens=800
+            )
+            research_results['spotlight'] = spotlight_research['content']
+            print(f"    Spotlight research: {len(spotlight_research['content'].split())} words")
 
-        content = response.choices[0].message.content.strip()
+        # Research Agent Advantage Tips (5 tips, ~30 words each)
+        if agent_tips_topics and len(agent_tips_topics) > 0:
+            safe_print(f"  - Researching {len(agent_tips_topics)} agent tips...")
+            tips_items = []
+            for topic in agent_tips_topics[:5]:
+                safe_print(f"    - {topic.get('title', 'Unknown')[:50]}...")
+                tip_prompt = f"""Create ONE actionable tip for insurance agents (~30 words) based on:
 
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
+Article: {topic.get('title', 'Unknown')}
+Summary: {topic.get('description', '')}
 
-        claims = json.loads(content)
+Output format: [Tip title]: [Actionable advice]
+Example: Follow Up Fast: Respond to leads within 5 minutes to increase conversion rates by up to 400%."""
 
-        safe_print(f"[API] Found {len(claims)} claims stories")
-        return jsonify({"success": True, "claims": claims})
+                tip_result = openai_client.generate_content(
+                    prompt=tip_prompt,
+                    model="gpt-4o",
+                    temperature=0.3,
+                    max_tokens=100
+                )
+                tips_items.append({
+                    'tip': tip_result['content'].strip(),
+                    'source_url': topic.get('url', '')
+                })
+            research_results['agent_tips'] = tips_items
+            print(f"    Agent tips research complete: {len(tips_items)} items")
 
-    except Exception as e:
-        safe_print(f"[API] Claims research error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"[API] Research complete")
 
-@app.route('/api/research-roundup', methods=['POST'])
-def research_roundup():
-    """
-    Get quick news items for the Insurance News Roundup section.
-    Returns 5 headline-style items with links.
-    """
-    try:
-        safe_print("[API] Gathering news roundup items...")
-
-        perplexity = get_api_client("perplexity")
-        if not perplexity:
-            return jsonify({"success": False, "error": "Perplexity API not configured"}), 500
-
-        sources_list = ", ".join(AGENT_NEWS_SOURCES)
-
-        prompt = f"""Find 5 recent insurance news headlines that would interest P&C insurance agents.
-
-Search: {sources_list}
-
-Requirements:
-- Each should be a single, catchy headline-style sentence
-- Include hyperlink to the source
-- Mix of topics: market trends, regulations, technology, claims, agent business
-- US-focused, P&C only (no health, life, international, political)
-
-Return as JSON:
-[
-  {{
-    "headline": "Catchy one-sentence news item with key detail or statistic",
-    "source": "Source name",
-    "url": "Full URL to article",
-    "category": "market|regulation|technology|claims|business"
-  }}
-]
-
-Return ONLY 5 items as JSON array."""
-
-        response = perplexity.chat.completions.create(
-            model="sonar-pro",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
-        )
-
-        content = response.choices[0].message.content.strip()
-
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
-
-        items = json.loads(content)
-
-        safe_print(f"[API] Found {len(items)} roundup items")
-        return jsonify({"success": True, "items": items})
+        return jsonify({
+            'success': True,
+            'research': research_results,
+            'generated_at': datetime.now().isoformat()
+        })
 
     except Exception as e:
-        safe_print(f"[API] Roundup research error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/research-agent-tips', methods=['POST'])
-def research_agent_tips():
-    """
-    Research content for Agent Advantage section - tips and advice for agents.
-    """
-    try:
-        data = request.json
-        topic_hint = data.get('topic', '')
-
-        safe_print(f"[API] Researching agent tips{' for: ' + topic_hint if topic_hint else ''}...")
-
-        perplexity = get_api_client("perplexity")
-        if not perplexity:
-            return jsonify({"success": False, "error": "Perplexity API not configured"}), 500
-
-        topic_context = f" related to '{topic_hint}'" if topic_hint else ""
-
-        prompt = f"""Find actionable tips and advice for independent insurance agents{topic_context}.
-
-Search for recent articles, guides, or expert advice that help agents:
-- Grow their business
-- Improve client relationships
-- Navigate market challenges
-- Use technology effectively
-- Handle claims better
-- Increase sales/retention
-
-Return 5-6 topic options for an "Agent Advantage" newsletter section:
-[
-  {{
-    "title": "Tip topic title (5-10 words)",
-    "angle": "The specific advice angle",
-    "key_points": ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5"],
-    "source_articles": ["Article title 1", "Article title 2"],
-    "relevance": "Why this matters now for agents"
-  }}
-]
-
-Return ONLY the JSON array."""
-
-        response = perplexity.chat.completions.create(
-            model="sonar-pro",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.4
-        )
-
-        content = response.choices[0].message.content.strip()
-
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
-
-        tips = json.loads(content)
-
-        safe_print(f"[API] Found {len(tips)} tip topics")
-        return jsonify({"success": True, "tips": tips})
-
-    except Exception as e:
-        safe_print(f"[API] Agent tips research error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"[API ERROR] Research failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================================================
 # ROUTES - CONTENT GENERATION
 # ============================================================================
 
-@app.route('/api/generate-intro', methods=['POST'])
-def generate_intro():
-    """Generate the newsletter introduction section."""
+@app.route('/api/generate-content', methods=['POST'])
+def generate_content():
+    """
+    Generate newsletter content using Claude Opus 4.5.
+    """
     try:
         data = request.json
-        highlights = data.get('highlights', [])
-        announcement = data.get('announcement', '')
+        month = data.get('month', 'january')
+        research = data.get('research')
+        brite_spot_topic = data.get('brite_spot_topic', '')
 
-        safe_print("[API] Generating newsletter introduction...")
+        if not research:
+            return jsonify({'success': False, 'error': 'Research data required'}), 400
 
-        claude = get_api_client("anthropic")
-        if not claude:
-            return jsonify({"success": False, "error": "Anthropic API not configured"}), 500
+        print(f"\n[API] Generating content for {month} using Claude Opus 4.5...")
 
-        highlights_text = "\n".join([f"- {h}" for h in highlights]) if highlights else "No specific highlights provided"
+        if not claude_client:
+            raise ValueError("Claude client not available for writing")
 
-        prompt = f"""Write a brief newsletter introduction for "The BriteCo Brief" - an insurance agent newsletter.
+        sections = {}
+        style_guide = get_style_guide_for_prompt()
 
-Newsletter highlights to mention:
-{highlights_text}
+        # Generate Introduction (1-4 sentences, ~75 words)
+        print("  - Generating Introduction...")
+        intro_prompt = f"""You are the copywriter for BriteCo Brief, a newsletter for independent insurance agents.
 
-Special announcement (if any): {announcement if announcement else 'None'}
-
-Requirements:
-- 1-4 sentences, punchy and engaging
-- Address readers as "Agents"
-- Highlight what's in this issue
-- Include any special announcements, contests, or calls-to-action
-- Professional but friendly tone
-- End with enthusiasm for the content
-
-Example style:
-"Agents, we have great news to share with you — opportunities to sell BriteCo's new wedding insurance will soon roll out, giving you more chances to earn commissions. Plus, we look at the role of AI in shaping a typical workday and provide tips on how to best prepare your clients as the hurricane and tornado seasons heat up this summer."
-
-Write ONLY the introduction paragraph, no other text."""
-
-        message = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=300,
-            messages=[{"role": "user", "content": prompt}]
-        )
-
-        intro = message.content[0].text.strip()
-
-        safe_print("[API] Introduction generated successfully")
-        return jsonify({"success": True, "content": intro})
-
-    except Exception as e:
-        safe_print(f"[API] Intro generation error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/generate-brite-spot', methods=['POST'])
-def generate_brite_spot():
-    """Generate The Brite Spot section content."""
-    try:
-        data = request.json
-        title = data.get('title', '')
-        topic = data.get('topic', '')
-        details = data.get('details', '')
-
-        if not title or not topic:
-            return jsonify({"success": False, "error": "Title and topic are required"}), 400
-
-        safe_print(f"[API] Generating Brite Spot content for: {title}")
-
-        claude = get_api_client("anthropic")
-        if not claude:
-            return jsonify({"success": False, "error": "Anthropic API not configured"}), 500
-
-        prompt = f"""Write content for "The Brite Spot" section of an insurance agent newsletter.
-
-Title: {title}
-Topic/Announcement: {topic}
-Additional details: {details if details else 'None provided'}
+Write a brief, welcoming introduction for the {month.capitalize()} edition.
 
 Requirements:
-- Sub-header title: Use the provided title (max 15 words)
-- Body: Maximum 100 words
-- Announce a new feature, tool, product, or company news
-- Professional but engaging tone
-- Clear value proposition for agents
+- 1-4 sentences
+- Maximum 75 words
+- Welcoming tone
+- Reference the month/season
+- Hint at what's inside this edition
 
-Return as JSON:
-{{
-  "title": "The sub-header title",
-  "body": "The main body text (max 100 words)"
-}}
+{style_guide}
 
-Return ONLY the JSON."""
+Output ONLY the introduction text, no labels or formatting."""
 
-        message = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=400,
-            messages=[{"role": "user", "content": prompt}]
+        intro_result = claude_client.generate_content(
+            prompt=intro_prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.5,
+            max_tokens=150
         )
+        sections['introduction'] = intro_result['content'].strip()
 
-        content = message.content[0].text.strip()
+        # Generate Brite Spot (max 100 words)
+        if brite_spot_topic:
+            print("  - Generating Brite Spot...")
+            brite_spot_prompt = f"""You are the copywriter for BriteCo Brief newsletter.
 
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
-
-        result = json.loads(content)
-
-        safe_print("[API] Brite Spot content generated successfully")
-        return jsonify({"success": True, "content": result})
-
-    except Exception as e:
-        safe_print(f"[API] Brite Spot generation error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/generate-insurnews', methods=['POST'])
-def generate_insurnews():
-    """Generate InsurNews Spotlight section with multiple sources."""
-    try:
-        data = request.json
-        topic = data.get('topic', '')
-        articles = data.get('articles', [])
-
-        if not topic or not articles:
-            return jsonify({"success": False, "error": "Topic and articles are required"}), 400
-
-        safe_print(f"[API] Generating InsurNews Spotlight for: {topic}")
-
-        claude = get_api_client("anthropic")
-        if not claude:
-            return jsonify({"success": False, "error": "Anthropic API not configured"}), 500
-
-        articles_text = "\n\n".join([
-            f"Source: {a.get('source', 'Unknown')}\nTitle: {a.get('title', '')}\nURL: {a.get('url', '')}\nSummary: {a.get('summary', '')}"
-            for a in articles
-        ])
-
-        prompt = f"""Write the "InsurNews Spotlight" section for an insurance agent newsletter.
-
-Main Topic: {topic}
-
-Source Articles:
-{articles_text}
+Write the "Brite Spot" section about: {brite_spot_topic}
 
 Requirements:
-- Sub-header: A compelling title (max 15 words) that captures the main story
-- Opening paragraph: 1-4 sentences introducing the topic
-- Up to 4 H3 subsections, each with:
-  - A clear subheading
-  - 1-2 paragraphs (1-4 sentences each)
-  - Inline hyperlinks to source articles where relevant
-- "Implications for Agents" as the final H3
-- Total length: 400-600 words
+- Maximum 100 words
+- Exciting, informative tone
+- Focus on new BriteCo features or company news
+- Include a subtle call to action
 
-IMPORTANT: Include hyperlinks to the source articles naturally within the text using markdown format [text](url)
+{style_guide}
 
-Return as JSON:
-{{
-  "title": "Main sub-header title",
-  "intro": "Opening paragraph",
-  "sections": [
-    {{
-      "heading": "H3 heading",
-      "content": "Paragraph(s) with [hyperlinks](url) embedded"
-    }}
-  ],
-  "agent_implications": "Final paragraph about what this means for agents"
-}}
+Output ONLY the Brite Spot text, no title or labels."""
 
-Return ONLY the JSON."""
+            brite_spot_result = claude_client.generate_content(
+                prompt=brite_spot_prompt,
+                model="claude-opus-4-5-20251101",
+                temperature=0.4,
+                max_tokens=200
+            )
+            sections['brite_spot'] = brite_spot_result['content'].strip()
 
-        message = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1500,
-            messages=[{"role": "user", "content": prompt}]
-        )
+        # Generate Curious Claims from research
+        if research.get('curious_claims'):
+            print("  - Writing Curious Claims section...")
+            claims_prompt = f"""You are the copywriter for BriteCo Brief newsletter.
 
-        content = message.content[0].text.strip()
+## RESEARCH BRIEFING
+{research['curious_claims']}
 
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
-
-        result = json.loads(content)
-
-        safe_print("[API] InsurNews Spotlight generated successfully")
-        return jsonify({"success": True, "content": result})
-
-    except Exception as e:
-        safe_print(f"[API] InsurNews generation error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/generate-curious-claims', methods=['POST'])
-def generate_curious_claims():
-    """Generate Curious Claims section content."""
-    try:
-        data = request.json
-        claim_story = data.get('story', {})
-
-        if not claim_story:
-            return jsonify({"success": False, "error": "Claim story data is required"}), 400
-
-        safe_print(f"[API] Generating Curious Claims for: {claim_story.get('headline', 'Unknown')}")
-
-        claude = get_api_client("anthropic")
-        if not claude:
-            return jsonify({"success": False, "error": "Anthropic API not configured"}), 500
-
-        prompt = f"""Write the "Curious Claims" section for an insurance agent newsletter.
-
-Story Details:
-Headline: {claim_story.get('headline', '')}
-Summary: {claim_story.get('summary', '')}
-Source: {claim_story.get('source', '')}
-URL: {claim_story.get('url', '')}
-Claim Type: {claim_story.get('claim_type', '')}
-Interest Factor: {claim_story.get('interest_factor', '')}
+Write the "Curious Claims" section based on this research.
 
 Requirements:
-- Sub-header title: Catchy, max 15 words
-- At least 2 paragraphs, each 1-4+ sentences
-- Can include an optional H3 subheading if it helps structure
-- Include hyperlink to source article
-- Engaging, slightly playful tone while remaining professional
-- End with insurance relevance or takeaway
+- 2-3 short paragraphs
+- Maximum 200 words
+- Engaging, storytelling tone
+- End with a takeaway for agents
 
-Return as JSON:
-{{
-  "title": "Catchy sub-header title",
-  "paragraphs": [
-    "First paragraph with story setup...",
-    "Second paragraph with details and [source link](url)..."
-  ],
-  "subheading": "Optional H3 if needed (or null)",
-  "subheading_content": "Content under subheading (or null)"
-}}
+{style_guide}
 
-Return ONLY the JSON."""
+Output ONLY the section text, no title or labels."""
 
-        message = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=800,
-            messages=[{"role": "user", "content": prompt}]
-        )
+            claims_result = claude_client.generate_content(
+                prompt=claims_prompt,
+                model="claude-opus-4-5-20251101",
+                temperature=0.4,
+                max_tokens=400
+            )
+            sections['curious_claims'] = claims_result['content'].strip()
 
-        content = message.content[0].text.strip()
+        # News Roundup is already formatted as bullet points from research
+        if research.get('roundup'):
+            sections['roundup'] = research['roundup']
 
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
+        # Generate InsurNews Spotlight from research
+        if research.get('spotlight'):
+            print("  - Writing InsurNews Spotlight section...")
+            spotlight_prompt = f"""You are the copywriter for BriteCo Brief newsletter.
 
-        result = json.loads(content)
+## RESEARCH BRIEFING
+{research['spotlight']}
 
-        safe_print("[API] Curious Claims generated successfully")
-        return jsonify({"success": True, "content": result})
-
-    except Exception as e:
-        safe_print(f"[API] Curious Claims generation error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/generate-agent-advantage', methods=['POST'])
-def generate_agent_advantage():
-    """Generate Agent Advantage section with 5 tips."""
-    try:
-        data = request.json
-        topic = data.get('topic', {})
-
-        if not topic:
-            return jsonify({"success": False, "error": "Topic data is required"}), 400
-
-        safe_print(f"[API] Generating Agent Advantage for: {topic.get('title', 'Unknown')}")
-
-        claude = get_api_client("anthropic")
-        if not claude:
-            return jsonify({"success": False, "error": "Anthropic API not configured"}), 500
-
-        prompt = f"""Write the "Agent Advantage" section for an insurance agent newsletter.
-
-Topic: {topic.get('title', '')}
-Angle: {topic.get('angle', '')}
-Key Points to Cover: {json.dumps(topic.get('key_points', []))}
-Why It Matters: {topic.get('relevance', '')}
+Write the "InsurNews Spotlight" section based on this research.
 
 Requirements:
-- Sub-header title: Max 15 words, action-oriented
-- Quick intro paragraph (2-3 sentences)
-- Exactly 5 bullet points, each with:
-  - Mini-title (up to 10 words, bold)
-  - 1-3 supporting sentences
-- Optional closing sentence to wrap up
+- 3-4 paragraphs
+- Maximum 300 words
+- Analytical, insightful tone
+- Include specific data points
+- End with actionable insights for agents
 
-Return as JSON:
-{{
-  "title": "Sub-header title",
-  "intro": "Brief intro paragraph",
-  "tips": [
-    {{
-      "mini_title": "Bold mini-title",
-      "content": "1-3 sentences of supporting content"
-    }}
-  ],
-  "closing": "Optional closing sentence (or null)"
-}}
+{style_guide}
 
-Return ONLY the JSON with exactly 5 tips."""
+Output ONLY the section text, no title or labels."""
 
-        message = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1000,
-            messages=[{"role": "user", "content": prompt}]
-        )
+            spotlight_result = claude_client.generate_content(
+                prompt=spotlight_prompt,
+                model="claude-opus-4-5-20251101",
+                temperature=0.4,
+                max_tokens=600
+            )
+            sections['spotlight'] = spotlight_result['content'].strip()
 
-        content = message.content[0].text.strip()
+        # Agent Advantage tips are already formatted from research
+        if research.get('agent_tips'):
+            sections['agent_tips'] = research['agent_tips']
 
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
-            content = re.sub(r"\n```$", "", content).strip()
+        print(f"[API] Content generated successfully")
 
-        result = json.loads(content)
-
-        safe_print("[API] Agent Advantage generated successfully")
-        return jsonify({"success": True, "content": result})
+        return jsonify({
+            'success': True,
+            'content': sections,
+            'generated_at': datetime.now().isoformat()
+        })
 
     except Exception as e:
-        safe_print(f"[API] Agent Advantage generation error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"[API ERROR] Content generation failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================================================
 # ROUTES - IMAGE GENERATION
 # ============================================================================
 
+@app.route('/api/generate-image-prompts', methods=['POST'])
+def generate_image_prompts():
+    """Generate image prompts for newsletter sections"""
+    try:
+        data = request.json
+        sections = data.get('sections', {})
+        month = data.get('month', 'january')
+
+        print(f"\n[API] Generating image prompts for {len(sections)} sections...")
+
+        prompts = {}
+
+        for section_name, section_data in sections.items():
+            print(f"  - Creating image prompt for {section_name}")
+
+            title = section_data.get('title', '')
+            content = section_data.get('content', '')[:400]
+
+            prompt_request = f"""Create a text-to-image prompt for an insurance newsletter illustration.
+
+Section: {section_name}
+Title: "{title}"
+Content: "{content}..."
+
+Requirements:
+- Professional, clean aesthetic
+- Blue/teal color palette (BriteCo brand colors)
+- No text in the image
+- Suitable for email newsletter
+- Modern, digital style
+
+Output ONLY the image generation prompt, nothing else."""
+
+            prompt_result = openai_client.generate_content(
+                prompt=prompt_request,
+                model="gpt-4o",
+                temperature=0.5,
+                max_tokens=150
+            )
+
+            prompts[section_name] = {
+                'prompt': prompt_result['content'].strip(),
+                'title': title
+            }
+
+        print(f"[API] Generated {len(prompts)} image prompts")
+
+        return jsonify({
+            'success': True,
+            'prompts': prompts,
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] Image prompt generation failed: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/generate-image', methods=['POST'])
 def generate_image():
-    """Generate AI image based on prompt."""
+    """Generate an image using Gemini"""
     try:
         data = request.json
         prompt = data.get('prompt', '')
         section = data.get('section', 'general')
 
         if not prompt:
-            return jsonify({"success": False, "error": "Prompt is required"}), 400
+            return jsonify({'success': False, 'error': 'Prompt required'}), 400
 
-        safe_print(f"[API] Generating image for {section}: {prompt[:50]}...")
+        print(f"\n[API] Generating image for {section}...")
+        safe_print(f"  Prompt: {prompt[:100]}...")
 
-        gemini = get_api_client("gemini")
-        if not gemini:
-            return jsonify({"success": False, "error": "Gemini API not configured"}), 500
-
-        # Enhance prompt for better image generation
-        enhanced_prompt = f"""Create a professional, modern illustration for an insurance industry newsletter.
-
-Topic: {prompt}
-
-Style requirements:
-- Clean, professional corporate style
-- Modern flat design or subtle 3D
-- Colors: Use teal (#037E7F), coral (#FE8916), and neutral tones
-- No text in the image
-- Suitable for email newsletter
-- Business/insurance industry appropriate"""
-
-        response = gemini.models.generate_images(
-            model="imagen-3.0-generate-002",
-            prompt=enhanced_prompt,
-            config={
-                "number_of_images": 1,
-                "aspect_ratio": "16:9",
-                "safety_filter_level": "BLOCK_MEDIUM_AND_ABOVE"
-            }
+        # Generate image using Gemini
+        result = gemini_client.generate_image(
+            prompt=prompt,
+            aspect_ratio="16:9"
         )
 
-        if response.generated_images and len(response.generated_images) > 0:
-            image_data = response.generated_images[0].image.image_bytes
-
-            # Resize image
-            from PIL import Image
-            pil_image = Image.open(BytesIO(image_data))
-
-            # Target size based on section
-            if section in ['brite_spot', 'curious_claims', 'agent_advantage', 'insurnews']:
-                target_width = 203
-                target_height = 152
-            else:
-                target_width = 400
-                target_height = 225
-
-            # Resize maintaining aspect ratio and crop to fit
-            img_aspect = pil_image.width / pil_image.height
-            target_aspect = target_width / target_height
-
-            if img_aspect > target_aspect:
-                new_height = target_height
-                new_width = int(target_height * img_aspect)
-            else:
-                new_width = target_width
-                new_height = int(target_width / img_aspect)
-
-            resized = pil_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-            # Center crop
-            left = (new_width - target_width) // 2
-            top = (new_height - target_height) // 2
-            cropped = resized.crop((left, top, left + target_width, top + target_height))
-
-            # Convert to base64
-            buffer = BytesIO()
-            cropped.save(buffer, format='PNG', optimize=True)
-            image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-            image_url = f"data:image/png;base64,{image_base64}"
-
-            safe_print(f"[API] Image generated successfully for {section}")
-            return jsonify({"success": True, "image_url": image_url})
+        if result and result.get('image_base64'):
+            print(f"[API] Image generated successfully")
+            return jsonify({
+                'success': True,
+                'image_base64': result['image_base64'],
+                'section': section,
+                'generated_at': datetime.now().isoformat()
+            })
         else:
-            return jsonify({"success": False, "error": "No image generated"}), 500
+            return jsonify({
+                'success': False,
+                'error': 'Image generation failed'
+            }), 500
 
     except Exception as e:
-        safe_print(f"[API] Image generation error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"[API ERROR] Image generation failed: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============================================================================
+# ROUTES - HEADLINES & INTRO
+# ============================================================================
+
+@app.route('/api/generate-headlines', methods=['POST'])
+def generate_headlines():
+    """Generate newsletter headlines and subject line"""
+    try:
+        data = request.json
+        content = data.get('content', {})
+        month = data.get('month', 'january')
+
+        print(f"\n[API] Generating headlines for {month}...")
+
+        # Generate subject line
+        subject_prompt = f"""Create an email subject line for the BriteCo Brief newsletter ({month.capitalize()} edition).
+
+Newsletter highlights:
+- Curious Claims section
+- Insurance News Roundup
+- InsurNews Spotlight
+- Agent Advantage Tips
+
+Requirements:
+- 40-60 characters
+- Engaging, professional
+- No clickbait
+- Reference the month or a key topic
+
+Output ONLY the subject line, nothing else."""
+
+        subject_result = claude_client.generate_content(
+            prompt=subject_prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.6,
+            max_tokens=50
+        )
+
+        # Generate preview text
+        preview_prompt = f"""Create email preview text (preheader) for the BriteCo Brief newsletter.
+
+Requirements:
+- 80-100 characters
+- Complements the subject line
+- Teases content inside
+
+Output ONLY the preview text, nothing else."""
+
+        preview_result = claude_client.generate_content(
+            prompt=preview_prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.5,
+            max_tokens=60
+        )
+
+        print(f"[API] Headlines generated")
+
+        return jsonify({
+            'success': True,
+            'subject_line': subject_result['content'].strip(),
+            'preview_text': preview_result['content'].strip(),
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] Headlines generation failed: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================================================
 # ROUTES - BRAND CHECK
@@ -852,71 +880,66 @@ Style requirements:
 
 @app.route('/api/brand-check', methods=['POST'])
 def brand_check():
-    """Run content through brand guidelines check."""
+    """Check newsletter content against brand guidelines"""
     try:
         data = request.json
         content = data.get('content', {})
+        html = data.get('html', '')
 
-        safe_print("[API] Running brand check...")
+        print(f"\n[API] Running brand check...")
 
-        claude = get_api_client("anthropic")
-        if not claude:
-            return jsonify({"success": False, "error": "Anthropic API not configured"}), 500
+        # Combine all text content for checking
+        all_text = json.dumps(content) if content else html
 
-        content_text = json.dumps(content, indent=2)
+        check_prompt = f"""You are a brand compliance reviewer for BriteCo Brief, an insurance agent newsletter.
 
-        prompt = f"""Review this insurance newsletter content for brand consistency and quality.
+Review this content against brand guidelines:
 
-Content to review:
-{content_text}
+CONTENT:
+{all_text[:3000]}
 
-Check for:
-1. Professional tone appropriate for insurance agents
-2. Accuracy and clarity of information
-3. Consistent formatting
-4. Appropriate length for each section
-5. Engaging but not sensational language
-6. Proper attribution of sources
-7. No health/life insurance, political, or international content
-8. Clear calls-to-action where appropriate
+BRAND GUIDELINES:
+- Tone: Professional, knowledgeable, supportive
+- Focus: P&C insurance only (property, casualty, auto, homeowners, commercial)
+- Avoid: Health insurance, life insurance, political content, international news, jargon overload
 
-Return as JSON:
-{{
-  "overall_score": 1-10,
-  "passes": true/false,
-  "issues": [
-    {{
-      "section": "Section name",
-      "issue": "Description of issue",
-      "suggestion": "How to fix"
-    }}
-  ],
-  "strengths": ["Strength 1", "Strength 2"],
-  "suggestions": ["General suggestion 1", "General suggestion 2"]
-}}
+CHECK FOR:
+1. Any health or life insurance mentions (FAIL if found)
+2. Any political content (FAIL if found)
+3. Tone consistency (professional but approachable)
+4. Clarity and readability
+5. Actionable content for agents
 
-Return ONLY the JSON."""
+OUTPUT FORMAT:
+PASS/FAIL: [PASS or FAIL]
+SCORE: [1-10]
+ISSUES: [List any issues found, or "None"]
+SUGGESTIONS: [Any improvement suggestions]"""
 
-        message = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1000,
-            messages=[{"role": "user", "content": prompt}]
+        check_result = claude_client.generate_content(
+            prompt=check_prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.2,
+            max_tokens=500
         )
 
-        result_text = message.content[0].text.strip()
+        result_text = check_result['content'].strip()
 
-        if result_text.startswith("```"):
-            result_text = re.sub(r"^```[a-zA-Z]*\n", "", result_text)
-            result_text = re.sub(r"\n```$", "", result_text).strip()
+        # Parse the result
+        passed = 'PASS' in result_text.upper() and 'FAIL' not in result_text.split('PASS')[0].upper()
 
-        result = json.loads(result_text)
+        print(f"[API] Brand check complete: {'PASS' if passed else 'FAIL'}")
 
-        safe_print(f"[API] Brand check complete - Score: {result.get('overall_score', 'N/A')}")
-        return jsonify({"success": True, "result": result})
+        return jsonify({
+            'success': True,
+            'passed': passed,
+            'details': result_text,
+            'generated_at': datetime.now().isoformat()
+        })
 
     except Exception as e:
-        safe_print(f"[API] Brand check error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"[API ERROR] Brand check failed: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================================================
 # ROUTES - EXPORT & SHARING
@@ -924,7 +947,7 @@ Return ONLY the JSON."""
 
 @app.route('/api/send-preview', methods=['POST'])
 def send_preview():
-    """Send newsletter preview to team members via email."""
+    """Send newsletter preview to team members via SMTP email"""
     try:
         data = request.json
         recipients = data.get('recipients', [])
@@ -959,11 +982,9 @@ def send_preview():
                 msg['From'] = smtp_user
                 msg['To'] = recipient
 
-                # Attach HTML content
                 html_part = MIMEText(html_content, 'html')
                 msg.attach(html_part)
 
-                # Connect and send
                 with smtplib.SMTP(smtp_server, smtp_port) as server:
                     server.starttls()
                     server.login(smtp_user, smtp_password)
@@ -1005,7 +1026,7 @@ def send_preview():
 
 @app.route('/api/export-to-docs', methods=['POST'])
 def export_to_docs():
-    """Export newsletter content to Google Docs."""
+    """Export newsletter content to Google Docs"""
     try:
         data = request.json
         content = data.get('content', {})
@@ -1013,86 +1034,69 @@ def export_to_docs():
 
         safe_print(f"[API] Exporting to Google Docs: {title}")
 
-        # Check for Google Docs credentials
         creds_json = os.environ.get('GOOGLE_DOCS_CREDENTIALS')
 
         if not creds_json:
             return jsonify({
                 "success": False,
-                "error": "Google Docs credentials not configured",
-                "setup_instructions": "Add GOOGLE_DOCS_CREDENTIALS environment variable with service account JSON"
+                "error": "Google Docs credentials not configured"
             }), 500
 
-        # Placeholder - actual Google Docs integration would go here
-        # This requires google-api-python-client and proper authentication
-
+        # TODO: Implement actual Google Docs export
+        # For now, return placeholder
         return jsonify({
             "success": True,
             "message": "Google Docs export ready",
-            "title": title,
-            "note": "Full integration requires Google Docs API setup"
+            "note": "Full implementation coming soon"
         })
 
     except Exception as e:
-        safe_print(f"[API] Google Docs export error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/download-html', methods=['POST'])
-def download_html():
-    """Generate downloadable HTML file content."""
-    try:
-        data = request.json
-        html_content = data.get('html', '')
-
-        if not html_content:
-            return jsonify({"success": False, "error": "HTML content required"}), 400
-
-        # Return the HTML content for client-side download
-        return jsonify({
-            "success": True,
-            "html": html_content,
-            "filename": f"briteco-brief-{datetime.now().strftime('%Y%m%d')}.html"
-        })
-
-    except Exception as e:
-        safe_print(f"[API] Download HTML error: {e}")
+        safe_print(f"[API] Export error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 # ============================================================================
-# ROUTES - ONTRAPORT INTEGRATION
+# ROUTES - ONTRAPORT
 # ============================================================================
 
 @app.route('/api/send-to-ontraport', methods=['POST'])
 def send_to_ontraport():
-    """Send newsletter to Ontraport for distribution."""
+    """Send newsletter to Ontraport for distribution"""
     try:
         data = request.json
         html_content = data.get('html', '')
-        subject = data.get('subject', '')
-        preheader = data.get('preheader', '')
+        subject = data.get('subject', 'BriteCo Brief')
 
-        if not html_content or not subject:
-            return jsonify({"success": False, "error": "HTML content and subject required"}), 400
+        if not html_content:
+            return jsonify({"success": False, "error": "HTML content required"}), 400
 
-        safe_print("[API] Preparing to send to Ontraport...")
+        if not ontraport_client:
+            return jsonify({"success": False, "error": "Ontraport client not available"}), 500
 
-        app_id = os.environ.get('ONTRAPORT_APP_ID')
-        api_key = os.environ.get('ONTRAPORT_API_KEY')
+        safe_print(f"[API] Sending to Ontraport...")
 
-        if not app_id or not api_key:
-            return jsonify({"success": False, "error": "Ontraport credentials not configured"}), 500
+        # Convert to plain text for Ontraport
+        plain_text = html_to_plain_text(html_content)
 
-        # Ontraport API integration would go here
-        # Objects: 10004 and 10007
-        # From: agent@brite.co
+        # Send to Ontraport objects
+        result = ontraport_client.create_email(
+            subject=subject,
+            html_content=html_content,
+            plain_text=plain_text,
+            from_email=ONTRAPORT_CONFIG['from_email'],
+            from_name=ONTRAPORT_CONFIG['from_name']
+        )
 
-        return jsonify({
-            "success": True,
-            "message": "Newsletter ready for Ontraport",
-            "objects": ONTRAPORT_OBJECTS,
-            "from_email": ONTRAPORT_FROM_EMAIL,
-            "subject": subject
-        })
+        if result.get('success'):
+            return jsonify({
+                "success": True,
+                "message": "Newsletter sent to Ontraport",
+                "email_id": result.get('email_id')
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', 'Ontraport send failed')
+            }), 500
 
     except Exception as e:
         safe_print(f"[API] Ontraport error: {e}")
@@ -1104,5 +1108,6 @@ def send_to_ontraport():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
-    safe_print(f"Starting BriteCo Brief server on port {port}")
+    print(f"\n=== BriteCo Brief API Server ===")
+    print(f"Starting on port {port}")
     app.run(host='0.0.0.0', port=port, debug=True)

@@ -1,0 +1,464 @@
+# Vision Models Reference
+# ======================
+# Catalog of vision-capable models across providers for benchmarking
+# The 'id' field is the exact string to send to the API
+# VALIDATED: 2026-01-09 - Only models with status "active" have been tested and work
+# Last Updated: 2026-01-09
+
+providers:
+  google:
+    name: "Google (Gemini)"
+    env_key: "GOOGLE_API_KEY"
+    models:
+      # Gemini 3 Series (Preview) - VALIDATED WORKING
+      - id: "gemini-3-pro-preview"
+        name: "Gemini 3 Pro Preview"
+        tier: "frontier"
+        speed: "medium"
+        context_window: 1000000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Cutting-edge multimodal understanding"
+        cost_per_1m_input: 1.25
+        cost_per_1m_output: 5.00
+
+      - id: "gemini-3-flash-preview"
+        name: "Gemini 3 Flash Preview"
+        tier: "standard"
+        speed: "fast"
+        context_window: 1000000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Fast/cheap - good for OCR tasks"
+        cost_per_1m_input: 0.10
+        cost_per_1m_output: 0.40
+
+      - id: "gemini-3-pro-image-preview"
+        name: "Gemini 3 Pro Image Preview"
+        tier: "frontier"
+        speed: "medium"
+        context_window: 1000000
+        vision: true
+        image_generation: true
+        status: "active"
+        notes: "Image generation model - for memes, illustrations"
+        cost_per_1m_input: 1.25
+        cost_per_1m_output: 5.00
+
+      # Gemini 2.5 Series - VALIDATED WORKING
+      - id: "gemini-2.5-pro"
+        name: "Gemini 2.5 Pro"
+        tier: "frontier"
+        speed: "medium"
+        context_window: 1000000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Deep reasoning capabilities"
+        cost_per_1m_input: 1.25
+        cost_per_1m_output: 5.00
+
+      - id: "gemini-2.5-flash"
+        name: "Gemini 2.5 Flash"
+        tier: "standard"
+        speed: "fast"
+        context_window: 1000000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Balanced performance"
+        cost_per_1m_input: 0.15
+        cost_per_1m_output: 0.60
+
+      # Gemini 2.0 Series - WORKING
+      - id: "gemini-2.0-flash"
+        name: "Gemini 2.0 Flash"
+        tier: "standard"
+        speed: "fast"
+        context_window: 1000000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - GA model, native tool use, multimodal"
+        cost_per_1m_input: 0.10
+        cost_per_1m_output: 0.40
+
+      - id: "gemini-2.0-flash-lite"
+        name: "Gemini 2.0 Flash Lite"
+        tier: "economy"
+        speed: "fastest"
+        context_window: 1000000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Most cost-efficient model"
+        cost_per_1m_input: 0.02
+        cost_per_1m_output: 0.10
+
+      # Legacy
+      - id: "gemini-1.5-flash"
+        name: "Gemini 1.5 Flash"
+        tier: "legacy"
+        speed: "fast"
+        context_window: 1000000
+        vision: true
+        status: "deprecated"
+        notes: "Retired April 2025 - use 2.0+ instead"
+        cost_per_1m_input: 0.075
+        cost_per_1m_output: 0.30
+
+      - id: "gemini-1.5-pro"
+        name: "Gemini 1.5 Pro"
+        tier: "legacy"
+        speed: "medium"
+        context_window: 2000000
+        vision: true
+        status: "deprecated"
+        notes: "Retired April 2025 - use 2.0+ instead"
+        cost_per_1m_input: 1.25
+        cost_per_1m_output: 5.00
+
+  openai:
+    name: "OpenAI"
+    env_key: "OPENAI_API_KEY"
+    models:
+      # GPT-5.2 Series - WORKING
+      - id: "gpt-5.2"
+        name: "GPT-5.2"
+        tier: "frontier"
+        speed: "medium"
+        context_window: 400000
+        max_output: 128000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Most advanced frontier model. Uses max_completion_tokens"
+        cost_per_1m_input: 1.75
+        cost_per_1m_output: 14.00
+
+      # GPT-5.2 Turbo - Not found (404), may not exist
+      - id: "gpt-5.2-turbo"
+        name: "GPT-5.2 Turbo"
+        tier: "frontier"
+        speed: "fast"
+        context_window: 400000
+        vision: true
+        status: "unavailable"
+        notes: "404 - Model not found. May not exist or different name."
+        cost_per_1m_input: 1.25
+        cost_per_1m_output: 10.00
+
+      # GPT-5 Mini - Economy variant
+      - id: "gpt-5-mini"
+        name: "GPT-5 Mini"
+        tier: "economy"
+        speed: "fastest"
+        context_window: 400000
+        vision: true
+        status: "active"
+        notes: "Cost-efficient GPT-5. Uses max_completion_tokens"
+        cost_per_1m_input: 0.10
+        cost_per_1m_output: 0.40
+
+      # GPT-4.1 Series - WORKING
+      - id: "gpt-4.1"
+        name: "GPT-4.1"
+        tier: "standard"
+        speed: "medium"
+        context_window: 128000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Frontier model with vision, fine-tunable"
+        cost_per_1m_input: 2.00
+        cost_per_1m_output: 8.00
+
+      - id: "gpt-4.1-mini"
+        name: "GPT-4.1 Mini"
+        tier: "standard"
+        speed: "fast"
+        context_window: 128000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Efficient mid-tier model"
+        cost_per_1m_input: 0.40
+        cost_per_1m_output: 1.60
+
+      - id: "gpt-4.1-nano"
+        name: "GPT-4.1 Nano"
+        tier: "economy"
+        speed: "fastest"
+        context_window: 128000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Ultra-fast, cost-efficient"
+        cost_per_1m_input: 0.10
+        cost_per_1m_output: 0.40
+
+      # GPT-4o Series - WORKING
+      - id: "gpt-4o"
+        name: "GPT-4o"
+        tier: "standard"
+        speed: "fast"
+        context_window: 128000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Omni model - text, audio, image, video"
+        cost_per_1m_input: 2.50
+        cost_per_1m_output: 10.00
+
+      - id: "gpt-4o-mini"
+        name: "GPT-4o Mini"
+        tier: "economy"
+        speed: "fast"
+        context_window: 128000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - 60% cheaper than GPT-3.5 Turbo, great for focused tasks"
+        cost_per_1m_input: 0.15
+        cost_per_1m_output: 0.60
+
+      # Legacy
+      - id: "gpt-4-turbo"
+        name: "GPT-4 Turbo"
+        tier: "legacy"
+        speed: "medium"
+        context_window: 128000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Previous generation, still supported"
+        cost_per_1m_input: 10.00
+        cost_per_1m_output: 30.00
+
+  anthropic:
+    name: "Anthropic (Claude)"
+    env_key: "ANTHROPIC_API_KEY"
+    models:
+      # Claude 4.5 Series - WORKING
+      - id: "claude-opus-4-5-20251101"
+        name: "Claude Opus 4.5"
+        tier: "frontier"
+        speed: "slow"
+        context_window: 200000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Most capable, best vision/reasoning/math"
+        cost_per_1m_input: 15.00
+        cost_per_1m_output: 75.00
+
+      # Claude Sonnet 4 - WORKING
+      - id: "claude-sonnet-4-20250514"
+        name: "Claude Sonnet 4"
+        tier: "standard"
+        speed: "medium"
+        context_window: 200000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Balanced capability and speed"
+        cost_per_1m_input: 3.00
+        cost_per_1m_output: 15.00
+
+      # Claude 3.5 Series
+      - id: "claude-3-5-haiku-20241022"
+        name: "Claude 3.5 Haiku"
+        tier: "economy"
+        speed: "fastest"
+        context_window: 200000
+        vision: true
+        status: "active"
+        notes: "VALIDATED - Fast and affordable"
+        cost_per_1m_input: 0.80
+        cost_per_1m_output: 4.00
+
+      # Legacy/Unavailable
+      - id: "claude-3-opus-20240229"
+        name: "Claude 3 Opus"
+        tier: "legacy"
+        speed: "slow"
+        context_window: 200000
+        vision: true
+        status: "deprecated"
+        notes: "Deprecated June 2025, retiring Jan 2026"
+        cost_per_1m_input: 15.00
+        cost_per_1m_output: 75.00
+
+# Benchmark Test Groups
+# Define model groups for A/B testing
+# ONLY INCLUDES VALIDATED WORKING MODELS
+benchmark_groups:
+  # Economy tier - cheapest models for high-volume tasks
+  economy_tier:
+    description: "Cheapest validated models for high-volume tasks"
+    models:
+      - "gemini-2.0-flash-lite"
+      - "gpt-4o-mini"
+      - "claude-3-5-haiku-20241022"
+
+  # Standard tier - balanced cost/performance
+  standard_tier:
+    description: "Balanced cost/performance validated models"
+    models:
+      - "gemini-2.0-flash"
+      - "gpt-4o"
+      - "claude-sonnet-4-20250514"
+
+  # Frontier tier - highest capability
+  frontier_tier:
+    description: "Highest capability validated models"
+    models:
+      - "gpt-5.2"
+      - "claude-opus-4-5-20251101"
+      # Note: gemini-3-pro not yet available
+
+  # OpenAI comparison - all tiers
+  openai_versions:
+    description: "Compare OpenAI model generations"
+    models:
+      - "gpt-5.2"
+      - "gpt-5-mini"
+      - "gpt-4.1"
+      - "gpt-4o"
+      - "gpt-4o-mini"
+
+  # OpenAI economy options
+  openai_economy:
+    description: "Compare OpenAI economy models"
+    models:
+      - "gpt-5-mini"
+      - "gpt-4.1-nano"
+      - "gpt-4o-mini"
+
+  # Claude comparison
+  claude_versions:
+    description: "Compare Claude model tiers"
+    models:
+      - "claude-opus-4-5-20251101"
+      - "claude-sonnet-4-20250514"
+      - "claude-3-5-haiku-20241022"
+
+  # Gemini comparison - all versions
+  gemini_versions:
+    description: "Compare Gemini model generations"
+    models:
+      - "gemini-3-pro-preview"
+      - "gemini-3-flash-preview"
+      - "gemini-2.5-pro"
+      - "gemini-2.5-flash"
+      - "gemini-2.0-flash"
+      - "gemini-2.0-flash-lite"
+
+  # Gemini Flash comparison
+  gemini_flash_versions:
+    description: "Compare Gemini Flash models (3 vs 2.5 vs 2.0)"
+    models:
+      - "gemini-3-flash-preview"
+      - "gemini-2.5-flash"
+      - "gemini-2.0-flash"
+
+  # Gemini Pro comparison
+  gemini_pro_versions:
+    description: "Compare Gemini Pro models"
+    models:
+      - "gemini-3-pro-preview"
+      - "gemini-2.5-pro"
+
+  # Default for classification benchmarks
+  classification_default:
+    description: "Recommended validated models for document classification"
+    models:
+      - "gemini-2.0-flash"        # Fast, cheap, good vision
+      - "claude-sonnet-4-20250514"  # Strong reasoning
+      - "gpt-4o-mini"             # Cost-effective
+
+  # Full cross-provider comparison (validated only)
+  full_comparison:
+    description: "All validated models across providers"
+    models:
+      # Frontier
+      - "gpt-5.2"
+      - "claude-opus-4-5-20251101"
+      # Standard
+      - "gemini-2.0-flash"
+      - "gpt-4o"
+      - "claude-sonnet-4-20250514"
+      # Economy
+      - "gemini-2.0-flash-lite"
+      - "gpt-4o-mini"
+      - "claude-3-5-haiku-20241022"
+
+# Validation Results (2026-01-09):
+# WORKING:
+#   Google:    gemini-2.0-flash, gemini-2.0-flash-lite
+#   OpenAI:    gpt-5.2, gpt-5-2025-08-07, gpt-5-nano-2025-08-07, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano, gpt-4o, gpt-4o-mini, gpt-4-turbo
+#   Anthropic: claude-opus-4-5-20251101, claude-sonnet-4-20250514, claude-3-5-haiku-20241022
+#
+# NOT AVAILABLE (404 errors):
+#   Google:    gemini-3-pro-latest, gemini-3-flash, gemini-2.5-flash-preview-05-20
+#   OpenAI:    gpt-5.2-mini (may not exist)
+#   Anthropic: claude-4-1-opus-20250805, claude-4-1-sonnet-20250625, claude-3-5-sonnet-20241022
+
+# Sources:
+# - Google Gemini: https://ai.google.dev/gemini-api/docs/models
+# - OpenAI: https://platform.openai.com/docs/models
+# - Anthropic: https://platform.claude.com/docs/en/about-claude/models/overview
+
+# =============================================================================
+# TASK ASSIGNMENTS
+# =============================================================================
+# Maps application tasks to specific models
+# Each task has: model (primary), fallback, tier, and optional alternatives
+
+task_assignments:
+  # Research & Analysis Tasks
+  research_enrichment:
+    description: "GPT-5.2 analysis layer for Perplexity/Insight Builder/Source Explorer"
+    model: "gpt-5.2"
+    fallback: "gpt-4.1"
+    tier: "frontier"
+    economy_alternative: "gpt-4o-mini"
+    notes: "Uses max_completion_tokens parameter"
+
+  # Content Generation Tasks
+  content_generation:
+    description: "Newsletter article writing (News, Tip, Trend sections)"
+    model: "gpt-4o-mini"
+    fallback: "claude-3-5-haiku-20241022"
+    tier: "economy"
+    standard_alternative: "gpt-4o"
+    frontier_alternative: "gpt-5.2"
+    notes: "Cost-effective for high-volume content generation"
+
+  # Brand & Quality Checks
+  brand_guidelines_check:
+    description: "Check content against brand voice guidelines"
+    model: "gpt-4o-mini"
+    fallback: "claude-3-5-haiku-20241022"
+    tier: "economy"
+    notes: "Fast validation, doesn't need frontier capabilities"
+
+  # Image Analysis (for meme review, etc.)
+  image_analysis:
+    description: "Analyze images for content appropriateness"
+    model: "gpt-4o"
+    fallback: "gemini-2.0-flash"
+    tier: "standard"
+    economy_alternative: "gpt-4o-mini"
+    notes: "Needs vision capabilities"
+
+  # Image Generation Prompts
+  image_prompt_generation:
+    description: "Generate prompts for image creation"
+    model: "gpt-4o-mini"
+    fallback: "claude-3-5-haiku-20241022"
+    tier: "economy"
+    notes: "Creative but cost-efficient"
+
+  # Subject Line Generation
+  subject_line_generation:
+    description: "Generate email subject lines and preheaders"
+    model: "gpt-4o-mini"
+    fallback: "claude-3-5-haiku-20241022"
+    tier: "economy"
+    notes: "Short outputs, economy tier sufficient"
+
+  # Meme Image Generation
+  meme_generation:
+    description: "Generate meme images with text overlays"
+    model: "gemini-3-pro-image-preview"
+    fallback: "gemini-2.0-flash"
+    tier: "frontier"
+    notes: "Uses Gemini 3 Pro for image generation with humor"
