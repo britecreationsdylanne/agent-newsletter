@@ -663,35 +663,119 @@
             </div>
 
             <div class="buttons">
-                <button class="btn" id="monthNextBtn" disabled onclick="showResearchDashboard()">Research Topics →</button>
+                <button class="btn" id="monthNextBtn" disabled onclick="showStep('2-britespot')">Continue to Brite Spot →</button>
             </div>
         </div>
 
-        <!-- Step 2: Research Dashboard (3-Card Layout) -->
+        <!-- Step 2: The Brite Spot (Manual Input + AI Rewrite) -->
+        <div class="step" id="step2-britespot">
+            <h2>✨ The Brite Spot</h2>
+            <p>Share BriteCo company news, new features, or updates. Enter your content and optionally use AI to polish it.</p>
+
+            <div style="max-width: 700px; margin: 0 auto;">
+                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #272d3f;">
+                        Brite Spot Content <span style="color: #666; font-weight: 400;">(max 100 words)</span>
+                    </label>
+                    <textarea id="briteSpotInput" rows="5" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="Enter your BriteCo news, feature announcement, or company update here..."></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <span id="briteSpotWordCount" style="font-size: 13px; color: #666;">0 / 100 words</span>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="briteSpotTone" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                                <option value="exciting">Exciting</option>
+                                <option value="informative" selected>Informative</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                            <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpot()">🤖 AI Rewrite</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="briteSpotRewriteResult" style="display: none; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 600; color: #15803d;">✓ AI Rewritten Version</span>
+                        <button class="btn" style="padding: 6px 12px; font-size: 13px;" onclick="useBriteSpotRewrite()">Use This Version</button>
+                    </div>
+                    <div id="briteSpotRewriteText" style="color: #166534; line-height: 1.6;"></div>
+                </div>
+
+                <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                    <div style="font-weight: 600; color: #1e40af; margin-bottom: 5px;">💡 Tips for Brite Spot</div>
+                    <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px;">
+                        <li>Announce new BriteCo features or tools</li>
+                        <li>Share company milestones or achievements</li>
+                        <li>Highlight agent success stories</li>
+                        <li>Keep it concise and action-oriented</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="buttons" style="justify-content: center;">
+                <button class="btn-secondary btn" onclick="showStep(1)">← Back</button>
+                <button class="btn" onclick="showStep('2-spotlight')">Continue to InsurNews Spotlight →</button>
+            </div>
+        </div>
+
+        <!-- Step 2B: InsurNews Spotlight (Multi-Source Selection) -->
+        <div class="step" id="step2-spotlight">
+            <h2>⭐ InsurNews Spotlight</h2>
+            <p>Search for articles on a major insurance topic. Select 3-5 sources to create a comprehensive feature story.</p>
+
+            <div style="max-width: 900px; margin: 0 auto;">
+                <!-- Search Controls -->
+                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="spotlightSearchQuery" placeholder="e.g., California wildfire insurance crisis, auto insurance rate increases..." value="major P&C insurance news 2026" style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                        <select id="spotlightTimeWindow" style="padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <option value="7d">Last 7 days</option>
+                            <option value="30d" selected>Last 30 days</option>
+                            <option value="90d">Last 90 days</option>
+                        </select>
+                        <button class="btn" onclick="searchSpotlightArticles()">🔍 Search</button>
+                    </div>
+                    <p style="font-size: 13px; color: #666; margin: 0;">Select 3-5 articles below. AI will analyze them and generate a unified feature story with H3 sections.</p>
+                </div>
+
+                <!-- Selected Articles Counter -->
+                <div id="spotlightSelectionCounter" style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 12px 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; color: #92400e;">📑 Selected: <span id="spotlightSelectedCount">0</span> / 5 articles</span>
+                    <button class="btn" id="generateSpotlightBtn" disabled onclick="generateSpotlightContent()" style="padding: 8px 16px;">Generate Spotlight Story →</button>
+                </div>
+
+                <!-- Search Results -->
+                <div id="spotlightSearchResults" style="display: grid; gap: 12px; max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                    <p style="text-align: center; color: #999; padding: 40px;">Search for articles to get started</p>
+                </div>
+            </div>
+
+            <div class="buttons" style="justify-content: center; margin-top: 20px;">
+                <button class="btn-secondary btn" onclick="showStep('2-britespot')">← Back to Brite Spot</button>
+                <button class="btn" id="spotlightNextBtn" disabled onclick="showStep('2-research')">Continue to Research Dashboard →</button>
+            </div>
+        </div>
+
+        <!-- Step 2C: Research Dashboard (Curious Claims, News Roundup, Agent Advantage) -->
         <div class="step" id="step2-research">
             <h2>🔍 Research Dashboard</h2>
+            <p>Search and select articles for the remaining newsletter sections.</p>
 
             <!-- Section Tabs -->
             <div class="research-tabs">
                 <button class="research-tab active" data-section="claims" onclick="switchResearchTab('claims')">
-                    🔍 CURIOUS CLAIMS
+                    🔍 Curious Claims
                     <span class="tab-check" id="claimsTabCheck" style="display:none">✓</span>
                 </button>
                 <button class="research-tab" data-section="roundup" onclick="switchResearchTab('roundup')">
-                    📰 NEWS ROUNDUP
+                    📰 News Roundup
                     <span class="tab-check" id="roundupTabCheck" style="display:none">✓</span>
                 </button>
-                <button class="research-tab" data-section="spotlight" onclick="switchResearchTab('spotlight')">
-                    ⭐ INSURNEWS
-                    <span class="tab-check" id="spotlightTabCheck" style="display:none">✓</span>
-                </button>
                 <button class="research-tab" data-section="tips" onclick="switchResearchTab('tips')">
-                    💡 AGENT TIPS
+                    💡 Agent Advantage
                     <span class="tab-check" id="tipsTabCheck" style="display:none">✓</span>
                 </button>
             </div>
 
-            <p id="researchSectionLabel">Researching for: <strong>CURIOUS CLAIMS</strong> section. Search and select one article below.</p>
+            <p id="researchSectionLabel">Researching for: <strong>Curious Claims</strong> section. Search and select one article below.</p>
 
             <div class="research-dashboard">
                 <!-- Card 1: Perplexity Research -->
@@ -763,27 +847,22 @@
                 <div class="selection-progress-items">
                     <div class="selection-progress-item" id="progressClaims" onclick="switchResearchTab('claims')">
                         <span class="progress-icon">🔍</span>
-                        <span class="progress-label">CLAIMS</span>
+                        <span class="progress-label">Curious Claims</span>
                         <span class="progress-check" id="checkClaims"></span>
                     </div>
                     <div class="selection-progress-item" id="progressRoundup" onclick="switchResearchTab('roundup')">
                         <span class="progress-icon">📰</span>
-                        <span class="progress-label">ROUNDUP</span>
+                        <span class="progress-label">News Roundup</span>
                         <span class="progress-check" id="checkRoundup"></span>
-                    </div>
-                    <div class="selection-progress-item" id="progressSpotlight" onclick="switchResearchTab('spotlight')">
-                        <span class="progress-icon">⭐</span>
-                        <span class="progress-label">SPOTLIGHT</span>
-                        <span class="progress-check" id="checkSpotlight"></span>
                     </div>
                     <div class="selection-progress-item" id="progressTips" onclick="switchResearchTab('tips')">
                         <span class="progress-icon">💡</span>
-                        <span class="progress-label">TIPS</span>
+                        <span class="progress-label">Agent Advantage</span>
                         <span class="progress-check" id="checkTips"></span>
                     </div>
                 </div>
                 <div class="selection-progress-actions">
-                    <button class="btn-secondary btn" onclick="showStep(1)">← Back</button>
+                    <button class="btn-secondary btn" onclick="showStep('2-spotlight')">← Back</button>
                     <button class="btn" id="researchNextBtn" disabled onclick="generateContent()">Generate Newsletter →</button>
                 </div>
             </div>
@@ -1362,14 +1441,23 @@
         // State
         let selectedMonth = '';
         let selectedSeason = '';
+
+        // Brite Spot state
+        let briteSpotContent = '';
+        let briteSpotRewritten = '';
+
+        // InsurNews Spotlight state (multi-source)
+        let spotlightSelectedArticles = [];  // Array of 3-5 selected articles
+        let spotlightSearchResults = [];
+        let spotlightGeneratedContent = null;  // { subheader, h3s, body, sources }
+
+        // Research Dashboard state
         let selectedClaims = null;
-        let selectedRoundup = [];  // Array of 5 articles for roundup bullets
+        let selectedRoundup = [];  // Array of up to 5 articles for roundup bullets
         let currentResearchSection = 'claims'; // Track which section we're researching for
-        let selectedSpotlight = null;
-        let selectedTips = [];  // Array of 5 articles for agent tips
+        let selectedTips = [];  // Array of up to 5 articles for agent tips
         let claimsTopics = [];
         let roundupTopics = [];
-        let spotlightTopics = [];
         let tipsTopics = [];
 
         // Track shown articles to avoid duplicates on refresh
@@ -1378,7 +1466,7 @@
         let shownSpotlightArticles = [];
         let shownTipsArticles = [];
 
-        // NEW: 3-Card Research Dashboard State
+        // 3-Card Research Dashboard State
         let researchResults = {
             insight: [],
             explorer: [],
@@ -1393,10 +1481,6 @@
                 htmlCache: { insight: '', explorer: '', perplexity: '' }
             },
             roundup: {
-                results: { insight: [], explorer: [], perplexity: [] },
-                htmlCache: { insight: '', explorer: '', perplexity: '' }
-            },
-            spotlight: {
                 results: { insight: [], explorer: [], perplexity: [] },
                 htmlCache: { insight: '', explorer: '', perplexity: '' }
             },
@@ -1498,6 +1582,204 @@
             element.classList.add('selected');
             document.getElementById('monthNextBtn').disabled = false;
         }
+
+        // ============================================================================
+        // BRITE SPOT FUNCTIONS
+        // ============================================================================
+
+        // Update word count for Brite Spot
+        document.addEventListener('DOMContentLoaded', function() {
+            const briteSpotInput = document.getElementById('briteSpotInput');
+            if (briteSpotInput) {
+                briteSpotInput.addEventListener('input', updateBriteSpotWordCount);
+            }
+        });
+
+        function updateBriteSpotWordCount() {
+            const input = document.getElementById('briteSpotInput');
+            const counter = document.getElementById('briteSpotWordCount');
+            if (input && counter) {
+                const words = input.value.trim().split(/\s+/).filter(w => w.length > 0);
+                const count = words.length;
+                counter.textContent = `${count} / 100 words`;
+                counter.style.color = count > 100 ? '#dc2626' : '#666';
+                briteSpotContent = input.value;
+            }
+        }
+
+        async function rewriteBriteSpot() {
+            const input = document.getElementById('briteSpotInput').value.trim();
+            const tone = document.getElementById('briteSpotTone').value;
+            const resultDiv = document.getElementById('briteSpotRewriteResult');
+            const resultText = document.getElementById('briteSpotRewriteText');
+
+            if (!input) {
+                alert('Please enter some content first');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultText.innerHTML = '<div class="spinner" style="margin: 10px auto;"></div> Rewriting with AI...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/rewrite-britespot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: input, tone: tone })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    briteSpotRewritten = data.rewritten;
+                    resultText.textContent = data.rewritten;
+                } else {
+                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${data.error}</span>`;
+                }
+            } catch (error) {
+                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+            }
+        }
+
+        function useBriteSpotRewrite() {
+            if (briteSpotRewritten) {
+                document.getElementById('briteSpotInput').value = briteSpotRewritten;
+                briteSpotContent = briteSpotRewritten;
+                updateBriteSpotWordCount();
+                document.getElementById('briteSpotRewriteResult').style.display = 'none';
+            }
+        }
+
+        // ============================================================================
+        // INSURNEWS SPOTLIGHT FUNCTIONS (Multi-Source)
+        // ============================================================================
+
+        async function searchSpotlightArticles() {
+            const query = document.getElementById('spotlightSearchQuery').value;
+            const timeWindow = document.getElementById('spotlightTimeWindow').value;
+            const resultsDiv = document.getElementById('spotlightSearchResults');
+
+            resultsDiv.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner" style="margin: 0 auto 10px;"></div><p>Searching for articles...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v2/search-perplexity`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, time_window: timeWindow, exclude_urls: shownSpotlightArticles })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.results.length > 0) {
+                    spotlightSearchResults = data.results;
+                    displaySpotlightSearchResults(data.results);
+                } else {
+                    resultsDiv.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No articles found. Try a different search term.</p>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="text-align: center; color: #dc2626; padding: 40px;">Error: ${error.message}</p>`;
+            }
+        }
+
+        function displaySpotlightSearchResults(results) {
+            const container = document.getElementById('spotlightSearchResults');
+            container.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const isSelected = spotlightSelectedArticles.some(a => a.url === result.url);
+                const card = document.createElement('div');
+                card.className = 'spotlight-article-card';
+                card.style.cssText = `
+                    background: white;
+                    border: 2px solid ${isSelected ? '#22c55e' : '#e5e7eb'};
+                    border-radius: 10px;
+                    padding: 15px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    ${isSelected ? 'background: #f0fdf4;' : ''}
+                `;
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #272d3f; margin-bottom: 5px;">${result.title || result.headline}</div>
+                            <div style="font-size: 13px; color: #666; margin-bottom: 8px;">${result.snippet || result.industry_data || ''}</div>
+                            <div style="font-size: 12px; color: #018181;">${result.publisher || 'Unknown source'}</div>
+                        </div>
+                        <div style="width: 24px; height: 24px; border: 2px solid ${isSelected ? '#22c55e' : '#ccc'}; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ${isSelected ? '#22c55e' : 'white'};">
+                            ${isSelected ? '<span style="color: white; font-weight: bold;">✓</span>' : ''}
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => toggleSpotlightArticle(result, card);
+                container.appendChild(card);
+            });
+        }
+
+        function toggleSpotlightArticle(article, element) {
+            const existingIndex = spotlightSelectedArticles.findIndex(a => a.url === article.url);
+
+            if (existingIndex >= 0) {
+                // Deselect
+                spotlightSelectedArticles.splice(existingIndex, 1);
+            } else if (spotlightSelectedArticles.length < 5) {
+                // Select (max 5)
+                spotlightSelectedArticles.push(article);
+                shownSpotlightArticles.push(article.url);
+            } else {
+                alert('Maximum 5 articles. Deselect one to add another.');
+                return;
+            }
+
+            // Update UI
+            displaySpotlightSearchResults(spotlightSearchResults);
+            updateSpotlightCounter();
+        }
+
+        function updateSpotlightCounter() {
+            const count = spotlightSelectedArticles.length;
+            document.getElementById('spotlightSelectedCount').textContent = count;
+            document.getElementById('generateSpotlightBtn').disabled = count < 3;
+            document.getElementById('spotlightNextBtn').disabled = !spotlightGeneratedContent;
+        }
+
+        async function generateSpotlightContent() {
+            const btn = document.getElementById('generateSpotlightBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 8px;"></span> Generating...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/generate-spotlight`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        articles: spotlightSelectedArticles,
+                        month: selectedMonth
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    spotlightGeneratedContent = data.content;
+                    document.getElementById('spotlightNextBtn').disabled = false;
+                    btn.innerHTML = '✓ Spotlight Generated';
+                    btn.style.background = '#22c55e';
+
+                    // Show preview
+                    alert(`Spotlight story generated!\n\nSub-header: ${data.content.subheader}\n\nH3 sections: ${data.content.h3s.length}\n\nClick "Continue" to proceed.`);
+                } else {
+                    throw new Error(data.error || 'Failed to generate spotlight');
+                }
+            } catch (error) {
+                btn.innerHTML = 'Generate Spotlight Story →';
+                btn.disabled = false;
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        // ============================================================================
+        // LEGACY SEARCH FUNCTIONS (kept for compatibility)
+        // ============================================================================
 
         async function searchTopics() {
             showStep(2);
@@ -4582,12 +4864,6 @@
                 explorer: 'insurance industry news roundup',
                 explorerPlaceholder: 'e.g., market news, regulatory updates...'
             },
-            spotlight: {
-                perplexity: 'major insurance news breaking P&C 2026',
-                perplexityPlaceholder: 'e.g., major industry news, breaking stories...',
-                explorer: 'insurance industry spotlight news',
-                explorerPlaceholder: 'e.g., big news, industry impact...'
-            },
             tips: {
                 perplexity: 'insurance agent sales tips strategies 2026',
                 perplexityPlaceholder: 'e.g., agent tips, sales strategies, client retention...',
@@ -4609,7 +4885,7 @@
             });
 
             // Update section label
-            const labels = { claims: 'CURIOUS CLAIMS', roundup: 'NEWS ROUNDUP', spotlight: 'INSURNEWS SPOTLIGHT', tips: 'AGENT ADVANTAGE' };
+            const labels = { claims: 'Curious Claims', roundup: 'News Roundup', tips: 'Agent Advantage' };
             document.getElementById('researchSectionLabel').innerHTML =
                 `Researching for: <strong>${labels[section]}</strong> section. Search and select one article below.`;
 
@@ -4693,14 +4969,12 @@
         function updateSelectionProgress() {
             const hasClaims = selectedClaims !== null;
             const hasRoundup = selectedRoundup.length > 0;
-            const hasSpotlight = selectedSpotlight !== null;
             const hasTips = selectedTips.length > 0;
-            const allSelected = hasClaims && hasRoundup && hasSpotlight && hasTips;
+            const allSelected = hasClaims && hasRoundup && hasTips;
 
             // Update progress tracker items
             const claimsItem = document.getElementById('progressClaims');
             const roundupItem = document.getElementById('progressRoundup');
-            const spotlightItem = document.getElementById('progressSpotlight');
             const tipsItem = document.getElementById('progressTips');
 
             // Update completed states
@@ -4714,11 +4988,6 @@
                 roundupItem.classList.toggle('active', currentResearchSection === 'roundup');
                 document.getElementById('checkRoundup').textContent = hasRoundup ? '✓' : '';
             }
-            if (spotlightItem) {
-                spotlightItem.classList.toggle('completed', hasSpotlight);
-                spotlightItem.classList.toggle('active', currentResearchSection === 'spotlight');
-                document.getElementById('checkSpotlight').textContent = hasSpotlight ? '✓' : '';
-            }
             if (tipsItem) {
                 tipsItem.classList.toggle('completed', hasTips);
                 tipsItem.classList.toggle('active', currentResearchSection === 'tips');
@@ -4728,10 +4997,9 @@
             // Update tab checkmarks
             document.getElementById('claimsTabCheck').style.display = hasClaims ? 'inline' : 'none';
             document.getElementById('roundupTabCheck').style.display = hasRoundup ? 'inline' : 'none';
-            document.getElementById('spotlightTabCheck').style.display = hasSpotlight ? 'inline' : 'none';
             document.getElementById('tipsTabCheck').style.display = hasTips ? 'inline' : 'none';
 
-            // Update Next button - always shows "Generate Newsletter" but disabled until all 4 selected
+            // Update Next button - always shows "Generate Newsletter" but disabled until all 3 selected
             const nextBtn = document.getElementById('researchNextBtn');
             if (nextBtn) {
                 nextBtn.disabled = !allSelected;

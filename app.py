@@ -287,6 +287,177 @@ def v2_search_sources():
 
 
 # ============================================================================
+# ROUTES - BRITE SPOT
+# ============================================================================
+
+@app.route('/api/rewrite-britespot', methods=['POST'])
+def rewrite_britespot():
+    """Rewrite Brite Spot content using Claude in brand voice"""
+    try:
+        data = request.json
+        content = data.get('content', '')
+        tone = data.get('tone', 'informative')
+
+        if not content:
+            return jsonify({'success': False, 'error': 'Content required'}), 400
+
+        print(f"\n[API] Rewriting Brite Spot content ({tone} tone)...")
+
+        if not claude_client:
+            return jsonify({'success': False, 'error': 'Claude client not available'}), 500
+
+        tone_instructions = {
+            'exciting': 'Make it energetic and exciting with action words',
+            'informative': 'Keep it clear, factual, and professional',
+            'professional': 'Use formal business language and tone'
+        }
+
+        prompt = f"""Rewrite this BriteCo company update for our agent newsletter "The Brite Spot" section.
+
+ORIGINAL CONTENT:
+{content}
+
+REQUIREMENTS:
+- Maximum 100 words
+- {tone_instructions.get(tone, 'Professional but approachable')}
+- Focus on value to independent insurance agents
+- Include a subtle call to action
+- BriteCo brand voice: professional, knowledgeable, supportive
+
+Output ONLY the rewritten content, no labels or explanations."""
+
+        result = claude_client.generate_content(
+            prompt=prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.4,
+            max_tokens=200
+        )
+
+        return jsonify({
+            'success': True,
+            'rewritten': result['content'].strip(),
+            'original': content,
+            'tone': tone
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] Brite Spot rewrite: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# ROUTES - INSURNEWS SPOTLIGHT (Multi-Source)
+# ============================================================================
+
+@app.route('/api/generate-spotlight', methods=['POST'])
+def generate_spotlight():
+    """Generate InsurNews Spotlight from multiple source articles"""
+    try:
+        data = request.json
+        articles = data.get('articles', [])
+        month = data.get('month', 'january')
+
+        if len(articles) < 3:
+            return jsonify({'success': False, 'error': 'At least 3 articles required'}), 400
+
+        print(f"\n[API] Generating InsurNews Spotlight from {len(articles)} articles...")
+
+        if not claude_client:
+            return jsonify({'success': False, 'error': 'Claude client not available'}), 500
+
+        # Build article summaries for the prompt
+        article_summaries = ""
+        sources = []
+        for i, article in enumerate(articles, 1):
+            article_summaries += f"""
+ARTICLE {i}:
+Title: {article.get('title', article.get('headline', 'Unknown'))}
+Source: {article.get('publisher', 'Unknown')}
+URL: {article.get('url', '')}
+Summary: {article.get('snippet', article.get('industry_data', ''))}
+"""
+            sources.append({
+                'title': article.get('title', article.get('headline', '')),
+                'url': article.get('url', ''),
+                'publisher': article.get('publisher', '')
+            })
+
+        prompt = f"""You are writing the "InsurNews Spotlight" section for BriteCo Brief, a newsletter for independent insurance agents.
+
+Analyze these {len(articles)} related articles and create a comprehensive feature story that synthesizes the information:
+
+{article_summaries}
+
+CREATE A SPOTLIGHT STORY WITH:
+
+1. SUB-HEADER (max 15 words): A compelling headline that captures the unified theme
+
+2. H3 SECTIONS: Create 2-4 H3 headers that break down different aspects of the story
+   - Each H3 should have 1-2 paragraphs (1-4 sentences each)
+   - Reference specific data points from the sources
+   - Include hyperlink placeholders like [Source Name](URL)
+
+3. AGENT TAKEAWAY: End with actionable insights for independent insurance agents
+
+OUTPUT FORMAT (JSON):
+{{
+    "subheader": "Your compelling sub-header here",
+    "h3s": [
+        {{"title": "H3 Title 1", "body": "Paragraph content with [source links]..."}},
+        {{"title": "H3 Title 2", "body": "Paragraph content..."}},
+        {{"title": "H3 Title 3", "body": "Paragraph content..."}}
+    ],
+    "agent_takeaway": "Actionable insights for agents..."
+}}
+
+Target: 250-300 words total. Be factual and cite sources."""
+
+        result = claude_client.generate_content(
+            prompt=prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.3,
+            max_tokens=1000
+        )
+
+        # Parse the JSON response
+        import json
+        content_text = result['content'].strip()
+
+        # Remove markdown code blocks if present
+        if content_text.startswith('```'):
+            content_text = content_text.split('```')[1]
+            if content_text.startswith('json'):
+                content_text = content_text[4:]
+            content_text = content_text.strip()
+
+        try:
+            spotlight_content = json.loads(content_text)
+        except json.JSONDecodeError:
+            # Fallback: return raw text
+            spotlight_content = {
+                'subheader': 'Insurance Industry Update',
+                'h3s': [{'title': 'Overview', 'body': content_text}],
+                'agent_takeaway': 'Review these developments and consider their impact on your clients.'
+            }
+
+        spotlight_content['sources'] = sources
+
+        print(f"[API] Spotlight generated: {spotlight_content.get('subheader', 'No title')}")
+
+        return jsonify({
+            'success': True,
+            'content': spotlight_content,
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] Spotlight generation: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
 # ROUTES - ARTICLE SEARCH (Legacy)
 # ============================================================================
 
