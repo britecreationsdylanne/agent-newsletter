@@ -719,32 +719,77 @@
         <!-- Step 2B: InsurNews Spotlight (Multi-Source Selection) -->
         <div class="step" id="step2-spotlight">
             <h2>⭐ InsurNews Spotlight</h2>
-            <p>Search for articles on a major insurance topic. Select 3-5 sources to create a comprehensive feature story.</p>
+            <p>Search across multiple sources and select 3-5 articles. AI will create a comprehensive feature story.</p>
 
-            <div style="max-width: 900px; margin: 0 auto;">
-                <!-- Search Controls -->
-                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <input type="text" id="spotlightSearchQuery" placeholder="e.g., California wildfire insurance crisis, auto insurance rate increases..." value="major P&C insurance news 2026" style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
-                        <select id="spotlightTimeWindow" style="padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;">
+            <!-- Selected Articles Counter -->
+            <div id="spotlightSelectionCounter" style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 12px 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: #92400e;">📑 Selected: <span id="spotlightSelectedCount">0</span> / 5 articles (min 3)</span>
+                <button class="btn" id="generateSpotlightBtn" disabled onclick="generateSpotlightContent()" style="padding: 8px 16px;">Generate Spotlight Story →</button>
+            </div>
+
+            <!-- 3-Card Search Dashboard (same order as venue-voice) -->
+            <div class="research-dashboard">
+                <!-- Card 1: Perplexity Research -->
+                <div class="research-card" id="spotlightPerplexityCard">
+                    <div class="research-card-header">
+                        <span class="research-card-title">🔮 Perplexity Research</span>
+                        <span class="research-card-badge">AI + Citations</span>
+                    </div>
+                    <p class="research-card-description">Searches the web via Perplexity AI, then GPT-5.2 transforms findings into newsletter-ready articles with agent-specific insights.</p>
+                    <div class="research-card-filters">
+                        <input type="text" id="spotlightPerplexityQuery" placeholder="e.g., insurance market trends..." value="P&C insurance industry trends 2026">
+                        <select id="spotlightPerplexityTimeWindow">
                             <option value="7d">Last 7 days</option>
                             <option value="30d" selected>Last 30 days</option>
                             <option value="90d">Last 90 days</option>
                         </select>
-                        <button class="btn" onclick="searchSpotlightArticles()">🔍 Search</button>
                     </div>
-                    <p style="font-size: 13px; color: #666; margin: 0;">Select 3-5 articles below. AI will analyze them and generate a unified feature story with H3 sections.</p>
+                    <button class="research-card-search-btn" onclick="searchSpotlightPerplexity()">Search with Perplexity</button>
+                    <div class="research-card-results" id="spotlightPerplexityResults">
+                        <p style="text-align: center; color: #999; padding: 20px;">Enter a topic and search</p>
+                    </div>
                 </div>
 
-                <!-- Selected Articles Counter -->
-                <div id="spotlightSelectionCounter" style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 12px 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 600; color: #92400e;">📑 Selected: <span id="spotlightSelectedCount">0</span> / 5 articles</span>
-                    <button class="btn" id="generateSpotlightBtn" disabled onclick="generateSpotlightContent()" style="padding: 8px 16px;">Generate Spotlight Story →</button>
+                <!-- Card 2: Insight Builder (Industry Signals) -->
+                <div class="research-card" id="spotlightSignalsCard">
+                    <div class="research-card-header">
+                        <span class="research-card-title">📊 Insight Builder</span>
+                        <span class="research-card-badge">All Signals</span>
+                    </div>
+                    <p class="research-card-description">Scans 8 market signals simultaneously via OpenAI web search, then GPT-5.2 analyzes impact on the insurance industry and generates actionable headlines.</p>
+                    <div class="research-card-filters">
+                        <span style="color: #666; font-size: 0.8em;">Auto, Home, Commercial, Claims, Regulations, Technology, Market Trends</span>
+                        <select id="spotlightSignalsTimeWindow">
+                            <option value="7d">Last 7 days</option>
+                            <option value="30d" selected>Last 30 days</option>
+                            <option value="90d">Last 90 days</option>
+                        </select>
+                    </div>
+                    <button class="research-card-search-btn" onclick="searchSpotlightSignals()">Search All 8 Signals</button>
+                    <div class="research-card-results" id="spotlightSignalsResults">
+                        <p style="text-align: center; color: #999; padding: 20px;">Click to analyze all 8 market signals</p>
+                    </div>
                 </div>
 
-                <!-- Search Results -->
-                <div id="spotlightSearchResults" style="display: grid; gap: 12px; max-height: 500px; overflow-y: auto; padding-right: 5px;">
-                    <p style="text-align: center; color: #999; padding: 40px;">Search for articles to get started</p>
+                <!-- Card 3: Source Explorer (Curated Sources) -->
+                <div class="research-card" id="spotlightCuratedCard">
+                    <div class="research-card-header">
+                        <span class="research-card-title">📰 Source Explorer</span>
+                        <span class="research-card-badge">Industry</span>
+                    </div>
+                    <p class="research-card-description">Searches curated insurance industry sources, then GPT-5.2 extracts story angles and agent implications.</p>
+                    <div class="research-card-filters">
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="insurance" checked class="spotlightSourcePack"> Insurance News</label>
+                            <label><input type="checkbox" value="claims" class="spotlightSourcePack"> Claims</label>
+                            <label><input type="checkbox" value="regulations" class="spotlightSourcePack"> Regulations</label>
+                        </div>
+                        <input type="text" id="spotlightCuratedQuery" placeholder="e.g., market news, industry updates..." value="P&C insurance industry news">
+                    </div>
+                    <button class="research-card-search-btn" onclick="searchSpotlightCurated()">Search Sources</button>
+                    <div class="research-card-results" id="spotlightCuratedResults">
+                        <p style="text-align: center; color: #999; padding: 20px;">Select source packs and search</p>
+                    </div>
                 </div>
             </div>
 
@@ -1651,71 +1696,199 @@
         }
 
         // ============================================================================
-        // INSURNEWS SPOTLIGHT FUNCTIONS (Multi-Source)
+        // INSURNEWS SPOTLIGHT FUNCTIONS (3-Card Multi-Source)
         // ============================================================================
 
-        async function searchSpotlightArticles() {
-            const query = document.getElementById('spotlightSearchQuery').value;
-            const timeWindow = document.getElementById('spotlightTimeWindow').value;
-            const resultsDiv = document.getElementById('spotlightSearchResults');
+        // Search Card 1: Perplexity Research
+        async function searchSpotlightPerplexity() {
+            const query = document.getElementById('spotlightPerplexityQuery').value;
+            const timeWindow = document.getElementById('spotlightPerplexityTimeWindow').value;
+            const resultsDiv = document.getElementById('spotlightPerplexityResults');
 
-            resultsDiv.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner" style="margin: 0 auto 10px;"></div><p>Searching for articles...</p></div>';
+            resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Searching with Perplexity AI & analyzing with GPT-5.2...</p></div>';
 
             try {
                 const response = await fetch(`${API_BASE}/api/v2/search-perplexity`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, time_window: timeWindow, exclude_urls: shownSpotlightArticles })
+                    body: JSON.stringify({
+                        query: query,
+                        time_window: timeWindow,
+                        exclude_urls: shownSpotlightArticles
+                    })
                 });
 
                 const data = await response.json();
 
                 if (data.success && data.results.length > 0) {
-                    spotlightSearchResults = data.results;
-                    displaySpotlightSearchResults(data.results);
+                    // Mark these as perplexity source
+                    data.results.forEach(r => r.source_card = 'perplexity');
+
+                    // Show queries header then results
+                    resultsDiv.innerHTML = '';
+                    if (data.queries_used && data.queries_used.length > 0) {
+                        const headerDiv = document.createElement('div');
+                        headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
+                        headerDiv.innerHTML = `<strong>Queries:</strong> ${data.queries_used.join(' | ')}`;
+                        resultsDiv.appendChild(headerDiv);
+                    }
+                    displaySpotlightResults(data.results, 'spotlightPerplexityResults', true);
                 } else {
-                    resultsDiv.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No articles found. Try a different search term.</p>';
+                    let html = '';
+                    if (data.queries_used && data.queries_used.length > 0) {
+                        html += `<div style="font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;">
+                            <strong>Queries tried:</strong><br>${data.queries_used.join('<br>')}
+                        </div>`;
+                    }
+                    html += `<p style="text-align: center; color: #999; padding: 20px;">No articles found. Try a different search term.</p>`;
+                    resultsDiv.innerHTML = html;
                 }
             } catch (error) {
-                resultsDiv.innerHTML = `<p style="text-align: center; color: #dc2626; padding: 40px;">Error: ${error.message}</p>`;
+                console.error('Perplexity search error:', error);
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
             }
         }
 
-        function displaySpotlightSearchResults(results) {
-            const container = document.getElementById('spotlightSearchResults');
-            container.innerHTML = '';
+        // Search Card 2: Insight Builder (Industry Signals)
+        async function searchSpotlightSignals() {
+            const timeWindow = document.getElementById('spotlightSignalsTimeWindow').value;
+            const resultsDiv = document.getElementById('spotlightSignalsResults');
+
+            resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Scanning all 8 market signals...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v2/search-insights`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        time_window: timeWindow,
+                        exclude_urls: shownSpotlightArticles
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.results.length > 0) {
+                    // Mark these as insights source
+                    data.results.forEach(r => r.source_card = 'insights');
+
+                    // Show signals searched then results
+                    resultsDiv.innerHTML = '';
+                    if (data.signals_searched && data.signals_searched.length > 0) {
+                        const headerDiv = document.createElement('div');
+                        headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
+                        headerDiv.innerHTML = `<strong>Signals scanned:</strong> ${data.signals_searched.join(', ')}`;
+                        resultsDiv.appendChild(headerDiv);
+                    }
+                    displaySpotlightResults(data.results, 'spotlightSignalsResults', true);
+                } else {
+                    resultsDiv.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No signals found. Try again later.</p>';
+                }
+            } catch (error) {
+                console.error('Insights search error:', error);
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Search Card 3: Source Explorer (Curated Sources)
+        async function searchSpotlightCurated() {
+            const query = document.getElementById('spotlightCuratedQuery').value;
+            const resultsDiv = document.getElementById('spotlightCuratedResults');
+
+            // Get selected source packs
+            const selectedPacks = [];
+            document.querySelectorAll('.spotlightSourcePack:checked').forEach(cb => {
+                selectedPacks.push(cb.value);
+            });
+
+            if (selectedPacks.length === 0) {
+                alert('Please select at least one source pack');
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Searching curated sources...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v2/search-sources`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        source_packs: selectedPacks,
+                        exclude_urls: shownSpotlightArticles
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.results.length > 0) {
+                    // Mark these as curated source
+                    data.results.forEach(r => r.source_card = 'curated');
+
+                    // Show queries header then results
+                    resultsDiv.innerHTML = '';
+                    if (data.queries_used && data.queries_used.length > 0) {
+                        const headerDiv = document.createElement('div');
+                        headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
+                        headerDiv.innerHTML = `<strong>Queries tried:</strong><br>${data.queries_used.join('<br>')}`;
+                        resultsDiv.appendChild(headerDiv);
+                    }
+                    displaySpotlightResults(data.results, 'spotlightCuratedResults', true);
+                } else {
+                    let html = '';
+                    if (data.queries_used && data.queries_used.length > 0) {
+                        html += `<div style="font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;">
+                            <strong>Queries tried:</strong><br>${data.queries_used.join('<br>')}
+                        </div>`;
+                    }
+                    html += `<p style="text-align: center; color: #999; padding: 20px;">No articles found. Try a different search term.</p>`;
+                    resultsDiv.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Sources search error:', error);
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Display results in a specific container (for 3-card layout)
+        function displaySpotlightResults(results, containerId, append = false) {
+            const container = document.getElementById(containerId);
+            if (!append) {
+                container.innerHTML = '';
+            }
 
             results.forEach((result, index) => {
                 const isSelected = spotlightSelectedArticles.some(a => a.url === result.url);
                 const card = document.createElement('div');
-                card.className = 'spotlight-article-card';
+                card.className = 'research-result-card';
                 card.style.cssText = `
-                    background: white;
+                    background: ${isSelected ? '#f0fdf4' : '#f9fafb'};
                     border: 2px solid ${isSelected ? '#22c55e' : '#e5e7eb'};
-                    border-radius: 10px;
-                    padding: 15px;
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-bottom: 8px;
                     cursor: pointer;
                     transition: all 0.2s;
-                    ${isSelected ? 'background: #f0fdf4;' : ''}
                 `;
+
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #272d3f; margin-bottom: 5px;">${result.title || result.headline}</div>
-                            <div style="font-size: 13px; color: #666; margin-bottom: 8px;">${result.snippet || result.industry_data || ''}</div>
-                            <div style="font-size: 12px; color: #018181;">${result.publisher || 'Unknown source'}</div>
+                            <div style="font-weight: 600; color: #272d3f; margin-bottom: 4px; font-size: 13px;">${result.title || result.headline}</div>
+                            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${(result.snippet || result.industry_data || '').substring(0, 100)}...</div>
+                            <div style="font-size: 11px; color: #018181;">${result.publisher || 'Unknown source'}</div>
                         </div>
-                        <div style="width: 24px; height: 24px; border: 2px solid ${isSelected ? '#22c55e' : '#ccc'}; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ${isSelected ? '#22c55e' : 'white'};">
-                            ${isSelected ? '<span style="color: white; font-weight: bold;">✓</span>' : ''}
+                        <div style="width: 20px; height: 20px; border: 2px solid ${isSelected ? '#22c55e' : '#ccc'}; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ${isSelected ? '#22c55e' : 'white'};">
+                            ${isSelected ? '<span style="color: white; font-size: 12px;">✓</span>' : ''}
                         </div>
                     </div>
                 `;
-                card.onclick = () => toggleSpotlightArticle(result, card);
+                card.onclick = () => toggleSpotlightArticle(result, containerId);
                 container.appendChild(card);
             });
         }
 
-        function toggleSpotlightArticle(article, element) {
+        function toggleSpotlightArticle(article, containerId) {
             const existingIndex = spotlightSelectedArticles.findIndex(a => a.url === article.url);
 
             if (existingIndex >= 0) {
@@ -1730,9 +1903,35 @@
                 return;
             }
 
-            // Update UI
-            displaySpotlightSearchResults(spotlightSearchResults);
+            // Refresh all 3 result containers to update checkmarks
+            refreshAllSpotlightResults();
             updateSpotlightCounter();
+        }
+
+        function refreshAllSpotlightResults() {
+            // Re-render each container that has results
+            ['spotlightCuratedResults', 'spotlightPerplexityResults', 'spotlightSignalsResults'].forEach(containerId => {
+                const container = document.getElementById(containerId);
+                // Only refresh if it has result cards (not the default placeholder)
+                if (container && container.querySelector('.research-result-card')) {
+                    const cards = container.querySelectorAll('.research-result-card');
+                    cards.forEach(card => {
+                        // Extract URL from the card's onclick data
+                        const title = card.querySelector('div[style*="font-weight: 600"]')?.textContent;
+                        const isSelected = spotlightSelectedArticles.some(a =>
+                            (a.title === title || a.headline === title)
+                        );
+                        card.style.background = isSelected ? '#f0fdf4' : '#f9fafb';
+                        card.style.border = `2px solid ${isSelected ? '#22c55e' : '#e5e7eb'}`;
+                        const checkbox = card.querySelector('div[style*="width: 20px"]');
+                        if (checkbox) {
+                            checkbox.style.borderColor = isSelected ? '#22c55e' : '#ccc';
+                            checkbox.style.background = isSelected ? '#22c55e' : 'white';
+                            checkbox.innerHTML = isSelected ? '<span style="color: white; font-size: 12px;">✓</span>' : '';
+                        }
+                    });
+                }
+            });
         }
 
         function updateSpotlightCounter() {

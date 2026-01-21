@@ -115,174 +115,614 @@ def get_team_members():
     })
 
 # ============================================================================
+# HELPER FUNCTIONS - V2 RESEARCH API (Matching venue-voice pattern)
+# ============================================================================
+
+def transform_to_shared_schema(results: list, source_card: str) -> list:
+    """
+    Transform raw search results to shared schema for frontend.
+    Matches venue-voice pattern exactly.
+    """
+    transformed = []
+    for r in results:
+        transformed.append({
+            'title': r.get('title', ''),
+            'headline': r.get('headline', r.get('title', '')),
+            'url': r.get('url', r.get('source_url', '')),
+            'publisher': r.get('publisher', ''),
+            'published_at': r.get('published_date', r.get('published_at', '')),
+            'snippet': r.get('snippet', r.get('description', '')),
+            'industry_data': r.get('industry_data', r.get('snippet', r.get('description', ''))),
+            'so_what': r.get('so_what', r.get('venue_implications', '')),
+            'source_card': source_card,
+            'content_type': r.get('content_type', 'news'),
+            'impact': r.get('impact', 'MEDIUM'),
+            'signals': r.get('signals', []),
+            'signal_source': r.get('signal_source', '')
+        })
+    return transformed
+
+
+def multi_search(queries: list, max_results: int = 4, exclude_urls: list = None) -> list:
+    """
+    Run multiple search queries and merge/deduplicate results.
+
+    Uses a 3-query cascade strategy:
+    1. Specific query (user's intent)
+    2. Broader query (core terms)
+    3. Fallback query (general topic)
+
+    Stops early if we have enough results.
+    """
+    exclude_urls = exclude_urls or []
+    all_results = []
+    seen_urls = set()
+
+    for i, query in enumerate(queries):
+        safe_print(f"[Multi-Search] Query {i+1}/{len(queries)}: {query[:80]}...")
+
+        try:
+            results = openai_client.search_web_responses_api(
+                query,
+                max_results=6,  # Get extra to account for deduplication
+                exclude_urls=exclude_urls + list(seen_urls)
+            )
+
+            for r in results:
+                url = r.get('url', '')
+                if url and url not in seen_urls:
+                    all_results.append(r)
+                    seen_urls.add(url)
+
+            safe_print(f"[Multi-Search] Query {i+1} returned {len(results)} results, total unique: {len(all_results)}")
+
+            # Stop early if we have enough
+            if len(all_results) >= max_results:
+                break
+
+        except Exception as e:
+            safe_print(f"[Multi-Search] Query {i+1} failed: {e}")
+            continue
+
+    return all_results[:max_results]
+
+
+def search_all_signals(time_window: str = '30d', exclude_urls: list = None) -> list:
+    """
+    Search ALL insurance market signals simultaneously and collect results.
+    Returns deduplicated results across all signal categories.
+    """
+    exclude_urls = exclude_urls or []
+
+    # Signal query definitions - P&C insurance focused
+    SIGNAL_QUERIES = {
+        'auto_rates': 'US auto insurance rates pricing trends America recent news',
+        'homeowners': 'US homeowners insurance claims premiums trends America recent',
+        'commercial': 'US commercial insurance business liability market trends America',
+        'catastrophe': 'US catastrophe insurance disaster claims weather events America',
+        'regulations': 'US insurance regulations policy changes state commissioners America',
+        'insurtech': 'US insurtech technology digital insurance innovation America recent',
+        'workforce': 'US insurance agent hiring workforce trends staffing America recent',
+        'claims': 'US insurance claims management litigation trends America recent'
+    }
+
+    all_results = []
+    seen_urls = set(exclude_urls)
+
+    safe_print(f"[Insight Builder] Searching all 8 insurance signals...")
+
+    # Search each signal
+    for signal, query_terms in SIGNAL_QUERIES.items():
+        try:
+            prompt = f"""Search for recent US news about {signal.replace('_', ' ')} in insurance.
+
+Find articles about the United States with data points, statistics, and business impact.
+Focus on P&C (property and casualty) insurance markets.
+Search terms: {query_terms}
+
+Return results with title, url, publisher, published_date, and summary with key data points."""
+
+            results = openai_client.search_web_responses_api(prompt, max_results=4, exclude_urls=list(seen_urls))
+
+            for r in results:
+                url = r.get('url', '')
+                if url and url not in seen_urls:
+                    r['signal_source'] = signal  # Tag which signal found this
+                    all_results.append(r)
+                    seen_urls.add(url)
+
+            safe_print(f"[Insight Builder] Signal '{signal}' returned {len(results)} results")
+
+        except Exception as e:
+            safe_print(f"[Insight Builder] Error searching signal '{signal}': {e}")
+            continue
+
+    safe_print(f"[Insight Builder] Total unique results: {len(all_results)}")
+    return all_results
+
+
+def analyze_industry_impact(results: list) -> list:
+    """
+    Use LLM to analyze each result for insurance industry impact.
+    Generates newsletter-ready headlines and impact scores.
+    """
+    if not results:
+        return results
+
+    try:
+        safe_print(f"[Insight Builder] Analyzing {len(results)} results with GPT...")
+
+        # Build context for GPT
+        results_text = ""
+        for i, r in enumerate(results):
+            results_text += f"""
+Result {i+1}:
+- Signal: {r.get('signal_source', 'unknown')}
+- Publisher: {r.get('publisher', '')}
+- Raw title: {r.get('title', '')[:100]}
+- Snippet: {r.get('description', r.get('snippet', ''))[:400]}
+"""
+
+        prompt = f"""You are analyzing news articles for an insurance agent newsletter.
+
+For each article, determine its impact on P&C insurance agents and their clients.
+
+Here are the articles:
+{results_text}
+
+For EACH article, provide:
+1. headline: A newsletter-ready headline (5-12 words, actionable for insurance agents)
+2. impact: HIGH (immediate action needed), MEDIUM (worth monitoring), or LOW (FYI only)
+3. signals: Array of affected categories from [auto_rates, homeowners, commercial, catastrophe, regulations, insurtech, workforce, claims]
+4. so_what: One sentence explaining what agents should do about this
+
+Return a JSON array with exactly {len(results)} objects:
+[
+  {{"headline": "...", "impact": "HIGH|MEDIUM|LOW", "signals": ["..."], "so_what": "..."}},
+  ...
+]
+
+Guidelines:
+- HIGH impact: significant rate changes, regulatory changes, market shifts affecting client premiums
+- MEDIUM impact: emerging trends, technology changes, industry forecasts
+- LOW impact: general news, minor updates
+
+Return ONLY the JSON array, no other text."""
+
+        response = openai_client.client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=2000
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        # Parse JSON response
+        if content.startswith("```"):
+            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
+            content = re.sub(r"\n```$", "", content).strip()
+
+        enriched = json.loads(content)
+
+        # Merge enriched data back into results
+        for i, r in enumerate(results):
+            if i < len(enriched):
+                r['headline'] = enriched[i].get('headline', r.get('title', ''))
+                r['impact'] = enriched[i].get('impact', 'MEDIUM')
+                r['signals'] = enriched[i].get('signals', [])
+                r['so_what'] = enriched[i].get('so_what', '')
+                r['industry_data'] = r.get('description', r.get('snippet', ''))
+
+        # Sort by impact: HIGH first, then MEDIUM, then LOW
+        impact_order = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
+        results.sort(key=lambda x: impact_order.get(x.get('impact', 'LOW'), 2))
+
+        safe_print(f"[Insight Builder] GPT analysis complete - enriched {len(results)} results")
+        return results
+
+    except Exception as e:
+        safe_print(f"[Insight Builder] GPT analysis error: {e} - returning original results")
+        # Add default values if GPT fails
+        for r in results:
+            r['headline'] = r.get('title', 'Industry Update')
+            r['impact'] = 'MEDIUM'
+            r['signals'] = [r.get('signal_source', 'general')]
+            r['so_what'] = 'Monitor this trend for potential client impact.'
+        return results
+
+
+def analyze_story_angles(results: list, user_query: str) -> list:
+    """
+    Use LLM to analyze articles and surface interesting story angles for newsletters.
+    """
+    if not results:
+        return results
+
+    try:
+        safe_print(f"[Source Explorer] Analyzing {len(results)} results for story angles...")
+
+        # Build context for GPT
+        results_text = ""
+        for i, r in enumerate(results):
+            results_text += f"""
+Article {i+1}:
+- Title: {r.get('title', '')[:100]}
+- Publisher: {r.get('publisher', '')}
+- Snippet: {r.get('snippet', r.get('description', ''))[:400]}
+"""
+
+        prompt = f"""You are a newsletter editor for insurance agents. The user searched for: "{user_query}"
+
+Analyze these articles and surface the most interesting story angles for an agent newsletter.
+
+Here are the articles:
+{results_text}
+
+For EACH article, provide:
+1. story_angle: A compelling newsletter story angle (1-2 sentences) - what's the interesting hook for agents?
+2. headline: A catchy headline (5-10 words) that would grab an agent's attention
+3. why_it_matters: One sentence on why insurance agents should care about this
+4. content_type: One of [trend, tip, news, insight, case_study]
+
+Return a JSON array with exactly {len(results)} objects:
+[
+  {{"story_angle": "...", "headline": "...", "why_it_matters": "...", "content_type": "..."}},
+  ...
+]
+
+Guidelines:
+- Focus on actionable insights agents can use with clients
+- Look for data points, trends, or tips that can be turned into content
+- Headlines should be specific and engaging (not generic)
+- Story angles should suggest how to write about this for agent audiences
+
+Return ONLY the JSON array, no other text."""
+
+        response = openai_client.client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=2000
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        # Parse JSON response
+        if content.startswith("```"):
+            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
+            content = re.sub(r"\n```$", "", content).strip()
+
+        enriched = json.loads(content)
+
+        # Merge enriched data back into results
+        for i, r in enumerate(results):
+            if i < len(enriched):
+                r['story_angle'] = enriched[i].get('story_angle', '')
+                r['headline'] = enriched[i].get('headline', r.get('title', ''))
+                r['why_it_matters'] = enriched[i].get('why_it_matters', '')
+                r['content_type'] = enriched[i].get('content_type', 'insight')
+                # Update so_what with the why_it_matters
+                r['so_what'] = enriched[i].get('why_it_matters', r.get('so_what', ''))
+                r['industry_data'] = r.get('snippet', r.get('description', ''))
+
+        safe_print(f"[Source Explorer] GPT story analysis complete - enriched {len(results)} results")
+        return results
+
+    except Exception as e:
+        safe_print(f"[Source Explorer] GPT analysis error: {e} - returning original results")
+        # Add default values if GPT fails
+        for r in results:
+            r['story_angle'] = r.get('snippet', '')[:150]
+            r['headline'] = r.get('title', 'Industry Update')
+            r['why_it_matters'] = 'Review this article for potential newsletter content.'
+            r['content_type'] = 'insight'
+        return results
+
+
+def enrich_results_with_llm(results: list, original_query: str) -> list:
+    """
+    Use LLM to generate newsletter-ready content from research results.
+    Produces three-section format: headline, industry_data, so_what
+    """
+    if not results:
+        return results
+
+    try:
+        safe_print(f"[Enrichment] Processing {len(results)} results with GPT...")
+
+        # Build a single prompt to process all results at once
+        results_text = ""
+        for i, r in enumerate(results):
+            results_text += f"""
+Result {i+1}:
+- URL: {r.get('url', '')}
+- Publisher: {r.get('publisher', '')}
+- Raw snippet: {r.get('snippet', '')[:500]}
+"""
+
+        prompt = f"""You are analyzing research findings for an insurance agent newsletter. The user searched for: "{original_query}"
+
+Here are research findings to transform into newsletter-ready content:
+{results_text}
+
+For EACH result, extract/generate:
+1. headline: A compelling newsletter headline (5-12 words, specific and actionable)
+2. industry_data: The key statistic, fact, or data point from this article (1-2 sentences). Extract actual numbers/percentages when available.
+3. so_what: What should agents DO with this information? (1 actionable sentence)
+4. impact: HIGH (immediate action needed), MEDIUM (worth monitoring), or LOW (FYI only)
+
+Return a JSON array with exactly {len(results)} objects:
+[
+  {{"headline": "...", "industry_data": "...", "so_what": "...", "impact": "HIGH|MEDIUM|LOW"}},
+  ...
+]
+
+Guidelines:
+- Headlines should be specific with data when available (e.g., "Auto Rates Up 8% - Agents Should Review Client Policies")
+- industry_data should contain the actual facts/stats from the article, not commentary
+- so_what should be a specific action: "Review your...", "Contact clients about...", "Update your..."
+- HIGH impact: significant rate changes, regulatory changes affecting client premiums
+- MEDIUM impact: emerging trends, forecasts, industry shifts
+- LOW impact: general news, minor updates
+
+Return ONLY the JSON array, no other text."""
+
+        response = openai_client.client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=2000
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        # Parse the JSON response
+        if content.startswith("```"):
+            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
+            content = re.sub(r"\n```$", "", content).strip()
+
+        enriched = json.loads(content)
+
+        # Merge enriched data back into results
+        for i, r in enumerate(results):
+            if i < len(enriched):
+                r['headline'] = enriched[i].get('headline', r.get('title', ''))
+                r['title'] = r['headline']  # Use headline as title too
+                r['industry_data'] = enriched[i].get('industry_data', r.get('snippet', ''))
+                r['so_what'] = enriched[i].get('so_what', '')
+                r['impact'] = enriched[i].get('impact', 'MEDIUM')
+                # Keep snippet for backwards compatibility
+                r['snippet'] = r['industry_data']
+
+        # Sort by impact: HIGH first, then MEDIUM, then LOW
+        impact_order = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
+        results.sort(key=lambda x: impact_order.get(x.get('impact', 'LOW'), 2))
+
+        safe_print(f"[LLM Enrichment] Successfully enriched {len(results)} results")
+        return results
+
+    except Exception as e:
+        safe_print(f"[LLM Enrichment] Error: {e} - returning original results")
+        import traceback
+        traceback.print_exc()
+        return results
+
+
+# ============================================================================
 # ROUTES - V2 RESEARCH API (Frontend Dashboard)
 # ============================================================================
 
 @app.route('/api/v2/search-perplexity', methods=['POST'])
 def v2_search_perplexity():
-    """Perplexity Research card - searches with Perplexity AI"""
+    """
+    Perplexity Research Card - uses Perplexity sonar model for research with citations
+    """
     try:
         data = request.json
-        query = data.get('query', 'P&C insurance news')
-        time_window = data.get('time_window', '30d')
+        query = data.get('query', 'P&C insurance industry news trends')
+        time_window = data.get('time_window', '30d')  # 7d, 30d, 90d
         exclude_urls = data.get('exclude_urls', [])
 
-        print(f"\n[V2 API] Perplexity search: {query}")
+        safe_print(f"\n[API v2] Perplexity Research: query='{query}', time_window={time_window}")
 
+        # Check if Perplexity is available
         if not perplexity_client or not perplexity_client.is_available():
-            # Fallback to OpenAI search
-            print("[V2 API] Perplexity not available, using OpenAI search")
-            search_results = openai_client.search_web(
-                query=query,
-                exclude_urls=exclude_urls,
-                max_results=10
-            )
-        else:
-            search_results = perplexity_client.search(
-                query=query,
-                time_window=time_window,
-                max_results=10
-            )
+            return jsonify({
+                'success': False,
+                'error': 'Perplexity API not configured. Add PERPLEXITY_API_KEY to .env',
+                'results': []
+            }), 503
 
-        # Transform results for frontend
-        results = []
-        for r in search_results:
-            results.append({
-                'title': r.get('title', ''),
-                'headline': r.get('title', ''),
-                'url': r.get('url', r.get('source_url', '')),
-                'publisher': r.get('publisher', ''),
-                'snippet': r.get('snippet', r.get('description', '')),
-                'industry_data': r.get('snippet', ''),
-                'so_what': r.get('venue_implications', 'Review this article for agent insights'),
-                'source_card': 'perplexity'
-            })
+        # Search using Perplexity - build insurance-focused query
+        search_results = perplexity_client.search(
+            query=f"P&C insurance {query}",
+            time_window=time_window,
+            max_results=8
+        )
+
+        # Filter out excluded URLs
+        if exclude_urls:
+            search_results = [r for r in search_results if r.get('url') not in exclude_urls]
+
+        # Take top 8 results for more options
+        results = search_results[:8]
+
+        # Enrich results with LLM-generated titles and agent guidance
+        if results:
+            safe_print(f"[API v2] Enriching {len(results)} Perplexity results with LLM...")
+            results = enrich_results_with_llm(results, query)
+
+        # Build query description for UI
+        time_desc = {
+            '7d': 'past week',
+            '30d': 'past month',
+            '90d': 'past 3 months'
+        }.get(time_window, 'recent')
 
         return jsonify({
             'success': True,
             'results': results,
-            'queries_used': [query],
+            'queries_used': [f"P&C insurance news from {time_desc}: {query}"],
+            'source': 'perplexity',
             'generated_at': datetime.now().isoformat()
         })
 
     except Exception as e:
-        print(f"[V2 API ERROR] Perplexity search: {e}")
+        safe_print(f"[API v2 ERROR] Perplexity Research: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e), 'results': []}), 500
 
 
 @app.route('/api/v2/search-insights', methods=['POST'])
 def v2_search_insights():
-    """Insight Builder card - searches multiple insurance signals"""
+    """
+    Insight Builder Card - searches ALL 8 signals and analyzes industry impact
+    """
     try:
         data = request.json
         time_window = data.get('time_window', '30d')
         exclude_urls = data.get('exclude_urls', [])
 
-        print(f"\n[V2 API] Searching insurance market signals...")
+        safe_print(f"\n[API v2] Insight Builder: Searching ALL 8 signals")
 
-        # Insurance market signals to search
-        signals = [
-            'auto insurance rates trends',
-            'homeowners insurance claims',
-            'commercial insurance market',
-            'insurance regulations changes',
-            'insurtech technology news',
-            'P&C insurance mergers acquisitions',
-            'insurance agent commission trends',
-            'catastrophe insurance claims'
-        ]
+        # Step 1: Search all 8 signals simultaneously
+        raw_results = search_all_signals(time_window=time_window, exclude_urls=exclude_urls)
 
-        all_results = []
-        for signal in signals[:4]:  # Limit to prevent timeout
-            try:
-                query = f"{signal} site:insurancejournal.com OR site:propertycasualty360.com"
-                results = openai_client.search_web(
-                    query=query,
-                    exclude_urls=exclude_urls,
-                    max_results=3
-                )
-                for r in results:
-                    r['signal'] = signal
-                    r['headline'] = r.get('title', '')
-                    r['industry_data'] = r.get('snippet', r.get('description', ''))
-                    r['so_what'] = 'Consider how this affects your agency and clients'
-                    all_results.append(r)
-            except Exception as e:
-                print(f"[V2 API] Signal search error for {signal}: {e}")
+        # Step 2: Analyze results with GPT for industry impact
+        enriched_results = analyze_industry_impact(raw_results)
+
+        # Step 3: Transform to shared schema and limit to top 8-12 results
+        results = transform_to_shared_schema(enriched_results[:12], 'insight')
+
+        # Merge back the enriched fields (headline, impact, signals, so_what)
+        for i, result in enumerate(results):
+            if i < len(enriched_results):
+                enriched = enriched_results[i]
+                result['headline'] = enriched.get('headline', result.get('title', ''))
+                result['impact'] = enriched.get('impact', 'MEDIUM')
+                result['signals'] = enriched.get('signals', [])
+                result['so_what'] = enriched.get('so_what', '')
+                result['industry_data'] = enriched.get('industry_data', enriched.get('description', ''))
+
+        signals_searched = ['auto_rates', 'homeowners', 'commercial', 'catastrophe', 'regulations', 'insurtech', 'workforce', 'claims']
 
         return jsonify({
             'success': True,
-            'results': all_results[:15],
-            'signals_searched': signals[:4],
+            'results': results,
+            'signals_searched': signals_searched,
+            'source': 'insight',
             'generated_at': datetime.now().isoformat()
         })
 
     except Exception as e:
-        print(f"[V2 API ERROR] Insights search: {e}")
+        safe_print(f"[API v2 ERROR] Insight Builder: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e), 'results': []}), 500
 
 
 @app.route('/api/v2/search-sources', methods=['POST'])
 def v2_search_sources():
-    """Source Explorer card - searches curated insurance sources"""
+    """
+    Source Explorer Card - searches specific industry sites with 3-query cascade
+    """
     try:
         data = request.json
-        query = data.get('query', 'insurance news')
-        source_packs = data.get('source_packs', ['insurance'])
+        query = data.get('query', 'P&C insurance news')
+        source_packs = data.get('source_packs', ['insurance'])  # insurance, claims, regulations
+        time_window = data.get('time_window', '30d')
         exclude_urls = data.get('exclude_urls', [])
 
-        print(f"\n[V2 API] Source Explorer search: {query}, packs: {source_packs}")
+        safe_print(f"\n[API v2] Source Explorer: query='{query}', packs={source_packs}")
 
-        # Insurance industry source packs
-        source_pack_sites = {
-            'insurance': INSURANCE_NEWS_SOURCES,
-            'claims': ['claimsjournal.com', 'propertycasualty360.com'],
-            'regulations': ['naic.org', 'insurancejournal.com', 'carriermanagement.com']
+        # Insurance industry source packs (B2B and trade publications)
+        SITE_PACKS = {
+            'insurance': INSURANCE_NEWS_SOURCES,  # From brand_guidelines.py
+            'claims': [
+                'claimsjournal.com', 'propertycasualty360.com', 'insurancejournal.com',
+                'carriermanagement.com'
+            ],
+            'regulations': [
+                'naic.org', 'insurancejournal.com', 'carriermanagement.com',
+                'propertycasualty360.com'
+            ],
+            'technology': [
+                'dig-in.com', 'insurancejournal.com', 'propertycasualty360.com',
+                'carriermanagement.com'
+            ]
         }
 
-        # Build site filter from selected packs
+        # Collect sites from selected packs
         sites = []
         for pack in source_packs:
-            sites.extend(source_pack_sites.get(pack, []))
+            sites.extend(SITE_PACKS.get(pack, []))
         sites = list(set(sites))  # Remove duplicates
 
-        # Build search query with site filters
+        # Build site: queries with 3-query cascade
         if sites:
-            site_filter = ' OR '.join([f'site:{s}' for s in sites[:5]])
-            full_query = f"{query} ({site_filter})"
+            # Use up to 6 sites per query for better coverage
+            site_query = ' OR '.join([f'site:{s}' for s in sites[:6]])
+
+            queries = [
+                # Query 1: Site-specific with user query
+                f"""Search for: ({site_query}) {query}
+
+Find recent articles from these insurance industry sources.
+Return results with title, url, publisher, published_date, and summary.""",
+
+                # Query 2: Site-specific with broader topic
+                f"""Search for: ({site_query}) P&C insurance news trends
+
+Find recent business news about property and casualty insurance.
+Return results with title, url, publisher, published_date, and summary.""",
+
+                # Query 3: Fallback without site restriction
+                f"""Search for P&C insurance industry news from trade publications.
+
+Find articles about: {query}
+Focus on business insights, trends, and industry analysis.
+Return results with title, url, publisher, published_date, and summary."""
+            ]
         else:
-            full_query = query
+            queries = [
+                f"""Search for P&C insurance industry news.
+Find articles about: {query}
+Return results with title, url, publisher, published_date, and summary."""
+            ]
 
-        search_results = openai_client.search_web(
-            query=full_query,
-            exclude_urls=exclude_urls,
-            max_results=15
-        )
+        safe_print(f"[API v2] Source Explorer using {len(sites)} sites from packs: {source_packs}")
 
-        # Transform results
-        results = []
-        for r in search_results:
-            results.append({
-                'title': r.get('title', ''),
-                'headline': r.get('title', ''),
-                'url': r.get('url', r.get('source_url', '')),
-                'publisher': r.get('publisher', ''),
-                'snippet': r.get('snippet', r.get('description', '')),
-                'industry_data': r.get('snippet', ''),
-                'so_what': 'Review this source for insights relevant to your clients',
-                'source_card': 'explorer',
-                'content_type': 'news'
-            })
+        # Use multi-search with cascade
+        search_results = multi_search(queries, max_results=8, exclude_urls=exclude_urls)
+
+        # Transform to shared schema
+        results = transform_to_shared_schema(search_results, 'explorer')
+
+        # Enrich with GPT story angle analysis
+        results = analyze_story_angles(results, query)
+
+        # Query summaries for UI display
+        query_summaries = [
+            f"1. Site-specific: {query} from {', '.join(sites[:3])}...",
+            "2. Broader: P&C insurance news from sites",
+            "3. Fallback: insurance industry news (any source)"
+        ]
 
         return jsonify({
             'success': True,
             'results': results,
-            'queries_used': [full_query],
+            'queries_used': query_summaries,
+            'source_packs': source_packs,
+            'source': 'explorer',
             'generated_at': datetime.now().isoformat()
         })
 
     except Exception as e:
-        print(f"[V2 API ERROR] Source search: {e}")
+        safe_print(f"[API v2 ERROR] Source Explorer: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e), 'results': []}), 500
 
 
@@ -348,6 +788,119 @@ Output ONLY the rewritten content, no labels or explanations."""
 # ============================================================================
 # ROUTES - INSURNEWS SPOTLIGHT (Multi-Source)
 # ============================================================================
+
+@app.route('/api/search-spotlight-articles', methods=['POST'])
+def search_spotlight_articles():
+    """Search for InsurNews Spotlight articles from curated insurance sources"""
+    try:
+        data = request.json
+        query = data.get('query', 'P&C insurance news')
+        time_window = data.get('time_window', '30d')
+        exclude_urls = data.get('exclude_urls', [])
+
+        print(f"\n[API] Searching Spotlight articles from curated sources: {query}")
+
+        all_results = []
+        seen_urls = set(exclude_urls)
+
+        # Build site filter from curated insurance sources
+        site_filter = ' OR '.join([f'site:{s}' for s in INSURANCE_NEWS_SOURCES])
+
+        # Search 1: Main query with curated sources (OpenAI)
+        try:
+            main_query = f"{query} ({site_filter})"
+            main_results = openai_client.search_web(
+                query=main_query,
+                exclude_urls=list(seen_urls),
+                max_results=8
+            )
+            for r in main_results:
+                url = r.get('url', '')
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    all_results.append({
+                        'title': r.get('title', ''),
+                        'headline': r.get('title', ''),
+                        'url': url,
+                        'publisher': r.get('publisher', ''),
+                        'snippet': r.get('snippet', r.get('description', '')),
+                        'industry_data': r.get('snippet', ''),
+                        'so_what': 'Review for InsurNews Spotlight feature story',
+                        'source_card': 'curated'
+                    })
+            print(f"  - Found {len(main_results)} from curated sources")
+        except Exception as e:
+            print(f"  - Curated search error: {e}")
+
+        # Search 2: Perplexity for research-backed results (if available)
+        if perplexity_client and perplexity_client.is_available():
+            try:
+                perplexity_results = perplexity_client.search(
+                    query=f"P&C insurance {query}",
+                    time_window=time_window,
+                    max_results=6
+                )
+                for r in perplexity_results:
+                    url = r.get('url', '')
+                    if url and url not in seen_urls:
+                        seen_urls.add(url)
+                        all_results.append({
+                            'title': r.get('title', ''),
+                            'headline': r.get('title', ''),
+                            'url': url,
+                            'publisher': r.get('publisher', ''),
+                            'snippet': r.get('snippet', ''),
+                            'industry_data': r.get('snippet', ''),
+                            'so_what': r.get('venue_implications', 'Research-backed insight'),
+                            'source_card': 'perplexity'
+                        })
+                print(f"  - Found {len(perplexity_results)} from Perplexity")
+            except Exception as e:
+                print(f"  - Perplexity search error: {e}")
+
+        # Search 3: Industry signals/insights
+        try:
+            signals = ['insurance rates trends', 'claims news', 'insurance regulations', 'insurtech news']
+            for signal in signals[:2]:
+                signal_query = f"{signal} site:insurancejournal.com OR site:propertycasualty360.com"
+                signal_results = openai_client.search_web(
+                    query=signal_query,
+                    exclude_urls=list(seen_urls),
+                    max_results=3
+                )
+                for r in signal_results:
+                    url = r.get('url', '')
+                    if url and url not in seen_urls:
+                        seen_urls.add(url)
+                        all_results.append({
+                            'title': r.get('title', ''),
+                            'headline': r.get('title', ''),
+                            'url': url,
+                            'publisher': r.get('publisher', ''),
+                            'snippet': r.get('snippet', r.get('description', '')),
+                            'industry_data': r.get('snippet', ''),
+                            'so_what': f'Industry signal: {signal}',
+                            'source_card': 'insights'
+                        })
+            print(f"  - Added industry signal results")
+        except Exception as e:
+            print(f"  - Industry signals error: {e}")
+
+        print(f"[API] Total Spotlight articles found: {len(all_results)}")
+
+        return jsonify({
+            'success': True,
+            'results': all_results[:15],  # Cap at 15 results
+            'sources_searched': ['curated_insurance', 'perplexity', 'industry_signals'],
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] Spotlight article search: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e), 'results': []}), 500
+
 
 @app.route('/api/generate-spotlight', methods=['POST'])
 def generate_spotlight():

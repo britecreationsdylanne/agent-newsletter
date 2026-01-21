@@ -16,13 +16,19 @@ class GeminiClient:
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("GOOGLE_AI_API_KEY")
-        if not self.api_key:
-            raise ValueError("GOOGLE_AI_API_KEY environment variable not set")
-
-        # Initialize the client with API key
-        self.client = genai.Client(api_key=self.api_key)
-        # Use Gemini 2.5 Flash Image for image generation (Nano Banana)
+        self.client = None
         self.default_model = os.getenv("DEFAULT_IMAGE_MODEL", "gemini-2.5-flash-image")
+
+        if self.api_key:
+            # Initialize the client with API key
+            self.client = genai.Client(api_key=self.api_key)
+            print("[OK] Gemini initialized")
+        else:
+            print("[WARNING] GOOGLE_AI_API_KEY not set - Gemini image generation disabled")
+
+    def is_available(self) -> bool:
+        """Check if Gemini API is configured"""
+        return self.client is not None
 
     def generate_image(
         self,
@@ -51,8 +57,9 @@ class GeminiClient:
                 "generation_time_ms": 1234
             }
         """
-        if not self.api_key:
-            raise ValueError("Google AI API key not configured")
+        if not self.is_available():
+            print("[Gemini] API not available - skipping image generation")
+            return None
 
         model_name = model or self.default_model
         start_time = time.time()

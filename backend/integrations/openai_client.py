@@ -160,6 +160,12 @@ Generate the complete section following the structure guidelines."""
             "section_type": section_type,
         }
 
+    def search_web(self, query: str, max_results: int = 15, exclude_urls: list = None) -> list:
+        """
+        Wrapper method for search_web_responses_api for compatibility with venue-voice API calls
+        """
+        return self.search_web_responses_api(query, max_results, exclude_urls)
+
     def search_web_responses_api(self, query: str, max_results: int = 15, exclude_urls: list = None) -> list:
         """
         Search web using OpenAI Responses API with web_search tool
