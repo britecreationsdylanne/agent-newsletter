@@ -62,7 +62,7 @@ class PerplexityClient:
 
             geo_context = f" Focus on {geography}." if geography else ""
 
-            system_prompt = f"""You are a research assistant helping wedding venue owners find relevant industry news and insights.
+            system_prompt = f"""You are a research assistant helping independent P&C insurance agents find relevant industry news and insights.
 
 Search for {time_context} articles and news.{geo_context}
 
@@ -71,7 +71,7 @@ For each finding, provide:
 2. The source URL (must be a real, working URL)
 3. The publisher/source name
 4. A 2-3 sentence summary explaining the finding
-5. Why this matters for wedding venue operators
+5. Why this matters for insurance agents and their clients
 
 Return your findings as a JSON array with this structure:
 {{
@@ -82,15 +82,15 @@ Return your findings as a JSON array with this structure:
             "publisher": "Source name",
             "published_date": "YYYY-MM-DD or null if unknown",
             "summary": "2-3 sentence summary of the article",
-            "venue_implications": "Why this matters for wedding venues"
+            "agent_implications": "Why this matters for insurance agents"
         }}
     ]
 }}
 
 Important:
 - Only include results with REAL, verifiable URLs
-- Focus on actionable insights for wedding venue businesses
-- Include specific data points and statistics when available
+- Focus on actionable insights for P&C insurance agents
+- Include specific data points, statistics, and rate changes when available
 - Return exactly {max_results} results"""
 
             # Make API request
@@ -209,8 +209,8 @@ Important:
             # Build snippet from remaining sentences
             snippet = ' '.join(related_sentences[:2])[:300] if related_sentences else f"Source from {domain}"
 
-            # Generate venue implications from the content
-            venue_implications = self._generate_venue_angle(related_sentences)
+            # Generate agent implications from the content
+            agent_implications = self._generate_agent_angle(related_sentences)
 
             results.append({
                 'title': title,
@@ -218,7 +218,7 @@ Important:
                 'publisher': domain,
                 'published_at': '',
                 'snippet': snippet,
-                'venue_implications': venue_implications,
+                'agent_implications': agent_implications,
                 'source_card': 'perplexity',
                 'category': 'research'
             })
@@ -258,28 +258,28 @@ Important:
 
         return first
 
-    def _generate_venue_angle(self, sentences: list) -> str:
-        """Generate venue-focused implications from content"""
+    def _generate_agent_angle(self, sentences: list) -> str:
+        """Generate insurance agent-focused implications from content"""
         if not sentences:
-            return "Review this source for wedding venue insights"
+            return "Review this source for insurance industry insights"
 
         content = ' '.join(sentences).lower()
 
         # Check for specific topics and provide targeted implications
-        if any(word in content for word in ['cost', 'price', 'expense', 'budget', 'spending']):
-            return "Consider how these cost trends affect your pricing strategy and client expectations"
-        elif any(word in content for word in ['trend', 'popular', 'growing', 'rising']):
-            return "Evaluate whether to incorporate this trend into your venue offerings"
-        elif any(word in content for word in ['booking', 'demand', 'reservation', 'capacity']):
-            return "Use this insight to optimize your booking strategy and availability"
-        elif any(word in content for word in ['technology', 'digital', 'software', 'app']):
-            return "Assess if this technology could improve your venue operations"
-        elif any(word in content for word in ['staff', 'hiring', 'labor', 'employee']):
-            return "Factor this into your staffing plans and operational costs"
-        elif any(word in content for word in ['sustainable', 'eco', 'green', 'environment']):
-            return "Consider sustainability initiatives that align with these market expectations"
+        if any(word in content for word in ['rate', 'premium', 'price', 'cost', 'increase']):
+            return "Review client policies that may be affected by these rate changes"
+        elif any(word in content for word in ['claim', 'loss', 'damage', 'liability']):
+            return "Use this insight when discussing coverage options with clients"
+        elif any(word in content for word in ['regulation', 'compliance', 'law', 'requirement']):
+            return "Ensure your agency practices align with these regulatory changes"
+        elif any(word in content for word in ['technology', 'digital', 'insurtech', 'automation']):
+            return "Assess if this technology could improve your agency operations"
+        elif any(word in content for word in ['market', 'trend', 'forecast', 'growth']):
+            return "Factor this market trend into your client conversations and prospecting"
+        elif any(word in content for word in ['catastrophe', 'disaster', 'weather', 'storm']):
+            return "Proactively contact clients in affected areas about coverage reviews"
         else:
-            return "Share this industry insight with couples to demonstrate your expertise"
+            return "Share this industry insight with clients to demonstrate your expertise"
 
     def _parse_results(self, content: str, max_results: int) -> List[Dict]:
         """Parse JSON results from Perplexity response (legacy approach)"""
@@ -324,7 +324,7 @@ Important:
                     'publisher': r.get('publisher', self._extract_domain(url)),
                     'published_at': r.get('published_date', ''),
                     'snippet': r.get('summary', ''),
-                    'venue_implications': r.get('venue_implications', ''),
+                    'agent_implications': r.get('agent_implications', ''),
                     'source_card': 'perplexity',
                     'category': 'research'
                 })
@@ -354,7 +354,7 @@ Important:
                 'publisher': domain,
                 'published_at': '',
                 'snippet': 'See source for details',
-                'venue_implications': 'Review this source for wedding venue insights',
+                'agent_implications': 'Review this source for insurance industry insights',
                 'source_card': 'perplexity',
                 'category': 'research'
             })

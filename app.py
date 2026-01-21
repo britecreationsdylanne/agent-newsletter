@@ -133,7 +133,7 @@ def transform_to_shared_schema(results: list, source_card: str) -> list:
             'published_at': r.get('published_date', r.get('published_at', '')),
             'snippet': r.get('snippet', r.get('description', '')),
             'industry_data': r.get('industry_data', r.get('snippet', r.get('description', ''))),
-            'so_what': r.get('so_what', r.get('venue_implications', '')),
+            'so_what': r.get('so_what', r.get('agent_implications', '')),
             'source_card': source_card,
             'content_type': r.get('content_type', 'news'),
             'impact': r.get('impact', 'MEDIUM'),
@@ -851,7 +851,7 @@ def search_spotlight_articles():
                             'publisher': r.get('publisher', ''),
                             'snippet': r.get('snippet', ''),
                             'industry_data': r.get('snippet', ''),
-                            'so_what': r.get('venue_implications', 'Research-backed insight'),
+                            'so_what': r.get('agent_implications', 'Research-backed insight'),
                             'source_card': 'perplexity'
                         })
                 print(f"  - Found {len(perplexity_results)} from Perplexity")

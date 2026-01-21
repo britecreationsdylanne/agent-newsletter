@@ -4997,7 +4997,7 @@
                 // Extract the three sections
                 const headline = result.headline || result.title || 'Untitled';
                 const industryData = result.industry_data || result.snippet || result.description || '';
-                const soWhat = result.so_what || result.venue_implications || '';
+                const soWhat = result.so_what || result.agent_implications || '';
 
                 const item = document.createElement('div');
                 item.className = 'research-result-item';
@@ -5241,11 +5241,11 @@
             // Store the selection in the correct variable based on current tab
             const selectedObj = {
                 title: result.headline || result.title,
-                description: result.industry_data || result.snippet || result.venue_implications,
+                description: result.industry_data || result.snippet || result.agent_implications,
                 source_url: result.url,
                 url: result.url,
                 publisher: result.publisher,
-                so_what: result.so_what || result.venue_implications,
+                so_what: result.so_what || result.agent_implications,
                 _cardType: cardType
             };
 
@@ -5325,7 +5325,7 @@
                     </div>
                     <div class="research-result-title">${result.headline || result.title || 'Untitled'}</div>
                     <div class="research-result-snippet" style="font-style: italic; color: #555;">${result.story_angle || ''}</div>
-                    <div class="research-result-snippet" style="margin-top: 4px; font-size: 12px;">${result.why_it_matters || result.venue_implications || ''}</div>
+                    <div class="research-result-snippet" style="margin-top: 4px; font-size: 12px;">${result.why_it_matters || result.agent_implications || ''}</div>
                     <div class="research-result-meta">
                         <span>${result.publisher || 'Unknown source'}</span>
                         ${result.url ? `<a href="${result.url}" target="_blank" class="research-result-link" onclick="event.stopPropagation()">View →</a>` : ''}
@@ -5358,7 +5358,7 @@
                 item.dataset.url = result.url || '';
                 item.innerHTML = `
                     <div class="research-result-title">${result.title || 'Untitled'}</div>
-                    <div class="research-result-snippet">${(result.snippet || result.venue_implications || '').substring(0, 150)}...</div>
+                    <div class="research-result-snippet">${(result.snippet || result.agent_implications || '').substring(0, 150)}...</div>
                     <div class="research-result-meta">
                         <span>${result.publisher || 'Unknown source'}</span>
                         ${result.url ? `<a href="${result.url}" target="_blank" class="research-result-link" onclick="event.stopPropagation()">View →</a>` : ''}
@@ -5398,7 +5398,7 @@
                 card.dataset.globalIndex = globalIndex;
                 card.innerHTML = `
                     <div class="title">${getCardIcon(result._cardType)} ${result.title || 'Untitled'}</div>
-                    <div class="description">${result.snippet || result.venue_implications || ''}</div>
+                    <div class="description">${result.snippet || result.agent_implications || ''}</div>
                     ${result.url ? `<a href="${result.url}" target="_blank" class="source" onclick="event.stopPropagation()">View source →</a>` : ''}
                     <div style="margin-top: 8px; font-size: 12px; color: #999;">
                         Source: ${getCardLabel(result._cardType)} | ${result.publisher || 'Unknown'}
@@ -5425,7 +5425,7 @@
             // Update global selection (maps to existing selectedNews/selectedTip/selectedTrend)
             const selectedObj = {
                 title: result.title,
-                description: result.snippet || result.venue_implications,
+                description: result.snippet || result.agent_implications,
                 source_url: result.url,
                 url: result.url,
                 publisher: result.publisher,
