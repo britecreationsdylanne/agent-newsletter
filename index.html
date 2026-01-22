@@ -1000,13 +1000,13 @@
             </div>
 
             <div id="promptEditing" style="display: none;">
-                <!-- News Prompt -->
+                <!-- Brite Spot Prompt -->
                 <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                    <h3 style="margin: 0 0 5px 0;">📰 News Image Prompt</h3>
-                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;" id="newsPromptArticle"></p>
+                    <h3 style="margin: 0 0 5px 0;">✨ Brite Spot Image Prompt</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;" id="briteSpotPromptArticle"></p>
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Image Style:</label>
-                        <select id="newsImageStyle" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updatePromptWithStyle('news')">
+                        <select id="briteSpotImageStyle" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updatePromptWithStyle('briteSpot')">
                             <option value="photorealistic">Photorealistic (Default)</option>
                             <option value="sketch">Sketch / Illustration</option>
                             <option value="watercolor">Watercolor</option>
@@ -1016,16 +1016,16 @@
                             <option value="infographic">Infographic / Data Viz</option>
                         </select>
                     </div>
-                    <textarea id="newsImagePromptText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-family: inherit;" placeholder="Prompt will appear here..."></textarea>
+                    <textarea id="briteSpotImagePromptText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-family: inherit;" placeholder="Prompt will appear here..."></textarea>
                 </div>
 
-                <!-- Tip Prompt -->
+                <!-- Curious Claims Prompt -->
                 <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                    <h3 style="margin: 0 0 5px 0;">💡 Tip Image Prompt</h3>
-                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;" id="tipPromptArticle"></p>
+                    <h3 style="margin: 0 0 5px 0;">🔍 Curious Claims Image Prompt</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;" id="claimsPromptArticle"></p>
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Image Style:</label>
-                        <select id="tipImageStyle" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updatePromptWithStyle('tip')">
+                        <select id="claimsImageStyle" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updatePromptWithStyle('claims')">
                             <option value="photorealistic">Photorealistic (Default)</option>
                             <option value="sketch">Sketch / Illustration</option>
                             <option value="watercolor">Watercolor</option>
@@ -1035,16 +1035,16 @@
                             <option value="infographic">Infographic / Data Viz</option>
                         </select>
                     </div>
-                    <textarea id="tipImagePromptText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-family: inherit;" placeholder="Prompt will appear here..."></textarea>
+                    <textarea id="claimsImagePromptText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-family: inherit;" placeholder="Prompt will appear here..."></textarea>
                 </div>
 
-                <!-- Trend Prompt -->
+                <!-- Spotlight Prompt -->
                 <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                    <h3 style="margin: 0 0 5px 0;">📈 Trend Image Prompt</h3>
-                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;" id="trendPromptArticle"></p>
+                    <h3 style="margin: 0 0 5px 0;">⭐ InsurNews Spotlight Image Prompt</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;" id="spotlightPromptArticle"></p>
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Image Style:</label>
-                        <select id="trendImageStyle" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updatePromptWithStyle('trend')">
+                        <select id="spotlightImageStyle" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updatePromptWithStyle('spotlight')">
                             <option value="photorealistic">Photorealistic (Default)</option>
                             <option value="sketch">Sketch / Illustration</option>
                             <option value="watercolor">Watercolor</option>
@@ -1054,7 +1054,26 @@
                             <option value="infographic">Infographic / Data Viz</option>
                         </select>
                     </div>
-                    <textarea id="trendImagePromptText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-family: inherit;" placeholder="Prompt will appear here..."></textarea>
+                    <textarea id="spotlightImagePromptText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-family: inherit;" placeholder="Prompt will appear here..."></textarea>
+                </div>
+
+                <!-- Agent Advantage Prompt -->
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+                    <h3 style="margin: 0 0 5px 0;">💡 Agent Advantage Image Prompt</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;" id="tipsPromptArticle"></p>
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Image Style:</label>
+                        <select id="tipsImageStyle" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updatePromptWithStyle('tips')">
+                            <option value="photorealistic">Photorealistic (Default)</option>
+                            <option value="sketch">Sketch / Illustration</option>
+                            <option value="watercolor">Watercolor</option>
+                            <option value="modern-flat">Modern Flat Design</option>
+                            <option value="magazine">Magazine Editorial</option>
+                            <option value="cartoon">Cartoon</option>
+                            <option value="infographic">Infographic / Data Viz</option>
+                        </select>
+                    </div>
+                    <textarea id="tipsImagePromptText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-family: inherit;" placeholder="Prompt will appear here..."></textarea>
                 </div>
 
                 <!-- Info callout about image sizing -->
@@ -1065,7 +1084,7 @@
                             <div style="font-weight: 600; color: #1e40af; margin-bottom: 5px;">Images Auto-Sized for Newsletter</div>
                             <div style="font-size: 14px; color: #64748b; line-height: 1.5;">
                                 Generated images will be automatically resized to the correct dimensions for hosting on Ontraport:
-                                <strong>News (480×260px)</strong>, <strong>Tip (432×130px)</strong>, <strong>Trend (432×130px)</strong>
+                                <strong>Brite Spot (480×260px)</strong>, <strong>Claims (480×260px)</strong>, <strong>Spotlight (480×260px)</strong>, <strong>Tips (480×260px)</strong>
                             </div>
                         </div>
                     </div>
@@ -1098,7 +1117,7 @@
             </div>
         </div>
 
-        <!-- Step 10: Review Article Images (News, Tip, Trend) -->
+        <!-- Step 10: Review Article Images (Brite Spot, Claims, Spotlight, Tips) -->
         <div class="step" id="step10">
             <h2>🖼️ Article Images</h2>
             <p>Review and customize images for your newsletter sections</p>
@@ -1116,12 +1135,12 @@
                 </div>
             </div>
 
-            <!-- News Image -->
+            <!-- Brite Spot Image -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                <h3 style="margin: 0 0 10px 0;">📰 News Section Image</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="newsImageTitle">For your news article</p>
+                <h3 style="margin: 0 0 10px 0;">✨ Brite Spot Image</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="briteSpotImageTitle">For your Brite Spot section</p>
 
-                <div id="newsImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div id="briteSpotImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
                     <div style="text-align: center; color: #999;">
                         <div class="spinner" style="margin: 0 auto 10px;"></div>
                         <div>Generating image...</div>
@@ -1130,19 +1149,19 @@
 
                 <div style="margin-bottom: 10px;">
                     <label style="display: block; font-weight: 600; margin-bottom: 5px;">Image Prompt:</label>
-                    <textarea id="newsPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
+                    <textarea id="briteSpotPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
                 </div>
-                <button class="btn-secondary btn" onclick="regenerateImage('news')" style="margin-right: 10px;">🔄 Regenerate</button>
-                <button class="btn-secondary btn" onclick="exportImage('news')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('news')">🔍 Resize</button>
+                <button class="btn-secondary btn" onclick="regenerateImage('briteSpot')" style="margin-right: 10px;">🔄 Regenerate</button>
+                <button class="btn-secondary btn" onclick="exportImage('briteSpot')" style="margin-right: 10px;">📥 Export</button>
+                <button class="btn-secondary btn" onclick="resizeImage('briteSpot')">🔍 Resize</button>
             </div>
 
-            <!-- Tip Image -->
+            <!-- Claims Image -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                <h3 style="margin: 0 0 10px 0;">💡 Tip Section Image</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="tipImageTitle">For your tip article</p>
+                <h3 style="margin: 0 0 10px 0;">🔍 Curious Claims Image</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="claimsImageTitle">For your claims story</p>
 
-                <div id="tipImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div id="claimsImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
                     <div style="text-align: center; color: #999;">
                         <div class="spinner" style="margin: 0 auto 10px;"></div>
                         <div>Generating image...</div>
@@ -1151,19 +1170,19 @@
 
                 <div style="margin-bottom: 10px;">
                     <label style="display: block; font-weight: 600; margin-bottom: 5px;">Image Prompt:</label>
-                    <textarea id="tipPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
+                    <textarea id="claimsPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
                 </div>
-                <button class="btn-secondary btn" onclick="regenerateImage('tip')" style="margin-right: 10px;">🔄 Regenerate</button>
-                <button class="btn-secondary btn" onclick="exportImage('tip')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('tip')">🔍 Resize</button>
+                <button class="btn-secondary btn" onclick="regenerateImage('claims')" style="margin-right: 10px;">🔄 Regenerate</button>
+                <button class="btn-secondary btn" onclick="exportImage('claims')" style="margin-right: 10px;">📥 Export</button>
+                <button class="btn-secondary btn" onclick="resizeImage('claims')">🔍 Resize</button>
             </div>
 
-            <!-- Trend Image -->
+            <!-- Spotlight Image -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                <h3 style="margin: 0 0 10px 0;">📈 Trend Section Image</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="trendImageTitle">For your trend article</p>
+                <h3 style="margin: 0 0 10px 0;">⭐ InsurNews Spotlight Image</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="spotlightImageTitle">For your spotlight story</p>
 
-                <div id="trendImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div id="spotlightImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
                     <div style="text-align: center; color: #999;">
                         <div class="spinner" style="margin: 0 auto 10px;"></div>
                         <div>Generating image...</div>
@@ -1172,11 +1191,32 @@
 
                 <div style="margin-bottom: 10px;">
                     <label style="display: block; font-weight: 600; margin-bottom: 5px;">Image Prompt:</label>
-                    <textarea id="trendPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
+                    <textarea id="spotlightPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
                 </div>
-                <button class="btn-secondary btn" onclick="regenerateImage('trend')" style="margin-right: 10px;">🔄 Regenerate</button>
-                <button class="btn-secondary btn" onclick="exportImage('trend')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('trend')">🔍 Resize</button>
+                <button class="btn-secondary btn" onclick="regenerateImage('spotlight')" style="margin-right: 10px;">🔄 Regenerate</button>
+                <button class="btn-secondary btn" onclick="exportImage('spotlight')" style="margin-right: 10px;">📥 Export</button>
+                <button class="btn-secondary btn" onclick="resizeImage('spotlight')">🔍 Resize</button>
+            </div>
+
+            <!-- Tips Image -->
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+                <h3 style="margin: 0 0 10px 0;">💡 Agent Advantage Image</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="tipsImageTitle">For your agent tips section</p>
+
+                <div id="tipsImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                    <div style="text-align: center; color: #999;">
+                        <div class="spinner" style="margin: 0 auto 10px;"></div>
+                        <div>Generating image...</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">Image Prompt:</label>
+                    <textarea id="tipsPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
+                </div>
+                <button class="btn-secondary btn" onclick="regenerateImage('tips')" style="margin-right: 10px;">🔄 Regenerate</button>
+                <button class="btn-secondary btn" onclick="exportImage('tips')" style="margin-right: 10px;">📥 Export</button>
+                <button class="btn-secondary btn" onclick="resizeImage('tips')">🔍 Resize</button>
             </div>
 
             <div class="buttons">
@@ -2391,7 +2431,7 @@
                 showStep(6); // Brand Check loading screen
 
                 // Get the edited content from the contenteditable divs
-                const introContent = document.getElementById('introContentBox')?.innerHTML || '';
+                const briteSpotContent = document.getElementById('briteSpotContentBox')?.innerHTML || briteSpotRewritten || briteSpotContent || '';
                 const claimsContent = document.getElementById('claimsContentBox')?.innerHTML || '';
                 const roundupContent = document.getElementById('roundupContentBox')?.innerHTML || '';
                 const spotlightContent = document.getElementById('spotlightContentBox')?.innerHTML || '';
@@ -2401,13 +2441,11 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        content: {
-                            introduction: introContent,
-                            curious_claims: claimsContent,
-                            news_roundup: roundupContent,
-                            spotlight: spotlightContent,
-                            agent_tips: tipsContent
-                        }
+                        brite_spot_content: briteSpotContent,
+                        claims_content: claimsContent,
+                        roundup_content: roundupContent,
+                        spotlight_content: spotlightContent,
+                        tips_content: tipsContent
                     })
                 });
 
@@ -2416,7 +2454,7 @@
                 if (data.success) {
                     displayBrandCheckResults({
                         passed: data.passed,
-                        details: data.details
+                        suggestions: data.check_results?.suggestions || []
                     });
                     showStep(7); // Check Results
                 } else {
@@ -2432,30 +2470,106 @@
 
         function displayBrandCheckResults(results) {
             const container = document.getElementById('brandCheckResults');
+            const suggestions = results.suggestions || [];
 
             let html = '';
 
-            if (results.passed) {
+            if (results.passed || suggestions.length === 0) {
                 // Passed brand check
                 html += `<div style="text-align: center; padding: 40px; background: #10b98120; border-radius: 8px; margin-bottom: 20px;">`;
                 html += `<h2 style="margin: 0; color: #10b981; font-size: 36px;">✅ Brand Check Passed!</h2>`;
                 html += `<p style="margin: 10px 0 0 0; color: #666;">Your content meets brand guidelines and is ready to go!</p>`;
                 html += `</div>`;
             } else {
-                // Failed brand check
+                // Has suggestions - needs review
                 html += `<div style="text-align: center; padding: 20px; background: #fef3c7; border-radius: 8px; margin-bottom: 20px;">`;
-                html += `<h2 style="margin: 0; color: #f59e0b; font-size: 32px;">⚠️ Review Needed</h2>`;
-                html += `<p style="margin: 10px 0 0 0; color: #666;">Please review the feedback below before publishing.</p>`;
+                html += `<h2 style="margin: 0; color: #f59e0b; font-size: 32px;">⚠️ ${suggestions.length} Suggestion${suggestions.length > 1 ? 's' : ''} Found</h2>`;
+                html += `<p style="margin: 10px 0 0 0; color: #666;">Review the suggestions below and accept or ignore each one.</p>`;
+                html += `</div>`;
+
+                // Group suggestions by section
+                const sectionLabels = {
+                    'brite_spot': 'Brite Spot',
+                    'claims': 'Curious Claims',
+                    'roundup': 'News Roundup',
+                    'spotlight': 'InsurNews Spotlight',
+                    'tips': 'Agent Advantage'
+                };
+
+                const sectionIcons = {
+                    'brite_spot': '✨',
+                    'claims': '🔍',
+                    'roundup': '📰',
+                    'spotlight': '⭐',
+                    'tips': '💡'
+                };
+
+                // Display each suggestion
+                suggestions.forEach((suggestion, index) => {
+                    const section = suggestion.section || 'content';
+                    const sectionLabel = sectionLabels[section] || section;
+                    const sectionIcon = sectionIcons[section] || '📝';
+                    const suggestionId = `suggestion-${section}-${index}`;
+
+                    html += `<div id="${suggestionId}" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #e5e7eb;">`;
+                    html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">`;
+                    html += `<span style="font-size: 12px; background: #e5e7eb; padding: 4px 12px; border-radius: 20px; color: #374151; font-weight: 600;">${sectionIcon} ${sectionLabel}</span>`;
+                    html += `<span style="font-size: 12px; color: #f59e0b; font-weight: 600;">${suggestion.issue || 'Style Issue'}</span>`;
+                    html += `</div>`;
+
+                    // Original text with strikethrough
+                    html += `<div style="margin-bottom: 10px;">`;
+                    html += `<label style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">Original:</label>`;
+                    html += `<p style="margin: 4px 0; padding: 10px; background: #fef3c7; border-radius: 4px; border-left: 3px solid #f59e0b; text-decoration: line-through; color: #92400e;">${suggestion.original || ''}</p>`;
+                    html += `</div>`;
+
+                    // Suggested text
+                    html += `<div style="margin-bottom: 10px;">`;
+                    html += `<label style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">Suggested:</label>`;
+                    html += `<p style="margin: 4px 0; padding: 10px; background: #d1fae5; border-radius: 4px; border-left: 3px solid #10b981; color: #065f46; font-weight: 500;">${suggestion.suggested || ''}</p>`;
+                    html += `</div>`;
+
+                    // Reason
+                    html += `<p style="font-size: 13px; color: #6b7280; margin-bottom: 15px; font-style: italic;">${suggestion.reason || ''}</p>`;
+
+                    // Accept/Ignore buttons
+                    html += `<div style="display: flex; gap: 10px;">`;
+                    html += `<button onclick="acceptSuggestion('${suggestionId}', '${escapeForAttribute(suggestion.original || '')}', '${escapeForAttribute(suggestion.suggested || '')}', '${section}')" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600;">✓ Accept</button>`;
+                    html += `<button onclick="ignoreSuggestion('${suggestionId}')" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600;">✗ Ignore</button>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+
+                // Quick actions
+                html += `<div style="background: #f3f4f6; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">`;
+                html += `<span style="color: #374151; font-weight: 600;">${suggestions.length} suggestion${suggestions.length > 1 ? 's' : ''} remaining</span>`;
+                html += `<div style="display: flex; gap: 10px;">`;
+                html += `<button onclick="acceptAllSuggestions()" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer;">Accept All</button>`;
+                html += `<button onclick="ignoreAllSuggestions()" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer;">Ignore All</button>`;
+                html += `</div>`;
                 html += `</div>`;
             }
 
-            // Show the detailed review
-            html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
-            html += `<h3 style="margin: 0 0 15px 0; color: #272d3f;">Brand Review Details</h3>`;
-            html += `<pre style="white-space: pre-wrap; font-family: inherit; margin: 0; line-height: 1.6; color: #374151;">${results.details || 'No details available.'}</pre>`;
-            html += `</div>`;
-
             container.innerHTML = html;
+        }
+
+        // Store current suggestions for bulk actions
+        let currentSuggestions = [];
+
+        function acceptAllSuggestions() {
+            // Find all suggestion cards and click their accept buttons
+            document.querySelectorAll('[id^="suggestion-"]').forEach(card => {
+                const acceptBtn = card.querySelector('button:first-of-type');
+                if (acceptBtn) acceptBtn.click();
+            });
+        }
+
+        function ignoreAllSuggestions() {
+            // Find all suggestion cards and click their ignore buttons
+            document.querySelectorAll('[id^="suggestion-"]').forEach(card => {
+                const ignoreBtn = card.querySelector('button:last-of-type');
+                if (ignoreBtn) ignoreBtn.click();
+            });
         }
 
         function highlightContent(content, suggestions) {
@@ -2509,32 +2623,92 @@
         }
 
         function acceptSuggestion(suggestionId, original, suggested, section) {
+            // Map section names to content box IDs
+            const sectionToContentBox = {
+                'brite_spot': 'briteSpotContentBox',
+                'claims': 'claimsContentBox',
+                'roundup': 'roundupContentBox',
+                'spotlight': 'spotlightContentBox',
+                'tips': 'tipsContentBox'
+            };
+
             // Get the content box for this section
-            const contentBox = document.getElementById(`${section}ContentBox`);
-            if (!contentBox) return;
+            const contentBoxId = sectionToContentBox[section] || `${section}ContentBox`;
+            const contentBox = document.getElementById(contentBoxId);
 
-            // Replace the original text with suggested text in the content box
-            let content = contentBox.innerHTML;
+            if (contentBox) {
+                // Replace the original text with suggested text in the content box
+                let content = contentBox.innerHTML;
+                // Decode HTML entities for comparison
+                const decodedOriginal = original.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+                const decodedSuggested = suggested.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
 
-            // Remove the suggestion highlight span and replace with just the suggested text
+                // Replace in content box
+                contentBox.innerHTML = content.replace(decodedOriginal, decodedSuggested);
+            }
+
+            // Remove the suggestion card from the results
             const suggestionElement = document.getElementById(suggestionId);
             if (suggestionElement) {
-                // Find and replace just this instance
-                const parent = suggestionElement.parentElement;
-                const textNode = document.createTextNode(suggested);
-                parent.replaceChild(textNode, suggestionElement);
+                suggestionElement.style.transition = 'all 0.3s ease';
+                suggestionElement.style.opacity = '0';
+                suggestionElement.style.transform = 'translateX(20px)';
+                setTimeout(() => suggestionElement.remove(), 300);
             }
 
             // Show success message
             const toast = document.createElement('div');
-            toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; animation: slideIn 0.3s ease;';
+            toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
             toast.textContent = '✓ Change accepted';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+
+            // Update remaining count
+            updateSuggestionsCount();
+        }
+
+        function updateSuggestionsCount() {
+            const remaining = document.querySelectorAll('[id^="suggestion-"]').length;
+            const countEl = document.querySelector('#brandCheckResults .buttons span, #brandCheckResults > div:last-child span');
+            if (countEl && countEl.textContent.includes('suggestion')) {
+                countEl.textContent = `${remaining} suggestion${remaining !== 1 ? 's' : ''} remaining`;
+            }
+            // If no suggestions left, show success
+            if (remaining === 0) {
+                const container = document.getElementById('brandCheckResults');
+                const successHtml = `<div style="text-align: center; padding: 40px; background: #10b98120; border-radius: 8px; margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: #10b981; font-size: 36px;">✅ All Suggestions Resolved!</h2>
+                    <p style="margin: 10px 0 0 0; color: #666;">Your content is now ready to continue.</p>
+                </div>`;
+                container.innerHTML = successHtml;
+            }
+        }
+
+        function ignoreSuggestion(suggestionId) {
+            // Get the suggestion element (card)
+            const suggestionElement = document.getElementById(suggestionId);
+            if (!suggestionElement) return;
+
+            // Animate and remove the suggestion card
+            suggestionElement.style.transition = 'all 0.3s ease';
+            suggestionElement.style.opacity = '0';
+            suggestionElement.style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+                suggestionElement.remove();
+                updateSuggestionsCount();
+            }, 300);
+
+            // Show info message
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #6b7280; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
+            toast.textContent = 'Suggestion ignored';
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 2000);
         }
 
-        function ignoreSuggestion(suggestionId) {
-            // Get the suggestion element
+        // Legacy ignoreSuggestion for inline suggestions (if any)
+        function ignoreSuggestionLegacy(suggestionId) {
+            // Get the suggestion element (inline highlight)
             const suggestionElement = document.getElementById(suggestionId);
             if (!suggestionElement) return;
 
@@ -2560,9 +2734,10 @@
         // Store generated images
         let generatedImages = {
             meme: null,
-            news: null,
-            tip: null,
-            trend: null
+            briteSpot: null,
+            claims: null,
+            spotlight: null,
+            tips: null
         };
 
         // Helper to extract readable text from content objects
@@ -2777,30 +2952,33 @@
                 document.getElementById('promptGenerationLoading').style.display = 'block';
                 document.getElementById('promptEditing').style.display = 'none';
 
-                // Extract content text
-                const newsText = extractContentText(generatedNewsContent);
-                const tipText = extractContentText(generatedTipContent);
-                const trendText = extractContentText(generatedTrendContent);
+                // Extract content text for each section
+                const briteSpotText = briteSpotRewritten || briteSpotContent || '';
+                const claimsText = extractContentText(generatedClaimsContent);
+                const spotlightText = extractContentText(generatedSpotlightContent);
+                const tipsText = Array.isArray(generatedTipsContent)
+                    ? generatedTipsContent.map(t => t.tip || t).join(' ')
+                    : extractContentText(generatedTipsContent);
 
                 // DEBUG: Log what content was extracted
                 console.log('[FRONTEND DEBUG] ===== CONTENT EXTRACTION =====');
-                console.log('[FRONTEND DEBUG] generatedNewsContent object:', generatedNewsContent);
-                console.log('[FRONTEND DEBUG] generatedTipContent object:', generatedTipContent);
-                console.log('[FRONTEND DEBUG] generatedTrendContent object:', generatedTrendContent);
-                console.log('[FRONTEND DEBUG] Extracted news content:', newsText?.substring(0, 300));
-                console.log('[FRONTEND DEBUG] Extracted tip content:', tipText?.substring(0, 300));
-                console.log('[FRONTEND DEBUG] Extracted trend content:', trendText?.substring(0, 300));
+                console.log('[FRONTEND DEBUG] briteSpotContent:', briteSpotText?.substring(0, 300));
+                console.log('[FRONTEND DEBUG] generatedClaimsContent:', claimsText?.substring(0, 300));
+                console.log('[FRONTEND DEBUG] generatedSpotlightContent:', spotlightText?.substring(0, 300));
+                console.log('[FRONTEND DEBUG] generatedTipsContent:', tipsText?.substring(0, 300));
 
                 const sections = {
-                    news: { title: selectedNews.title, content: newsText, month: selectedMonth },
-                    tip: { title: selectedTip.title, content: tipText, month: selectedMonth },
-                    trend: { title: selectedTrend.title, content: trendText, month: selectedMonth }
+                    briteSpot: { title: 'The Brite Spot', content: briteSpotText, month: selectedMonth },
+                    claims: { title: selectedClaims?.title || 'Curious Claims', content: claimsText, month: selectedMonth },
+                    spotlight: { title: generatedSpotlightSubheader || 'InsurNews Spotlight', content: spotlightText, month: selectedMonth },
+                    tips: { title: 'Agent Advantage', content: tipsText, month: selectedMonth }
                 };
 
                 console.log('[FRONTEND DEBUG] ===== SECTIONS BEING SENT TO API =====');
-                console.log('[FRONTEND DEBUG] News title:', selectedNews.title);
-                console.log('[FRONTEND DEBUG] Tip title:', selectedTip.title);
-                console.log('[FRONTEND DEBUG] Trend title:', selectedTrend.title);
+                console.log('[FRONTEND DEBUG] Brite Spot title:', sections.briteSpot.title);
+                console.log('[FRONTEND DEBUG] Claims title:', sections.claims.title);
+                console.log('[FRONTEND DEBUG] Spotlight title:', sections.spotlight.title);
+                console.log('[FRONTEND DEBUG] Tips title:', sections.tips.title);
                 console.log('[FRONTEND DEBUG] Full sections object:', JSON.stringify(sections, null, 2));
 
                 // Call API to generate prompts
@@ -2822,22 +3000,26 @@
 
                 // Display prompts in textareas
                 // Store base prompts (without style modifiers)
-                basePrompts.news = data.prompts.news;
-                basePrompts.tip = data.prompts.tip;
-                basePrompts.trend = data.prompts.trend;
+                basePrompts.briteSpot = data.prompts.briteSpot?.prompt || data.prompts.briteSpot || '';
+                basePrompts.claims = data.prompts.claims?.prompt || data.prompts.claims || '';
+                basePrompts.spotlight = data.prompts.spotlight?.prompt || data.prompts.spotlight || '';
+                basePrompts.tips = data.prompts.tips?.prompt || data.prompts.tips || '';
 
-                document.getElementById('newsImagePromptText').value = data.prompts.news;
-                document.getElementById('tipImagePromptText').value = data.prompts.tip;
-                document.getElementById('trendImagePromptText').value = data.prompts.trend;
+                document.getElementById('briteSpotImagePromptText').value = basePrompts.briteSpot;
+                document.getElementById('claimsImagePromptText').value = basePrompts.claims;
+                document.getElementById('spotlightImagePromptText').value = basePrompts.spotlight;
+                document.getElementById('tipsImagePromptText').value = basePrompts.tips;
 
-                console.log('[FRONTEND DEBUG] Set newsImagePromptText to:', data.prompts.news);
-                console.log('[FRONTEND DEBUG] Set tipImagePromptText to:', data.prompts.tip);
-                console.log('[FRONTEND DEBUG] Set trendImagePromptText to:', data.prompts.trend);
+                console.log('[FRONTEND DEBUG] Set briteSpotImagePromptText to:', basePrompts.briteSpot);
+                console.log('[FRONTEND DEBUG] Set claimsImagePromptText to:', basePrompts.claims);
+                console.log('[FRONTEND DEBUG] Set spotlightImagePromptText to:', basePrompts.spotlight);
+                console.log('[FRONTEND DEBUG] Set tipsImagePromptText to:', basePrompts.tips);
 
                 // Show article titles
-                document.getElementById('newsPromptArticle').textContent = `For: ${selectedNews.title}`;
-                document.getElementById('tipPromptArticle').textContent = `For: ${selectedTip.title}`;
-                document.getElementById('trendPromptArticle').textContent = `For: ${selectedTrend.title}`;
+                document.getElementById('briteSpotPromptArticle').textContent = `For: The Brite Spot`;
+                document.getElementById('claimsPromptArticle').textContent = `For: ${selectedClaims?.title || 'Curious Claims'}`;
+                document.getElementById('spotlightPromptArticle').textContent = `For: ${generatedSpotlightSubheader || 'InsurNews Spotlight'}`;
+                document.getElementById('tipsPromptArticle').textContent = `For: Agent Advantage Tips`;
 
                 // Mark prompts as generated
                 promptsAlreadyGenerated = true;
@@ -2854,9 +3036,10 @@
 
         // Store base prompts for each section (without style modifiers)
         let basePrompts = {
-            news: '',
-            tip: '',
-            trend: ''
+            briteSpot: '',
+            claims: '',
+            spotlight: '',
+            tips: ''
         };
 
         function updatePromptWithStyle(section) {
@@ -2947,7 +3130,7 @@
 
         async function generateImagesFromPrompts(forceRegenerate = false) {
             // Check if images already exist and we're not forcing regeneration
-            if (imagesAlreadyGenerated && !forceRegenerate && generatedImages.news && generatedImages.tip && generatedImages.trend) {
+            if (imagesAlreadyGenerated && !forceRegenerate && generatedImages.briteSpot && generatedImages.claims && generatedImages.spotlight && generatedImages.tips) {
                 console.log('[Navigation] Images already generated, showing existing images');
                 displayImages();
                 showStep(10);
@@ -2962,29 +3145,34 @@
                         <div class="spinner"></div>
                         <h3>Generating Images...</h3>
                         <p style="color: #666;">Using Nano Banana (Gemini) to create article-specific images...</p>
-                        <p style="color: #999; font-size: 14px; margin-top: 10px;">This may take 20-30 seconds...</p>
+                        <p style="color: #999; font-size: 14px; margin-top: 10px;">This may take 30-60 seconds for 4 images...</p>
                     </div>
                 `;
                 document.getElementById('promptEditing').style.display = 'none';
 
                 // Read prompts from textareas
                 const prompts = {
-                    news: document.getElementById('newsImagePromptText').value,
-                    tip: document.getElementById('tipImagePromptText').value,
-                    trend: document.getElementById('trendImagePromptText').value
+                    briteSpot: document.getElementById('briteSpotImagePromptText').value,
+                    claims: document.getElementById('claimsImagePromptText').value,
+                    spotlight: document.getElementById('spotlightImagePromptText').value,
+                    tips: document.getElementById('tipsImagePromptText').value
                 };
 
                 console.log('[IMAGE GEN] Sending prompts to Nano Banana:', prompts);
 
                 // Extract content text for sections (needed by API)
-                const newsText = extractContentText(generatedNewsContent);
-                const tipText = extractContentText(generatedTipContent);
-                const trendText = extractContentText(generatedTrendContent);
+                const briteSpotText = briteSpotRewritten || briteSpotContent || '';
+                const claimsText = extractContentText(generatedClaimsContent);
+                const spotlightText = extractContentText(generatedSpotlightContent);
+                const tipsText = Array.isArray(generatedTipsContent)
+                    ? generatedTipsContent.map(t => t.tip || t).join(' ')
+                    : extractContentText(generatedTipsContent);
 
                 const sections = {
-                    news: { title: selectedNews.title, content: newsText, month: selectedMonth },
-                    tip: { title: selectedTip.title, content: tipText, month: selectedMonth },
-                    trend: { title: selectedTrend.title, content: trendText, month: selectedMonth }
+                    briteSpot: { title: 'The Brite Spot', content: briteSpotText, month: selectedMonth },
+                    claims: { title: selectedClaims?.title || 'Curious Claims', content: claimsText, month: selectedMonth },
+                    spotlight: { title: generatedSpotlightSubheader || 'InsurNews Spotlight', content: spotlightText, month: selectedMonth },
+                    tips: { title: 'Agent Advantage', content: tipsText, month: selectedMonth }
                 };
 
                 // Call API to generate images
@@ -3010,9 +3198,10 @@
                 }
 
                 // Store images with their prompts
-                generatedImages.news = { url: data.images.news, prompt: prompts.news };
-                generatedImages.tip = { url: data.images.tip, prompt: prompts.tip };
-                generatedImages.trend = { url: data.images.trend, prompt: prompts.trend };
+                generatedImages.briteSpot = { url: data.images.briteSpot, prompt: prompts.briteSpot };
+                generatedImages.claims = { url: data.images.claims, prompt: prompts.claims };
+                generatedImages.spotlight = { url: data.images.spotlight, prompt: prompts.spotlight };
+                generatedImages.tips = { url: data.images.tips, prompt: prompts.tips };
 
                 // Mark images as generated
                 imagesAlreadyGenerated = true;
@@ -3432,28 +3621,36 @@
                 }, 100);
             }
 
-            // Display news image
-            if (generatedImages.news) {
-                document.getElementById('newsImagePreview').innerHTML = `
-                    <img src="${generatedImages.news.url}" alt="News Image" style="max-width: 100%; border-radius: 8px;" />
+            // Display Brite Spot image
+            if (generatedImages.briteSpot) {
+                document.getElementById('briteSpotImagePreview').innerHTML = `
+                    <img src="${generatedImages.briteSpot.url}" alt="Brite Spot Image" style="max-width: 100%; border-radius: 8px;" />
                 `;
-                document.getElementById('newsPrompt').value = generatedImages.news.prompt || '';
+                document.getElementById('briteSpotPrompt').value = generatedImages.briteSpot.prompt || '';
             }
 
-            // Display tip image
-            if (generatedImages.tip) {
-                document.getElementById('tipImagePreview').innerHTML = `
-                    <img src="${generatedImages.tip.url}" alt="Tip Image" style="max-width: 100%; border-radius: 8px;" />
+            // Display Claims image
+            if (generatedImages.claims) {
+                document.getElementById('claimsImagePreview').innerHTML = `
+                    <img src="${generatedImages.claims.url}" alt="Curious Claims Image" style="max-width: 100%; border-radius: 8px;" />
                 `;
-                document.getElementById('tipPrompt').value = generatedImages.tip.prompt || '';
+                document.getElementById('claimsPrompt').value = generatedImages.claims.prompt || '';
             }
 
-            // Display trend image
-            if (generatedImages.trend) {
-                document.getElementById('trendImagePreview').innerHTML = `
-                    <img src="${generatedImages.trend.url}" alt="Trend Image" style="max-width: 100%; border-radius: 8px;" />
+            // Display Spotlight image
+            if (generatedImages.spotlight) {
+                document.getElementById('spotlightImagePreview').innerHTML = `
+                    <img src="${generatedImages.spotlight.url}" alt="Spotlight Image" style="max-width: 100%; border-radius: 8px;" />
                 `;
-                document.getElementById('trendPrompt').value = generatedImages.trend.prompt || '';
+                document.getElementById('spotlightPrompt').value = generatedImages.spotlight.prompt || '';
+            }
+
+            // Display Tips image
+            if (generatedImages.tips) {
+                document.getElementById('tipsImagePreview').innerHTML = `
+                    <img src="${generatedImages.tips.url}" alt="Agent Advantage Image" style="max-width: 100%; border-radius: 8px;" />
+                `;
+                document.getElementById('tipsPrompt').value = generatedImages.tips.prompt || '';
             }
         }
 
@@ -4285,30 +4482,30 @@
             const subjectLine = document.getElementById('finalSubjectLine')?.value || 'Your Monthly Newsletter';
             const preheader = document.getElementById('finalPreheader')?.value || 'Latest insights inside';
 
-            // Prepare news data
+            // Prepare claims data (maps to "news" in template)
             const newsData = {
-                title: selectedNews?.title || 'News Update',
-                content: document.getElementById('newsContentBox')?.innerHTML || generatedNewsContent || '',
-                image: generatedImages.news?.url || '',
-                url: selectedNews?.source_url || selectedNews?.url || '#'
+                title: selectedClaims?.title || 'Curious Claims',
+                content: document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '',
+                image: generatedImages.claims?.url || '',
+                url: selectedClaims?.source_url || selectedClaims?.url || '#'
             };
 
-            // Prepare tip data
+            // Prepare spotlight data (maps to "tip" in template)
             const tipData = {
-                title: selectedTip?.title || 'Tip of the Month',
-                content: document.getElementById('tipContentBox')?.innerHTML || generatedTipContent || '',
-                subtitle: generatedTipSubtitle || '',
-                image: generatedImages.tip?.url || '',
-                url: selectedTip?.source_url || selectedTip?.url || '#'
+                title: generatedSpotlightSubheader || 'InsurNews Spotlight',
+                content: document.getElementById('spotlightContentBox')?.innerHTML || generatedSpotlightContent || '',
+                subtitle: '',
+                image: generatedImages.spotlight?.url || '',
+                url: '#'
             };
 
-            // Prepare trend data
+            // Prepare tips data (maps to "trend" in template)
             const trendData = {
-                title: selectedTrend?.title || 'Trend Alert',
-                content: document.getElementById('trendContentBox')?.innerHTML || generatedTrendContent || '',
-                subtitle: generatedTrendSubtitle || '',
-                image: generatedImages.trend?.url || '',
-                url: selectedTrend?.source_url || selectedTrend?.url || '#'
+                title: 'Agent Advantage',
+                content: document.getElementById('tipsContentBox')?.innerHTML || (Array.isArray(generatedTipsContent) ? generatedTipsContent.map(t => t.tip || t).join('<br>') : generatedTipsContent) || '',
+                subtitle: '',
+                image: generatedImages.tips?.url || '',
+                url: '#'
             };
 
             // Get meme URL

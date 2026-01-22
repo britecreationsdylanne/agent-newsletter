@@ -965,33 +965,42 @@ Summary: {article.get('snippet', article.get('industry_data', ''))}
 
         prompt = f"""You are writing the "InsurNews Spotlight" section for BriteCo Brief, a newsletter for independent insurance agents.
 
-Analyze these {len(articles)} related articles and create a comprehensive feature story that synthesizes the information:
+Analyze these {len(articles)} related articles and create a comprehensive, in-depth feature story that synthesizes the information:
 
 {article_summaries}
 
-CREATE A SPOTLIGHT STORY WITH:
+CREATE A DETAILED SPOTLIGHT STORY WITH:
 
-1. SUB-HEADER (max 15 words): A compelling headline that captures the unified theme
+1. SUB-HEADER (max 15 words): A compelling headline that captures the unified theme and creates urgency or interest
 
-2. H3 SECTIONS: Create 2-4 H3 headers that break down different aspects of the story
-   - Each H3 should have 1-2 paragraphs (1-4 sentences each)
-   - Reference specific data points from the sources
-   - Include hyperlink placeholders like [Source Name](URL)
+2. H3 SECTIONS: Create 4-5 H3 headers that break down different aspects of the story
+   - Each H3 should have 2-3 substantial paragraphs
+   - Each paragraph should be 3-5 sentences
+   - Reference specific data points, statistics, and facts from the sources
+   - Include multiple hyperlink placeholders like [Source Name](URL) throughout
+   - Cover: What's happening, Why it matters, Industry context, Regional/market impact
 
-3. AGENT TAKEAWAY: End with actionable insights for independent insurance agents
+3. IMPLICATIONS FOR AGENTS SECTION: A dedicated section with:
+   - 2-3 paragraphs explaining how this affects independent agents
+   - Specific client conversation starters
+   - Potential business opportunities or risks
+
+4. ACTIONABLE INSIGHTS: End with 3-4 bullet points of specific actions agents can take
 
 OUTPUT FORMAT (JSON):
 {{
     "subheader": "Your compelling sub-header here",
     "h3s": [
-        {{"title": "H3 Title 1", "body": "Paragraph content with [source links]..."}},
-        {{"title": "H3 Title 2", "body": "Paragraph content..."}},
-        {{"title": "H3 Title 3", "body": "Paragraph content..."}}
+        {{"title": "H3 Title 1 - The Big Picture", "body": "Multiple paragraphs with [source links]..."}},
+        {{"title": "H3 Title 2 - By the Numbers", "body": "Paragraphs with data points and statistics..."}},
+        {{"title": "H3 Title 3 - Industry Response", "body": "What carriers and industry leaders are saying..."}},
+        {{"title": "H3 Title 4 - Regional Impact", "body": "How this affects different markets..."}},
+        {{"title": "Implications for Agents", "body": "Detailed analysis of agent impact..."}}
     ],
-    "agent_takeaway": "Actionable insights for agents..."
+    "agent_takeaway": "• Actionable insight 1\\n• Actionable insight 2\\n• Actionable insight 3\\n• Actionable insight 4"
 }}
 
-Target: 250-300 words total. Be factual and cite sources."""
+Target: 500-600 words total. Be thorough, factual, and cite sources throughout."""
 
         result = claude_client.generate_content(
             prompt=prompt,
@@ -1338,62 +1347,92 @@ def research_articles():
 
         research_results = {}
 
-        # Research Curious Claims (~200 words)
+        # Research Curious Claims (~350-400 words, storytelling narrative)
         if curious_claims_topic:
             safe_print(f"  - Researching Curious Claims: {curious_claims_topic.get('title', 'Unknown')}")
-            claims_prompt = f"""You are a senior insurance industry analyst. Research this claims story and produce a briefing (~200 words).
+            claims_prompt = f"""You are a master storyteller writing for BriteCo Brief, an insurance newsletter for independent agents.
 
 Article: {curious_claims_topic.get('title', 'Unknown')}
 Source: {curious_claims_topic.get('url', 'N/A')}
 Initial Summary: {curious_claims_topic.get('description', '')}
 
-Produce a structured briefing:
+Write an engaging STORY about this claims case using this structure:
 
-1. THE CLAIM
-What happened? Describe the unusual or interesting claim in 2-3 sentences.
+1. HOOK (1-2 sentences)
+Start with an attention-grabbing opening that draws readers in. Make it dramatic or intriguing.
 
-2. THE OUTCOME
-How was it resolved? What was the insurance company's response?
+2. THE SETUP (2-3 sentences)
+Set the scene. Who was involved? What was the situation before the claim?
 
-3. AGENT TAKEAWAY
-What can insurance agents learn from this? How does it relate to client conversations?
+3. THE INCIDENT (3-4 sentences)
+What happened? Describe the unusual claim event with vivid details. Paint a picture.
 
-Target: 150-200 words. Be engaging and informative."""
+4. THE TWIST OR COMPLICATION (2-3 sentences)
+What made this claim interesting or challenging? Was there something unexpected?
+
+5. THE RESOLUTION (2-3 sentences)
+How was it resolved? What did the insurance cover or not cover?
+
+6. AGENT TAKEAWAY (2-3 sentences)
+End with a clear lesson for insurance agents. How can they use this story with clients?
+
+STYLE REQUIREMENTS:
+- Write in a conversational, engaging tone
+- Use short paragraphs (2-3 sentences each)
+- Make it feel like a story, not a report
+- Include a memorable detail or quote if possible
+- Target: 350-400 words total
+
+Output the complete story as flowing prose, not as labeled sections."""
 
             claims_research = claude_client.generate_content(
                 prompt=claims_prompt,
                 model="claude-opus-4-5-20251101",
-                temperature=0.3,
-                max_tokens=500
+                temperature=0.5,
+                max_tokens=800
             )
             research_results['curious_claims'] = claims_research['content']
             print(f"    Curious Claims research: {len(claims_research['content'].split())} words")
 
-        # Research News Roundup (5 bullet points, ~25 words each)
+        # Research News Roundup (5 bullet points, headline-style with hyperlinks)
         if roundup_topics and len(roundup_topics) > 0:
             safe_print(f"  - Researching {len(roundup_topics)} roundup articles...")
             roundup_items = []
             for topic in roundup_topics[:5]:
                 safe_print(f"    - {topic.get('title', 'Unknown')[:50]}...")
-                roundup_prompt = f"""Summarize this insurance news in ONE bullet point (~25 words):
+                source_name = topic.get('publisher', 'Source')
+                url = topic.get('url', '#')
+
+                roundup_prompt = f"""Create a headline-style news bullet for this insurance story (~25-30 words).
 
 Article: {topic.get('title', 'Unknown')}
 Summary: {topic.get('description', '')}
-URL: {topic.get('url', 'N/A')}
+Source: {source_name}
 
-Output format: [Summary text] - [Source Name]
-Example: State Farm announces 15% rate increase in California amid wildfire concerns - Insurance Journal"""
+FORMAT REQUIREMENTS:
+- Start with a catchy, attention-grabbing phrase
+- Include the key news point
+- End with a hyperlink: [Source Name]({url})
+- Total ~25-30 words
+
+EXAMPLE FORMAT:
+"Rate hikes hit California hard, and [Insurance Journal](https://insurancejournal.com/article) reports State Farm is leading the charge with a 15% increase affecting 2 million policyholders."
+
+Another example:
+"Big changes for commercial auto, as [PropertyCasualty360](https://propertycasualty360.com/article) reveals new underwriting guidelines that could reshape fleet coverage nationwide."
+
+Output ONLY the bullet text with the embedded hyperlink, nothing else."""
 
                 roundup_result = claude_client.generate_content(
                     prompt=roundup_prompt,
                     model="claude-opus-4-5-20251101",
-                    temperature=0.2,
-                    max_tokens=100
+                    temperature=0.3,
+                    max_tokens=150
                 )
                 roundup_items.append({
                     'summary': roundup_result['content'].strip(),
-                    'url': topic.get('url', ''),
-                    'source': topic.get('publisher', '')
+                    'url': url,
+                    'source': source_name
                 })
             research_results['roundup'] = roundup_items
             print(f"    Roundup research complete: {len(roundup_items)} items")
@@ -1405,25 +1444,38 @@ Example: State Farm announces 15% rate increase in California amid wildfire conc
             research_results['spotlight'] = spotlight_content
             print(f"    Spotlight content ready: {spotlight_content.get('subheader', 'No title')}")
 
-        # Research Agent Advantage Tips (5 tips, ~30 words each)
+        # Research Agent Advantage Tips (5 tips with bold mini-titles + supporting sentences)
         if agent_tips_topics and len(agent_tips_topics) > 0:
             safe_print(f"  - Researching {len(agent_tips_topics)} agent tips...")
             tips_items = []
-            for topic in agent_tips_topics[:5]:
+            for i, topic in enumerate(agent_tips_topics[:5]):
                 safe_print(f"    - {topic.get('title', 'Unknown')[:50]}...")
-                tip_prompt = f"""Create ONE actionable tip for insurance agents (~30 words) based on:
+                tip_prompt = f"""Create ONE actionable tip for independent insurance agents based on this article.
 
 Article: {topic.get('title', 'Unknown')}
 Summary: {topic.get('description', '')}
 
-Output format: [Tip title]: [Actionable advice]
-Example: Follow Up Fast: Respond to leads within 5 minutes to increase conversion rates by up to 400%."""
+FORMAT REQUIREMENTS:
+- Start with a BOLD MINI-TITLE (up to 10 words, action-oriented)
+- Follow with 1-3 supporting sentences explaining the tip
+- Total ~40-50 words
+- Focus on sales, retention, or operations improvements
+
+EXAMPLE FORMAT:
+"**Master the Art of the Follow-Up Call**
+Don't just call once and give up. Set a reminder to follow up at least 3 times over 2 weeks. Studies show persistence increases close rates by 70%."
+
+Another example:
+"**Turn Claims Into Conversations**
+When a client files a claim, use it as a touchpoint. A simple 'How can I help?' call during the process builds trust and often leads to referrals."
+
+Output ONLY the tip with bold title and supporting sentences, nothing else."""
 
                 tip_result = claude_client.generate_content(
                     prompt=tip_prompt,
                     model="claude-opus-4-5-20251101",
-                    temperature=0.3,
-                    max_tokens=100
+                    temperature=0.4,
+                    max_tokens=150
                 )
                 tips_items.append({
                     'tip': tip_result['content'].strip(),
@@ -1771,65 +1823,135 @@ Output ONLY the preview text, nothing else."""
 
 @app.route('/api/brand-check', methods=['POST'])
 def brand_check():
-    """Check newsletter content against brand guidelines"""
+    """Check newsletter content against brand guidelines - returns structured JSON suggestions"""
     try:
         data = request.json
-        content = data.get('content', {})
-        html = data.get('html', '')
+        claims_content = data.get('claims_content', '')
+        roundup_content = data.get('roundup_content', '')
+        spotlight_content = data.get('spotlight_content', '')
+        tips_content = data.get('tips_content', '')
+        brite_spot_content = data.get('brite_spot_content', '')
 
         print(f"\n[API] Running brand check...")
 
-        # Combine all text content for checking
-        all_text = json.dumps(content) if content else html
+        # Combine all content for checking
+        full_content = f"""
+BRITE SPOT SECTION:
+{brite_spot_content}
 
-        check_prompt = f"""You are a brand compliance reviewer for BriteCo Brief, an insurance agent newsletter.
+CURIOUS CLAIMS SECTION:
+{claims_content}
 
-Review this content against brand guidelines:
+NEWS ROUNDUP SECTION:
+{roundup_content}
 
-CONTENT:
-{all_text[:3000]}
+INSURNEWS SPOTLIGHT SECTION:
+{spotlight_content}
 
-BRAND GUIDELINES:
-- Tone: Professional, knowledgeable, supportive
-- Focus: P&C insurance only (property, casualty, auto, homeowners, commercial)
-- Avoid: Health insurance, life insurance, political content, international news, jargon overload
+AGENT ADVANTAGE SECTION:
+{tips_content}
+"""
 
-CHECK FOR:
-1. Any health or life insurance mentions (FAIL if found)
-2. Any political content (FAIL if found)
-3. Tone consistency (professional but approachable)
-4. Clarity and readability
-5. Actionable content for agents
+        check_prompt = f"""You are a brand consistency checker for BriteCo Brief, an insurance agent newsletter, using BriteCo's Editorial Style Guide.
 
-OUTPUT FORMAT:
-PASS/FAIL: [PASS or FAIL]
-SCORE: [1-10]
-ISSUES: [List any issues found, or "None"]
-SUGGESTIONS: [Any improvement suggestions]"""
+BRAND GUIDELINES TO CHECK:
+
+1. TONE & VOICE:
+- Professional but approachable, knowledgeable, supportive
+- Clear, concise, actionable
+- Perspective: "We help independent insurance agents succeed"
+- Avoid: Overly salesy language, jargon without explanation, competitor bashing
+
+2. CONTENT FOCUS (P&C INSURANCE ONLY):
+- INCLUDE: Property & casualty, homeowners, auto, commercial, workers comp, liability
+- EXCLUDE: Health insurance, life insurance, Medicare/Medicaid, ACA content
+- EXCLUDE: Political content, election news, international news
+- US stories only (no international)
+
+3. PUNCTUATION & FORMATTING:
+- Use serial comma in lists
+- Use em dash (—) with spaces around it
+- Put punctuation inside quotation marks
+- Use hyphen between two words modifying a noun
+
+4. NUMBERS:
+- Use % symbol (not "percent")
+- Use numbers for ages (58-years-old, not fifty-eight)
+- Spell out "zero" (not "0")
+
+5. ABBREVIATIONS:
+- No periods in country codes (US, UK not U.S., U.K.)
+- Washington, DC (not D.C.)
+
+6. BRITECO BRAND TERMINOLOGY:
+- DO: Call BriteCo an "insurtech company" or "insurance provider"
+- DO: Say "backed by an AM Best A+ rated Insurance Carrier"
+- DO: Refer to website as brite.co or https://brite.co
+- DON'T: Call BriteCo an "insurance company"
+- DON'T: Say "we have AM Best policies" or "we are AM Best"
+- DON'T: Refer to website as www.brite.co
+
+Review the following newsletter content and identify SPECIFIC phrases that need to be changed.
+
+Return a JSON object with an array of suggested changes:
+{{
+    "suggestions": [
+        {{
+            "section": "claims" | "roundup" | "spotlight" | "tips" | "brite_spot",
+            "issue": "Brief description of the issue (e.g., 'Non-P&C content', 'Missing serial comma', 'Incorrect BriteCo terminology')",
+            "original": "exact phrase from content that needs changing",
+            "suggested": "what it should be changed to",
+            "reason": "why this change is needed per brand guidelines"
+        }}
+    ]
+}}
+
+Only include items that actually need to be changed. If the content is perfect, return an empty suggestions array.
+
+CONTENT TO REVIEW:
+{full_content}"""
 
         check_result = claude_client.generate_content(
             prompt=check_prompt,
             model="claude-opus-4-5-20251101",
             temperature=0.2,
-            max_tokens=500
+            max_tokens=1500
         )
 
-        result_text = check_result['content'].strip()
+        # Parse the JSON response
+        check_text = check_result['content'].strip()
 
-        # Parse the result
-        passed = 'PASS' in result_text.upper() and 'FAIL' not in result_text.split('PASS')[0].upper()
+        # Remove markdown code blocks if present
+        if check_text.startswith('```'):
+            check_text = check_text.split('```')[1]
+            if check_text.startswith('json'):
+                check_text = check_text[4:]
+            check_text = check_text.strip()
 
-        print(f"[API] Brand check complete: {'PASS' if passed else 'FAIL'}")
+        try:
+            check_results = json.loads(check_text)
+        except json.JSONDecodeError as e:
+            print(f"[API WARNING] Failed to parse brand check JSON: {e}")
+            print(f"[API WARNING] Raw response: {check_text[:200]}")
+            # Fallback if parsing fails
+            check_results = {"suggestions": []}
+
+        num_suggestions = len(check_results.get('suggestions', []))
+        passed = num_suggestions == 0
+
+        print(f"[API] Brand check complete - {num_suggestions} suggestions found")
 
         return jsonify({
             'success': True,
             'passed': passed,
-            'details': result_text,
+            'check_results': check_results,
             'generated_at': datetime.now().isoformat()
         })
 
     except Exception as e:
         print(f"[API ERROR] Brand check failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================================================
