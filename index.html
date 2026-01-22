@@ -2172,6 +2172,7 @@
         let generatedClaimsContent = null;
         let generatedRoundupContent = null;  // Array of 5 bullet items
         let generatedSpotlightContent = null;
+        let generatedSpotlightSubheader = null;  // Spotlight subheader from Step 2B
         let generatedTipsContent = null;  // Array of 5 tip items
         let generatedBriteSpotContent = null;
 
@@ -2218,7 +2219,7 @@
                     body: JSON.stringify({
                         curious_claims_topic: selectedClaims,
                         roundup_topics: selectedRoundup,
-                        spotlight_topic: selectedSpotlight,
+                        spotlight_content: spotlightGeneratedContent,  // Pass pre-generated spotlight content
                         agent_tips_topics: selectedTips
                     })
                 });
@@ -2264,6 +2265,7 @@
                     generatedClaimsContent = data.content.curious_claims;
                     generatedRoundupContent = data.content.roundup;
                     generatedSpotlightContent = data.content.spotlight;
+                    generatedSpotlightSubheader = data.content.spotlight_subheader || (spotlightGeneratedContent?.subheader || 'Industry Spotlight');
                     generatedTipsContent = data.content.agent_tips;
                     generatedBriteSpotContent = data.content.brite_spot;
 
@@ -2345,7 +2347,7 @@
             // INSURNEWS SPOTLIGHT SECTION
             html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
             html += '<h3 style="margin: 0 0 5px 0; color: #008181;">InsurNews Spotlight</h3>';
-            html += `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${selectedSpotlight?.title || 'Industry Spotlight'}</h4>`;
+            html += `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${generatedSpotlightSubheader || 'Industry Spotlight'}</h4>`;
             html += `<div id="spotlightContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${spotlightContent}</div>`;
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('spotlight')">Edit</button>`;
             html += `</div>`;
@@ -2412,7 +2414,10 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    displayBrandCheckResults(data.check_results);
+                    displayBrandCheckResults({
+                        passed: data.passed,
+                        details: data.details
+                    });
                     showStep(7); // Check Results
                 } else {
                     alert('Error checking brand guidelines: ' + (data.error || 'Unknown error'));
@@ -2430,75 +2435,25 @@
 
             let html = '';
 
-            // Check if we have suggestions
-            const suggestions = results.suggestions || [];
-
-            if (suggestions.length === 0) {
-                // No issues found
+            if (results.passed) {
+                // Passed brand check
                 html += `<div style="text-align: center; padding: 40px; background: #10b98120; border-radius: 8px; margin-bottom: 20px;">`;
-                html += `<h2 style="margin: 0; color: #10b981; font-size: 36px;">✅ Looks Great!</h2>`;
-                html += `<p style="margin: 10px 0 0 0; color: #666;">No brand guideline issues found. Your content is ready to go!</p>`;
+                html += `<h2 style="margin: 0; color: #10b981; font-size: 36px;">✅ Brand Check Passed!</h2>`;
+                html += `<p style="margin: 10px 0 0 0; color: #666;">Your content meets brand guidelines and is ready to go!</p>`;
                 html += `</div>`;
             } else {
-                // Show header
+                // Failed brand check
                 html += `<div style="text-align: center; padding: 20px; background: #fef3c7; border-radius: 8px; margin-bottom: 20px;">`;
-                html += `<h2 style="margin: 0; color: #f59e0b; font-size: 32px;">📝 Suggested Changes</h2>`;
-                html += `<p style="margin: 10px 0 0 0; color: #666;">Yellow highlights show what needs changing. Green highlights show suggested replacements.</p>`;
+                html += `<h2 style="margin: 0; color: #f59e0b; font-size: 32px;">⚠️ Review Needed</h2>`;
+                html += `<p style="margin: 10px 0 0 0; color: #666;">Please review the feedback below before publishing.</p>`;
                 html += `</div>`;
             }
 
-            // Get the full newsletter content with highlighting
-            const newsContent = highlightContent(
-                document.getElementById('newsContentBox')?.innerHTML || '',
-                suggestions.filter(s => s.section === 'news')
-            );
-            const tipContent = highlightContent(
-                document.getElementById('tipContentBox')?.innerHTML || '',
-                suggestions.filter(s => s.section === 'tip')
-            );
-            const trendContent = highlightContent(
-                document.getElementById('trendContentBox')?.innerHTML || '',
-                suggestions.filter(s => s.section === 'trend')
-            );
-
-            // Display full newsletter with highlights
-            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">📰 News You Can Use</h3>';
+            // Show the detailed review
             html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
-            html += newsContent;
+            html += `<h3 style="margin: 0 0 15px 0; color: #272d3f;">Brand Review Details</h3>`;
+            html += `<pre style="white-space: pre-wrap; font-family: inherit; margin: 0; line-height: 1.6; color: #374151;">${results.details || 'No details available.'}</pre>`;
             html += `</div>`;
-
-            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">💡 Tip of the Month</h3>';
-            html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
-            html += tipContent;
-            html += `</div>`;
-
-            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">📈 Trend Watch</h3>';
-            html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
-            html += trendContent;
-            html += `</div>`;
-
-            // If there are suggestions, show the legend
-            if (suggestions.length > 0) {
-                html += `<div style="margin-top: 30px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 2px dashed #e5e7eb;">`;
-                html += `<h4 style="margin: 0 0 10px 0; color: #666;">Legend:</h4>`;
-                html += `<div style="display: flex; gap: 20px; flex-wrap: wrap;">`;
-                html += `<div style="display: flex; align-items: center; gap: 8px;">`;
-                html += `<div style="width: 20px; height: 20px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 4px;"></div>`;
-                html += `<span style="font-size: 14px; color: #666;">Current text (needs changing)</span>`;
-                html += `</div>`;
-                html += `<div style="display: flex; align-items: center; gap: 8px;">`;
-                html += `<div style="width: 20px; height: 20px; background: #d1fae5; border: 2px solid #10b981; border-radius: 4px;"></div>`;
-                html += `<span style="font-size: 14px; color: #666;">Suggested replacement</span>`;
-                html += `</div>`;
-                html += `</div>`;
-
-                // Show issue count summary
-                html += `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">`;
-                html += `<strong style="color: #f59e0b;">${suggestions.length} issue${suggestions.length === 1 ? '' : 's'} found</strong> - `;
-                html += `Hover over highlighted text to see suggested changes.`;
-                html += `</div>`;
-                html += `</div>`;
-            }
 
             container.innerHTML = html;
         }

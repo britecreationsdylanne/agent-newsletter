@@ -1331,7 +1331,7 @@ def research_articles():
         data = request.json
         curious_claims_topic = data.get('curious_claims_topic')
         roundup_topics = data.get('roundup_topics', [])  # List of 5 articles
-        spotlight_topic = data.get('spotlight_topic')
+        spotlight_content = data.get('spotlight_content')  # Pre-generated spotlight content from Step 2B
         agent_tips_topics = data.get('agent_tips_topics', [])  # List of 5 tips
 
         print(f"\n[API] Researching selected articles...")
@@ -1398,42 +1398,12 @@ Example: State Farm announces 15% rate increase in California amid wildfire conc
             research_results['roundup'] = roundup_items
             print(f"    Roundup research complete: {len(roundup_items)} items")
 
-        # Research InsurNews Spotlight (~300 words)
-        if spotlight_topic:
-            safe_print(f"  - Researching Spotlight: {spotlight_topic.get('title', 'Unknown')}")
-            spotlight_prompt = f"""You are a senior insurance industry analyst. Produce a detailed briefing (~300 words) on this major news story.
-
-Article: {spotlight_topic.get('title', 'Unknown')}
-Source: {spotlight_topic.get('url', 'N/A')}
-Initial Summary: {spotlight_topic.get('description', '')}
-
-Produce a structured briefing:
-
-1. EXECUTIVE SUMMARY
-2-3 sentences capturing the core news and significance.
-
-2. KEY FACTS & DATA
-Bullet points with specific statistics, dates, and facts.
-
-3. INDUSTRY IMPACT
-1 paragraph on broader P&C insurance industry implications.
-
-4. WHAT IT MEANS FOR AGENTS
-1 paragraph on how this affects independent insurance agents and their clients.
-
-5. ACTIONABLE INSIGHTS
-2-3 bullets on what agents should do or consider.
-
-Target: 250-300 words. Be factual and cite specifics."""
-
-            spotlight_research = claude_client.generate_content(
-                prompt=spotlight_prompt,
-                model="claude-opus-4-5-20251101",
-                temperature=0.3,
-                max_tokens=800
-            )
-            research_results['spotlight'] = spotlight_research['content']
-            print(f"    Spotlight research: {len(spotlight_research['content'].split())} words")
+        # Use pre-generated InsurNews Spotlight content from Step 2B
+        if spotlight_content:
+            safe_print(f"  - Using pre-generated Spotlight: {spotlight_content.get('subheader', 'Unknown')}")
+            # Pass through the pre-generated spotlight content directly
+            research_results['spotlight'] = spotlight_content
+            print(f"    Spotlight content ready: {spotlight_content.get('subheader', 'No title')}")
 
         # Research Agent Advantage Tips (5 tips, ~30 words each)
         if agent_tips_topics and len(agent_tips_topics) > 0:
@@ -1584,34 +1554,31 @@ Output ONLY the section text, no title or labels."""
         if research.get('roundup'):
             sections['roundup'] = research['roundup']
 
-        # Generate InsurNews Spotlight from research
+        # Use pre-generated InsurNews Spotlight content (already written in Step 2B)
         if research.get('spotlight'):
-            print("  - Writing InsurNews Spotlight section...")
-            spotlight_prompt = f"""You are the copywriter for BriteCo Brief newsletter.
+            print("  - Formatting InsurNews Spotlight section...")
+            spotlight_data = research['spotlight']
 
-## RESEARCH BRIEFING
-{research['spotlight']}
+            # Convert structured spotlight content to readable text
+            if isinstance(spotlight_data, dict):
+                # Build the spotlight text from the structured content
+                spotlight_text = ""
 
-Write the "InsurNews Spotlight" section based on this research.
+                # Add H3 sections
+                for h3 in spotlight_data.get('h3s', []):
+                    spotlight_text += f"**{h3.get('title', '')}**\n\n"
+                    spotlight_text += f"{h3.get('body', '')}\n\n"
 
-Requirements:
-- 3-4 paragraphs
-- Maximum 300 words
-- Analytical, insightful tone
-- Include specific data points
-- End with actionable insights for agents
+                # Add agent takeaway
+                if spotlight_data.get('agent_takeaway'):
+                    spotlight_text += f"**What This Means for You**\n\n{spotlight_data['agent_takeaway']}"
 
-{style_guide}
-
-Output ONLY the section text, no title or labels."""
-
-            spotlight_result = claude_client.generate_content(
-                prompt=spotlight_prompt,
-                model="claude-opus-4-5-20251101",
-                temperature=0.4,
-                max_tokens=600
-            )
-            sections['spotlight'] = spotlight_result['content'].strip()
+                sections['spotlight'] = spotlight_text.strip()
+                sections['spotlight_subheader'] = spotlight_data.get('subheader', '')
+                sections['spotlight_sources'] = spotlight_data.get('sources', [])
+            else:
+                # Fallback if it's already a string
+                sections['spotlight'] = str(spotlight_data)
 
         # Agent Advantage tips are already formatted from research
         if research.get('agent_tips'):
