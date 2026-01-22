@@ -822,13 +822,54 @@
         <!-- Step 2B-Review: Spotlight Story Preview/Edit -->
         <div class="step" id="step2-spotlight-review">
             <h2>⭐ Review Spotlight Story</h2>
-            <p>Review and edit your generated InsurNews Spotlight content before continuing.</p>
+            <p>Review your generated InsurNews Spotlight content. Click "Edit Mode" to make changes.</p>
 
-            <div style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+            <!-- Toggle between Read and Edit mode -->
+            <div style="margin-bottom: 20px; text-align: right;">
+                <button id="spotlightModeToggle" onclick="toggleSpotlightMode()" class="btn-secondary btn" style="font-size: 13px; padding: 8px 16px;">
+                    ✏️ Edit Mode
+                </button>
+            </div>
+
+            <!-- READ MODE - Article-like display -->
+            <div id="spotlightReadMode" style="background: white; padding: 30px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+                <!-- Headline -->
+                <h2 id="spotlightSubheaderDisplay" style="margin: 0 0 20px 0; font-size: 24px; color: #008181; line-height: 1.3; border-bottom: 3px solid #008181; padding-bottom: 15px;">
+                    Loading...
+                </h2>
+
+                <!-- Article Body Sections -->
+                <div id="spotlightBodyDisplay" style="font-size: 15px; line-height: 1.8; color: #374151;">
+                    <!-- H3 sections will be rendered here as readable article -->
+                </div>
+
+                <!-- Agent Takeaway Box -->
+                <div style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #008181 0%, #006666 100%); border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; color: white; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">💡 Agent Takeaway</h4>
+                    <p id="spotlightTakeawayDisplay" style="margin: 0; color: white; font-size: 15px; line-height: 1.6;">
+                        Loading...
+                    </p>
+                </div>
+
+                <!-- Sources -->
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                    <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 600;">Sources:</p>
+                    <div id="spotlightSourcesDisplay" style="font-size: 13px; color: #008181;">
+                        <!-- Sources will be listed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDIT MODE - Form inputs (hidden by default) -->
+            <div id="spotlightEditMode" style="display: none; background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #3b82f6;">
+                <div style="background: #eff6ff; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
+                    <span style="font-size: 13px; color: #1e40af;">✏️ Edit Mode Active - Make your changes below</span>
+                </div>
+
                 <!-- Subheader -->
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Spotlight Headline</label>
-                    <input type="text" id="spotlightSubheaderEdit" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 18px; font-weight: 600;" placeholder="Enter headline...">
+                    <input type="text" id="spotlightSubheaderEdit" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 18px; font-weight: 600;" placeholder="Enter headline...">
                 </div>
 
                 <!-- H3 Sections -->
@@ -839,10 +880,10 @@
                 <!-- Agent Takeaway -->
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Agent Takeaway</label>
-                    <textarea id="spotlightTakeawayEdit" rows="4" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px;" placeholder="Actionable insights for agents..."></textarea>
+                    <textarea id="spotlightTakeawayEdit" rows="4" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px;" placeholder="Actionable insights for agents..."></textarea>
                 </div>
 
-                <!-- Sources -->
+                <!-- Sources (read-only in edit mode) -->
                 <div style="background: #f9fafb; padding: 15px; border-radius: 8px;">
                     <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Sources</label>
                     <div id="spotlightSourcesList" style="font-size: 13px; color: #6b7280;">
@@ -2122,21 +2163,48 @@
 
         // Display spotlight content in the review/edit page
         function displaySpotlightReview(content) {
+            // === POPULATE READ MODE (article-like display) ===
+            // Headline
+            document.getElementById('spotlightSubheaderDisplay').textContent = content.subheader || 'Untitled Spotlight';
+
+            // Build readable article body from H3 sections
+            const bodyDisplay = document.getElementById('spotlightBodyDisplay');
+            let bodyHtml = '';
+            (content.h3s || []).forEach((h3) => {
+                bodyHtml += `<h3 style="margin: 25px 0 12px 0; font-size: 18px; color: #008181; font-weight: 600;">${h3.title || ''}</h3>`;
+                bodyHtml += `<p style="margin: 0 0 15px 0; text-align: justify;">${h3.body || ''}</p>`;
+            });
+            bodyDisplay.innerHTML = bodyHtml || '<p style="color: #999;">No content sections available.</p>';
+
+            // Agent Takeaway
+            document.getElementById('spotlightTakeawayDisplay').textContent = content.agent_takeaway || 'No takeaway provided.';
+
+            // Sources in read mode
+            const sourcesDisplay = document.getElementById('spotlightSourcesDisplay');
+            if (content.sources && content.sources.length > 0) {
+                sourcesDisplay.innerHTML = content.sources.map(source =>
+                    `<a href="${source.url}" target="_blank" style="color: #008181; text-decoration: none; margin-right: 15px;">${source.title || source.publisher} ↗</a>`
+                ).join('');
+            } else {
+                sourcesDisplay.innerHTML = '<span style="color: #999;">No sources listed</span>';
+            }
+
+            // === POPULATE EDIT MODE (form inputs) ===
             // Set subheader
             document.getElementById('spotlightSubheaderEdit').value = content.subheader || '';
 
-            // Build H3 sections
+            // Build H3 sections for editing
             const h3Container = document.getElementById('spotlightH3Sections');
             h3Container.innerHTML = '';
 
             (content.h3s || []).forEach((h3, index) => {
                 const sectionDiv = document.createElement('div');
-                sectionDiv.style.cssText = 'margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 8px;';
+                sectionDiv.style.cssText = 'margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border: 1px solid #bfdbfe;';
                 sectionDiv.innerHTML = `
                     <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Section ${index + 1} Title</label>
-                    <input type="text" class="spotlight-h3-title" data-index="${index}" value="${h3.title || ''}" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+                    <input type="text" class="spotlight-h3-title" data-index="${index}" value="${h3.title || ''}" style="width: 100%; padding: 10px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
                     <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Section ${index + 1} Content</label>
-                    <textarea class="spotlight-h3-body" data-index="${index}" rows="4" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px;">${h3.body || ''}</textarea>
+                    <textarea class="spotlight-h3-body" data-index="${index}" rows="5" style="width: 100%; padding: 10px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; line-height: 1.6;">${h3.body || ''}</textarea>
                 `;
                 h3Container.appendChild(sectionDiv);
             });
@@ -2144,15 +2212,63 @@
             // Set agent takeaway
             document.getElementById('spotlightTakeawayEdit').value = content.agent_takeaway || '';
 
-            // Display sources
+            // Display sources in edit mode
             const sourcesList = document.getElementById('spotlightSourcesList');
             if (content.sources && content.sources.length > 0) {
                 sourcesList.innerHTML = content.sources.map(source =>
-                    `<div style="margin-bottom: 5px;">• <a href="${source.url}" target="_blank" style="color: #018181;">${source.title || source.publisher}</a></div>`
+                    `<div style="margin-bottom: 5px;">• <a href="${source.url}" target="_blank" style="color: #008181;">${source.title || source.publisher}</a></div>`
                 ).join('');
             } else {
                 sourcesList.innerHTML = '<p style="color: #999;">No sources listed</p>';
             }
+
+            // Reset to read mode by default
+            document.getElementById('spotlightReadMode').style.display = 'block';
+            document.getElementById('spotlightEditMode').style.display = 'none';
+            document.getElementById('spotlightModeToggle').innerHTML = '✏️ Edit Mode';
+        }
+
+        // Toggle between read and edit mode for spotlight review
+        function toggleSpotlightMode() {
+            const readMode = document.getElementById('spotlightReadMode');
+            const editMode = document.getElementById('spotlightEditMode');
+            const toggleBtn = document.getElementById('spotlightModeToggle');
+
+            if (editMode.style.display === 'none') {
+                // Switch to edit mode
+                readMode.style.display = 'none';
+                editMode.style.display = 'block';
+                toggleBtn.innerHTML = '👁️ Preview Mode';
+                toggleBtn.style.background = '#3b82f6';
+                toggleBtn.style.color = 'white';
+                toggleBtn.style.borderColor = '#3b82f6';
+            } else {
+                // Switch to read mode (and save edits first)
+                saveSpotlightEdits();
+                // Re-render read mode with updated content
+                displaySpotlightReadMode(spotlightGeneratedContent);
+                readMode.style.display = 'block';
+                editMode.style.display = 'none';
+                toggleBtn.innerHTML = '✏️ Edit Mode';
+                toggleBtn.style.background = '';
+                toggleBtn.style.color = '';
+                toggleBtn.style.borderColor = '';
+            }
+        }
+
+        // Update just the read mode display (used when switching from edit back to read)
+        function displaySpotlightReadMode(content) {
+            document.getElementById('spotlightSubheaderDisplay').textContent = content.subheader || 'Untitled Spotlight';
+
+            const bodyDisplay = document.getElementById('spotlightBodyDisplay');
+            let bodyHtml = '';
+            (content.h3s || []).forEach((h3) => {
+                bodyHtml += `<h3 style="margin: 25px 0 12px 0; font-size: 18px; color: #008181; font-weight: 600;">${h3.title || ''}</h3>`;
+                bodyHtml += `<p style="margin: 0 0 15px 0; text-align: justify;">${h3.body || ''}</p>`;
+            });
+            bodyDisplay.innerHTML = bodyHtml || '<p style="color: #999;">No content sections available.</p>';
+
+            document.getElementById('spotlightTakeawayDisplay').textContent = content.agent_takeaway || 'No takeaway provided.';
         }
 
         // Save edits from the spotlight review page back to spotlightGeneratedContent
@@ -2647,78 +2763,87 @@
 
             let html = '';
 
-            if (results.passed || suggestions.length === 0) {
-                // Passed brand check
+            if (suggestions.length === 0) {
+                // No issues found
                 html += `<div style="text-align: center; padding: 40px; background: #10b98120; border-radius: 8px; margin-bottom: 20px;">`;
-                html += `<h2 style="margin: 0; color: #10b981; font-size: 36px;">✅ Brand Check Passed!</h2>`;
-                html += `<p style="margin: 10px 0 0 0; color: #666;">Your content meets brand guidelines and is ready to go!</p>`;
+                html += `<h2 style="margin: 0; color: #10b981; font-size: 36px;">✅ Looks Great!</h2>`;
+                html += `<p style="margin: 10px 0 0 0; color: #666;">No brand guideline issues found. Your content is ready to go!</p>`;
                 html += `</div>`;
             } else {
-                // Has suggestions - needs review
+                // Show header
                 html += `<div style="text-align: center; padding: 20px; background: #fef3c7; border-radius: 8px; margin-bottom: 20px;">`;
-                html += `<h2 style="margin: 0; color: #f59e0b; font-size: 32px;">⚠️ ${suggestions.length} Suggestion${suggestions.length > 1 ? 's' : ''} Found</h2>`;
-                html += `<p style="margin: 10px 0 0 0; color: #666;">Review the suggestions below and accept or ignore each one.</p>`;
+                html += `<h2 style="margin: 0; color: #f59e0b; font-size: 32px;">📝 Suggested Changes</h2>`;
+                html += `<p style="margin: 10px 0 0 0; color: #666;">Yellow highlights show what needs changing. Green highlights show suggested replacements.</p>`;
+                html += `</div>`;
+            }
+
+            // Get the full newsletter content with highlighting (matching venue-voice approach)
+            const briteSpotContent = highlightContent(
+                document.getElementById('briteSpotContentBox')?.innerHTML || '',
+                suggestions.filter(s => s.section === 'brite_spot')
+            );
+            const claimsContent = highlightContent(
+                document.getElementById('claimsContentBox')?.innerHTML || '',
+                suggestions.filter(s => s.section === 'claims')
+            );
+            const roundupContent = highlightContent(
+                document.getElementById('roundupContentBox')?.innerHTML || '',
+                suggestions.filter(s => s.section === 'roundup')
+            );
+            const spotlightContent = highlightContent(
+                document.getElementById('spotlightContentBox')?.innerHTML || '',
+                suggestions.filter(s => s.section === 'spotlight')
+            );
+            const tipsContent = highlightContent(
+                document.getElementById('tipsContentBox')?.innerHTML || '',
+                suggestions.filter(s => s.section === 'tips')
+            );
+
+            // Display full newsletter with highlights
+            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">✨ The Brite Spot</h3>';
+            html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
+            html += briteSpotContent || '<p style="color: #999;">No content</p>';
+            html += `</div>`;
+
+            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">🔍 Curious Claims</h3>';
+            html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
+            html += claimsContent || '<p style="color: #999;">No content</p>';
+            html += `</div>`;
+
+            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">📰 Insurance News Roundup</h3>';
+            html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
+            html += roundupContent || '<p style="color: #999;">No content</p>';
+            html += `</div>`;
+
+            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">⭐ InsurNews Spotlight</h3>';
+            html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
+            html += spotlightContent || '<p style="color: #999;">No content</p>';
+            html += `</div>`;
+
+            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">💡 Agent Advantage</h3>';
+            html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
+            html += tipsContent || '<p style="color: #999;">No content</p>';
+            html += `</div>`;
+
+            // If there are suggestions, show the legend
+            if (suggestions.length > 0) {
+                html += `<div style="margin-top: 30px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 2px dashed #e5e7eb;">`;
+                html += `<h4 style="margin: 0 0 10px 0; color: #666;">Legend:</h4>`;
+                html += `<div style="display: flex; gap: 20px; flex-wrap: wrap;">`;
+                html += `<div style="display: flex; align-items: center; gap: 8px;">`;
+                html += `<div style="width: 20px; height: 20px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 4px;"></div>`;
+                html += `<span style="font-size: 14px; color: #666;">Current text (needs changing)</span>`;
+                html += `</div>`;
+                html += `<div style="display: flex; align-items: center; gap: 8px;">`;
+                html += `<div style="width: 20px; height: 20px; background: #d1fae5; border: 2px solid #10b981; border-radius: 4px;"></div>`;
+                html += `<span style="font-size: 14px; color: #666;">Suggested replacement</span>`;
+                html += `</div>`;
                 html += `</div>`;
 
-                // Group suggestions by section
-                const sectionLabels = {
-                    'brite_spot': 'Brite Spot',
-                    'claims': 'Curious Claims',
-                    'roundup': 'News Roundup',
-                    'spotlight': 'InsurNews Spotlight',
-                    'tips': 'Agent Advantage'
-                };
-
-                const sectionIcons = {
-                    'brite_spot': '✨',
-                    'claims': '🔍',
-                    'roundup': '📰',
-                    'spotlight': '⭐',
-                    'tips': '💡'
-                };
-
-                // Display each suggestion
-                suggestions.forEach((suggestion, index) => {
-                    const section = suggestion.section || 'content';
-                    const sectionLabel = sectionLabels[section] || section;
-                    const sectionIcon = sectionIcons[section] || '📝';
-                    const suggestionId = `suggestion-${section}-${index}`;
-
-                    html += `<div id="${suggestionId}" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #e5e7eb;">`;
-                    html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">`;
-                    html += `<span style="font-size: 12px; background: #e5e7eb; padding: 4px 12px; border-radius: 20px; color: #374151; font-weight: 600;">${sectionIcon} ${sectionLabel}</span>`;
-                    html += `<span style="font-size: 12px; color: #f59e0b; font-weight: 600;">${suggestion.issue || 'Style Issue'}</span>`;
-                    html += `</div>`;
-
-                    // Original text with strikethrough
-                    html += `<div style="margin-bottom: 10px;">`;
-                    html += `<label style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">Original:</label>`;
-                    html += `<p style="margin: 4px 0; padding: 10px; background: #fef3c7; border-radius: 4px; border-left: 3px solid #f59e0b; text-decoration: line-through; color: #92400e;">${suggestion.original || ''}</p>`;
-                    html += `</div>`;
-
-                    // Suggested text
-                    html += `<div style="margin-bottom: 10px;">`;
-                    html += `<label style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">Suggested:</label>`;
-                    html += `<p style="margin: 4px 0; padding: 10px; background: #d1fae5; border-radius: 4px; border-left: 3px solid #10b981; color: #065f46; font-weight: 500;">${suggestion.suggested || ''}</p>`;
-                    html += `</div>`;
-
-                    // Reason
-                    html += `<p style="font-size: 13px; color: #6b7280; margin-bottom: 15px; font-style: italic;">${suggestion.reason || ''}</p>`;
-
-                    // Accept/Ignore buttons
-                    html += `<div style="display: flex; gap: 10px;">`;
-                    html += `<button onclick="acceptSuggestion('${suggestionId}', '${escapeForAttribute(suggestion.original || '')}', '${escapeForAttribute(suggestion.suggested || '')}', '${section}')" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600;">✓ Accept</button>`;
-                    html += `<button onclick="ignoreSuggestion('${suggestionId}')" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600;">✗ Ignore</button>`;
-                    html += `</div>`;
-                    html += `</div>`;
-                });
-
-                // Quick actions
-                html += `<div style="background: #f3f4f6; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">`;
-                html += `<span style="color: #374151; font-weight: 600;">${suggestions.length} suggestion${suggestions.length > 1 ? 's' : ''} remaining</span>`;
-                html += `<div style="display: flex; gap: 10px;">`;
-                html += `<button onclick="acceptAllSuggestions()" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer;">Accept All</button>`;
-                html += `<button onclick="ignoreAllSuggestions()" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer;">Ignore All</button>`;
+                // Show issue count summary
+                html += `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">`;
+                html += `<strong style="color: #f59e0b;">${suggestions.length} issue${suggestions.length === 1 ? '' : 's'} found</strong> - `;
+                html += `Click Accept or Ignore on each highlighted change.`;
                 html += `</div>`;
                 html += `</div>`;
             }

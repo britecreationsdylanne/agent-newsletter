@@ -1981,6 +1981,120 @@ def generate_image():
         print(f"[API ERROR] Image generation failed: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@app.route('/api/generate-images', methods=['POST'])
+def generate_images():
+    """Generate images for newsletter sections using provided or auto-generated prompts (matches venue-voice)"""
+    try:
+        data = request.json
+        sections = data.get('sections', {})
+        prompts = data.get('prompts', {})  # Pre-generated or user-edited prompts
+
+        print(f"\n[API] Generating images with Nano Banana (Gemini)...")
+        print(f"[API] Received {len(prompts)} prompts")
+
+        images = {}
+
+        # Generate image for each prompt
+        for section_name, prompt in prompts.items():
+            safe_print(f"  [{section_name.upper()}] Prompt: {prompt[:80]}...")
+
+            # Determine aspect ratio based on section
+            # briteSpot/claims: larger images - use 16:9 landscape
+            # spotlight/tips: can be 1:1 square
+            if section_name in ['briteSpot', 'claims']:
+                aspect_ratio = "16:9"  # Landscape for larger images
+            else:
+                aspect_ratio = "1:1"  # Square for other images
+
+            # Generate with Gemini (Nano Banana)
+            print(f"  [{section_name.upper()}] Calling Nano Banana...")
+            image_result = gemini_client.generate_image(
+                prompt=prompt,
+                aspect_ratio=aspect_ratio
+            )
+
+            # Get the base64 image data
+            image_data = image_result.get('image_base64', image_result.get('image_data', ''))
+
+            # Resize image to exact newsletter dimensions
+            if image_data:
+                try:
+                    from PIL import Image
+
+                    # Decode base64 to PIL Image
+                    image_bytes = base64.b64decode(image_data)
+                    pil_image = Image.open(BytesIO(image_bytes))
+
+                    # Determine target size based on section
+                    if section_name in ['briteSpot', 'claims']:
+                        # Larger images: 480px wide
+                        target_width = 480
+                        target_height = 260
+                    else:
+                        # Spotlight/Tips: 210px wide
+                        target_width = 210
+                        target_height = 250
+
+                    print(f"  [{section_name.upper()}] Resizing from {pil_image.size} to {target_width}x{target_height}...")
+
+                    # Calculate aspect ratios
+                    img_aspect = pil_image.width / pil_image.height
+                    target_aspect = target_width / target_height
+
+                    # Resize maintaining aspect ratio, then crop to exact size
+                    if img_aspect > target_aspect:
+                        # Image is wider - resize based on height, then crop width
+                        new_height = target_height
+                        new_width = int(target_height * img_aspect)
+                    else:
+                        # Image is taller - resize based on width, then crop height
+                        new_width = target_width
+                        new_height = int(target_width / img_aspect)
+
+                    # Resize maintaining aspect ratio
+                    resized_temp = pil_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+                    # Center crop to exact target dimensions
+                    left = (new_width - target_width) // 2
+                    top = (new_height - target_height) // 2
+                    right = left + target_width
+                    bottom = top + target_height
+
+                    resized_image = resized_temp.crop((left, top, right, bottom))
+
+                    # Convert back to base64
+                    buffer = BytesIO()
+                    resized_image.save(buffer, format='PNG', optimize=True)
+                    resized_bytes = buffer.getvalue()
+                    image_data = base64.b64encode(resized_bytes).decode('utf-8')
+
+                    print(f"  [{section_name.upper()}] Resized successfully to {target_width}x{target_height}")
+
+                except Exception as resize_error:
+                    print(f"  [{section_name.upper()}] Resize failed, using original: {resize_error}")
+
+            # Convert to data URL for frontend display
+            image_url = f"data:image/png;base64,{image_data}" if image_data else ''
+
+            images[section_name] = image_url
+            print(f"  [{section_name.upper()}] SUCCESS - Image generated ({len(image_data) if image_data else 0} bytes)")
+
+        print(f"[API] Generated {len(images)} images")
+
+        return jsonify({
+            'success': True,
+            'images': images,
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ============================================================================
 # ROUTES - HEADLINES & INTRO
 # ============================================================================
