@@ -37,7 +37,21 @@ CONTENT_FILTERS = {
         "affordable care act",
         "political",
         "election",
-        "international news"
+        "international news",
+        # Promotion/personnel news exclusions
+        "promoted to",
+        "announces promotion",
+        "new CEO",
+        "new president",
+        "executive appointment",
+        "joins as",
+        "named to",
+        "leadership change",
+        "personnel announcement",
+        "new hire",
+        "appointed as",
+        "steps down",
+        "retires from"
     ]
 }
 

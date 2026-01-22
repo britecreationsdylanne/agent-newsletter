@@ -144,6 +144,34 @@ def transform_to_shared_schema(results: list, source_card: str) -> list:
     return transformed
 
 
+# Keywords that indicate promotion/personnel news to filter out
+PROMOTION_KEYWORDS = [
+    'promoted to', 'announces promotion', 'new ceo', 'new president',
+    'executive appointment', 'joins as', 'named to', 'leadership change',
+    'personnel announcement', 'new hire', 'appointed as', 'steps down',
+    'retires from', 'announces retirement', 'names new', 'appoints',
+    'welcomes new', 'hires', 'executive team', 'board of directors appoints'
+]
+
+
+def filter_promotion_news(results: list) -> list:
+    """Filter out promotion/personnel news from search results."""
+    filtered = []
+    for r in results:
+        title = (r.get('title', '') + ' ' + r.get('headline', '')).lower()
+        description = r.get('description', r.get('snippet', '')).lower()
+        combined_text = title + ' ' + description
+
+        is_promotion_news = any(keyword in combined_text for keyword in PROMOTION_KEYWORDS)
+
+        if not is_promotion_news:
+            filtered.append(r)
+        else:
+            safe_print(f"[Filter] Excluded promotion news: {r.get('title', '')[:50]}...")
+
+    return filtered
+
+
 def multi_search(queries: list, max_results: int = 4, exclude_urls: list = None) -> list:
     """
     Run multiple search queries and merge/deduplicate results.
@@ -328,7 +356,10 @@ Return ONLY the JSON array, no other text."""
         impact_order = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
         results.sort(key=lambda x: impact_order.get(x.get('impact', 'LOW'), 2))
 
-        safe_print(f"[Insight Builder] {model_id} analysis complete - enriched {len(results)} results")
+        # Filter out promotion/personnel news
+        results = filter_promotion_news(results)
+
+        safe_print(f"[Insight Builder] {model_id} analysis complete - enriched {len(results)} results (after filtering)")
         return results
 
     except Exception as e:
@@ -425,7 +456,10 @@ Return ONLY the JSON array, no other text."""
                 r['so_what'] = enriched[i].get('why_it_matters', r.get('so_what', ''))
                 r['industry_data'] = r.get('snippet', r.get('description', ''))
 
-        safe_print(f"[Source Explorer] {model_id} story analysis complete - enriched {len(results)} results")
+        # Filter out promotion/personnel news
+        results = filter_promotion_news(results)
+
+        safe_print(f"[Source Explorer] {model_id} story analysis complete - enriched {len(results)} results (after filtering)")
         return results
 
     except Exception as e:
@@ -1048,6 +1082,94 @@ Target: 500-600 words total. Be thorough, factual, and cite sources throughout."
 
 
 # ============================================================================
+# ROUTES - FETCH ARTICLE FROM URL
+# ============================================================================
+
+@app.route('/api/fetch-article', methods=['POST'])
+def fetch_article():
+    """Fetch and analyze an article from a user-provided URL"""
+    try:
+        data = request.json
+        url = data.get('url', '').strip()
+        section = data.get('section', 'general')  # claims, roundup, spotlight, tips
+
+        if not url:
+            return jsonify({'success': False, 'error': 'URL is required'}), 400
+
+        print(f"\n[API] Fetching article from URL: {url}")
+        print(f"  - Section: {section}")
+
+        # Use OpenAI to fetch and analyze the article
+        fetch_prompt = f"""Analyze this article URL and extract key information for an insurance agent newsletter.
+
+URL: {url}
+
+Extract and return a JSON object with:
+{{
+    "title": "The article headline/title",
+    "description": "A 2-3 sentence summary of the article's main points",
+    "publisher": "The publication name (e.g., Insurance Journal, PropertyCasualty360)",
+    "snippet": "A longer summary (4-5 sentences) with key facts and data points",
+    "industry_data": "Any specific statistics, percentages, or data mentioned",
+    "agent_implications": "How this news affects independent insurance agents (2-3 sentences)",
+    "content_type": "news" | "tip" | "trend" | "case_study" | "insight"
+}}
+
+Focus on P&C insurance relevance. If the article is not insurance-related, still extract the information but note that in the description."""
+
+        result = openai_client.generate_content(
+            prompt=fetch_prompt,
+            model="gpt-4.1-2025-04-14",
+            temperature=0.3,
+            max_tokens=800
+        )
+
+        # Parse the JSON response
+        content_text = result['content'].strip()
+
+        # Remove markdown code blocks if present
+        if content_text.startswith('```'):
+            content_text = content_text.split('```')[1]
+            if content_text.startswith('json'):
+                content_text = content_text[4:]
+            content_text = content_text.strip()
+
+        try:
+            article_data = json.loads(content_text)
+        except json.JSONDecodeError:
+            # Fallback if parsing fails
+            article_data = {
+                'title': 'Article from ' + url,
+                'description': content_text[:200],
+                'publisher': 'External Source',
+                'snippet': content_text,
+                'industry_data': '',
+                'agent_implications': '',
+                'content_type': 'news'
+            }
+
+        # Add the URL to the result
+        article_data['url'] = url
+        article_data['source_url'] = url
+        article_data['headline'] = article_data.get('title', '')
+        article_data['so_what'] = article_data.get('agent_implications', '')
+
+        print(f"[API] Article fetched: {article_data.get('title', 'Unknown')}")
+
+        return jsonify({
+            'success': True,
+            'article': article_data,
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] Fetch article failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
 # ROUTES - ARTICLE SEARCH (Legacy)
 # ============================================================================
 
@@ -1111,7 +1233,7 @@ def search_news():
 
 @app.route('/api/search-claims', methods=['POST'])
 def search_claims():
-    """Search for interesting/curious claims stories"""
+    """Search for interesting/curious claims stories - unusual, strange, noteworthy insurance cases"""
     try:
         data = request.json
         month = data.get('month', 'january')
@@ -1119,27 +1241,66 @@ def search_claims():
 
         print(f"\n[API] Searching for curious claims stories (month: {month})...")
 
-        # Build search query for unusual claims
-        search_query = f"unusual insurance claims interesting stories P&C property casualty site:claimsjournal.com OR site:insurancejournal.com OR site:propertycasualty360.com"
+        # Multiple search queries to find interesting claims stories
+        # Focus on specific types of stories that make good "Curious Claims" content
+        CLAIMS_SEARCH_QUERIES = [
+            # Unusual/strange claims
+            '"unusual claim" OR "strange claim" OR "bizarre claim" insurance',
+            '"insurance claim" lawsuit settlement verdict',
+            'insurance fraud case caught convicted',
+            '"filed a claim" "insurance company" story',
+            # Specific incident types that make good stories
+            'homeowner insurance claim damage unusual',
+            'auto insurance claim accident story',
+            'liability insurance claim lawsuit ruling',
+            # Claims Journal specific searches (great source for claims stories)
+            'site:claimsjournal.com claim story',
+            'site:claimsjournal.com insurance lawsuit verdict',
+            # Court cases and settlements
+            '"insurance dispute" "court ruled" OR settlement',
+            'property damage claim "insurance paid" OR denied'
+        ]
+
+        all_results = []
+        seen_urls = set(exclude_urls)
 
         try:
-            search_results = openai_client.search_web(
-                query=search_query,
-                exclude_urls=exclude_urls,
-                max_results=10
-            )
+            # Try each search query until we have enough results
+            for query in CLAIMS_SEARCH_QUERIES:
+                if len(all_results) >= 12:
+                    break
 
-            for result in search_results:
-                result['source_url'] = result.get('url', '')
+                safe_print(f"[Claims Search] Trying query: {query[:60]}...")
 
-            claims = search_results[:10]
+                try:
+                    search_results = openai_client.search_web(
+                        query=query,
+                        exclude_urls=list(seen_urls),
+                        max_results=6
+                    )
+
+                    for result in search_results:
+                        url = result.get('url', '')
+                        if url and url not in seen_urls:
+                            result['source_url'] = url
+                            all_results.append(result)
+                            seen_urls.add(url)
+
+                except Exception as e:
+                    safe_print(f"[Claims Search] Query failed: {e}")
+                    continue
+
+            # Filter out promotion/personnel news
+            all_results = filter_promotion_news(all_results)
+
+            claims = all_results[:15]
 
             if len(claims) > 0:
                 print(f"[API] Found {len(claims)} claims stories")
                 return jsonify({
                     'success': True,
                     'claims': claims,
-                    'source': 'openai_responses_api',
+                    'source': 'openai_responses_api_multi',
                     'generated_at': datetime.now().isoformat()
                 })
             else:
@@ -1444,45 +1605,116 @@ Output ONLY the bullet text with the embedded hyperlink, nothing else."""
             research_results['spotlight'] = spotlight_content
             print(f"    Spotlight content ready: {spotlight_content.get('subheader', 'No title')}")
 
-        # Research Agent Advantage Tips (5 tips with bold mini-titles + supporting sentences)
-        if agent_tips_topics and len(agent_tips_topics) > 0:
-            safe_print(f"  - Researching {len(agent_tips_topics)} agent tips...")
-            tips_items = []
-            for i, topic in enumerate(agent_tips_topics[:5]):
-                safe_print(f"    - {topic.get('title', 'Unknown')[:50]}...")
-                tip_prompt = f"""Create ONE actionable tip for independent insurance agents based on this article.
+        # Research Agent Advantage Tips (1 article generates intro + 5 tips)
+        # Frontend now passes a single article object, not an array
+        if agent_tips_topics:
+            # Handle both old array format and new single object format
+            if isinstance(agent_tips_topics, list):
+                topic = agent_tips_topics[0] if len(agent_tips_topics) > 0 else None
+            else:
+                topic = agent_tips_topics
 
-Article: {topic.get('title', 'Unknown')}
-Summary: {topic.get('description', '')}
+            if topic:
+                safe_print(f"  - Generating Agent Advantage from: {topic.get('title', 'Unknown')[:50]}...")
+
+                tips_prompt = f"""Create the "Agent Advantage" section for an insurance agent newsletter based on this article.
+
+ARTICLE TO DRAW FROM:
+Title: {topic.get('title', 'Unknown')}
+Summary: {topic.get('description', topic.get('snippet', ''))}
+Source: {topic.get('publisher', 'Industry Source')}
 
 FORMAT REQUIREMENTS:
-- Start with a BOLD MINI-TITLE (up to 10 words, action-oriented)
-- Follow with 1-3 supporting sentences explaining the tip
-- Total ~40-50 words
-- Focus on sales, retention, or operations improvements
+1. Start with an INTRO PARAGRAPH (2-3 sentences, ~40 words) that sets up the topic and explains why it matters to agents
+2. Then provide EXACTLY 5 numbered tips, each with:
+   - A BOLD MINI-TITLE (up to 10 words, action-oriented)
+   - 1-3 supporting sentences explaining the tip (~30-40 words per tip)
+3. Focus on sales, retention, or operations improvements
 
-EXAMPLE FORMAT:
-"**Master the Art of the Follow-Up Call**
-Don't just call once and give up. Set a reminder to follow up at least 3 times over 2 weeks. Studies show persistence increases close rates by 70%."
+OUTPUT FORMAT (use this exact structure):
+[INTRO]
+Your intro paragraph here (2-3 sentences).
 
-Another example:
-"**Turn Claims Into Conversations**
-When a client files a claim, use it as a touchpoint. A simple 'How can I help?' call during the process builds trust and often leads to referrals."
+[TIPS]
+1. **Bold Mini-Title Here**
+Supporting sentences explaining this tip and how agents can apply it.
 
-Output ONLY the tip with bold title and supporting sentences, nothing else."""
+2. **Another Bold Mini-Title**
+More supporting detail for this actionable advice.
 
-                tip_result = claude_client.generate_content(
-                    prompt=tip_prompt,
+3. **Third Tip Title**
+Explanation and practical application.
+
+4. **Fourth Tip Title**
+Supporting detail.
+
+5. **Fifth Tip Title**
+Final piece of advice.
+
+EXAMPLE:
+[INTRO]
+With auto rates climbing nationwide, agents have a unique opportunity to differentiate themselves. Here's how to turn rate conversations into retention wins.
+
+[TIPS]
+1. **Lead With Transparency on Rate Changes**
+Don't wait for clients to call asking about increases. Proactively reach out to explain what's happening in the market and why.
+
+2. **Bundle for Better Value**
+Combine auto with home or umbrella policies. Bundling can offset rate increases and makes clients stickier.
+
+(etc.)
+
+Output ONLY the intro and tips in this format, nothing else."""
+
+                tips_result = claude_client.generate_content(
+                    prompt=tips_prompt,
                     model="claude-opus-4-5-20251101",
                     temperature=0.4,
-                    max_tokens=150
+                    max_tokens=800
                 )
-                tips_items.append({
-                    'tip': tip_result['content'].strip(),
-                    'source_url': topic.get('url', '')
-                })
-            research_results['agent_tips'] = tips_items
-            print(f"    Agent tips research complete: {len(tips_items)} items")
+
+                # Parse the response into intro and tips
+                content = tips_result['content'].strip()
+                intro = ""
+                tips_items = []
+
+                # Extract intro section
+                if '[INTRO]' in content:
+                    parts = content.split('[TIPS]')
+                    intro_part = parts[0].replace('[INTRO]', '').strip()
+                    intro = intro_part
+                    tips_part = parts[1].strip() if len(parts) > 1 else ""
+                else:
+                    # Fallback: first paragraph is intro
+                    lines = content.split('\n\n')
+                    intro = lines[0] if lines else ""
+                    tips_part = '\n\n'.join(lines[1:]) if len(lines) > 1 else content
+
+                # Parse individual tips (look for numbered items with bold titles)
+                import re
+                tip_pattern = r'\d+\.\s*\*\*(.+?)\*\*\s*\n?(.+?)(?=\n\d+\.|$)'
+                matches = re.findall(tip_pattern, tips_part, re.DOTALL)
+
+                for title, body in matches[:5]:
+                    tips_items.append({
+                        'tip': f"**{title.strip()}**\n{body.strip()}",
+                        'source_url': topic.get('url', '')
+                    })
+
+                # If parsing failed, treat whole content as tips
+                if not tips_items:
+                    tips_items.append({
+                        'tip': content,
+                        'source_url': topic.get('url', '')
+                    })
+
+                research_results['agent_tips'] = {
+                    'intro': intro,
+                    'tips': tips_items,
+                    'source_url': topic.get('url', ''),
+                    'source_title': topic.get('title', '')
+                }
+                print(f"    Agent Advantage complete: intro + {len(tips_items)} tips")
 
         print(f"[API] Research complete")
 
@@ -2039,11 +2271,16 @@ def send_preview():
 
 @app.route('/api/export-to-docs', methods=['POST'])
 def export_to_docs():
-    """Export newsletter content to Google Docs"""
+    """Export newsletter content to Google Docs and optionally send link via email"""
     try:
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+
         data = request.json
         content = data.get('content', {})
-        title = data.get('title', f"BriteCo Brief - {datetime.now().strftime('%Y-%m-%d')}")
+        title = data.get('title', f"BriteCo Brief - {datetime.now().strftime('%B %Y')}")
+        send_email = data.get('send_email', False)
+        recipient_email = data.get('recipient_email', '')
 
         safe_print(f"[API] Exporting to Google Docs: {title}")
 
@@ -2052,18 +2289,186 @@ def export_to_docs():
         if not creds_json:
             return jsonify({
                 "success": False,
-                "error": "Google Docs credentials not configured"
+                "error": "Google Docs credentials not configured. Please set GOOGLE_DOCS_CREDENTIALS environment variable."
             }), 500
 
-        # TODO: Implement actual Google Docs export
-        # For now, return placeholder
+        # Parse credentials
+        try:
+            creds_data = json.loads(creds_json)
+            credentials = service_account.Credentials.from_service_account_info(
+                creds_data,
+                scopes=['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
+            )
+        except Exception as e:
+            safe_print(f"[API] Credentials error: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid Google credentials: {str(e)}"
+            }), 500
+
+        # Build the Docs service
+        docs_service = build('docs', 'v1', credentials=credentials)
+        drive_service = build('drive', 'v3', credentials=credentials)
+
+        # Create a new document
+        document = docs_service.documents().create(body={'title': title}).execute()
+        doc_id = document.get('documentId')
+        doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+
+        safe_print(f"[API] Created Google Doc: {doc_id}")
+
+        # Build document content from newsletter sections
+        requests_list = []
+
+        # Helper to add text with formatting
+        def add_text(text, bold=False, heading=False, index_offset=[1]):
+            if not text:
+                return
+            text = text.strip() + '\n\n'
+            start_index = index_offset[0]
+            end_index = start_index + len(text)
+
+            requests_list.append({
+                'insertText': {
+                    'location': {'index': start_index},
+                    'text': text
+                }
+            })
+
+            if heading:
+                requests_list.append({
+                    'updateParagraphStyle': {
+                        'range': {'startIndex': start_index, 'endIndex': end_index - 1},
+                        'paragraphStyle': {'namedStyleType': 'HEADING_2'},
+                        'fields': 'namedStyleType'
+                    }
+                })
+            elif bold:
+                requests_list.append({
+                    'updateTextStyle': {
+                        'range': {'startIndex': start_index, 'endIndex': end_index - 1},
+                        'textStyle': {'bold': True},
+                        'fields': 'bold'
+                    }
+                })
+
+            index_offset[0] = end_index
+
+        # Add newsletter sections
+        add_text(title, heading=True)
+
+        if content.get('introduction'):
+            add_text('Introduction', bold=True)
+            add_text(content['introduction'])
+
+        if content.get('brite_spot'):
+            add_text('The Brite Spot', bold=True)
+            add_text(content['brite_spot'])
+
+        if content.get('curious_claims'):
+            add_text('Curious Claims', bold=True)
+            add_text(content['curious_claims'])
+
+        if content.get('roundup'):
+            add_text('Insurance News Roundup', bold=True)
+            roundup_text = ''
+            if isinstance(content['roundup'], list):
+                for item in content['roundup']:
+                    bullet = item.get('summary', item) if isinstance(item, dict) else item
+                    roundup_text += f"• {bullet}\n"
+            else:
+                roundup_text = content['roundup']
+            add_text(roundup_text)
+
+        if content.get('spotlight'):
+            add_text('InsurNews Spotlight', bold=True)
+            spotlight = content['spotlight']
+            if isinstance(spotlight, dict):
+                if spotlight.get('subheader'):
+                    add_text(spotlight['subheader'])
+                if spotlight.get('body'):
+                    add_text(spotlight['body'])
+            else:
+                add_text(str(spotlight))
+
+        if content.get('agent_tips'):
+            add_text('Agent Advantage', bold=True)
+            tips = content['agent_tips']
+            if isinstance(tips, dict) and tips.get('intro'):
+                add_text(tips['intro'])
+                for i, tip in enumerate(tips.get('tips', []), 1):
+                    tip_text = tip.get('tip', tip) if isinstance(tip, dict) else tip
+                    add_text(f"{i}. {tip_text}")
+            elif isinstance(tips, list):
+                for i, tip in enumerate(tips, 1):
+                    tip_text = tip.get('tip', tip) if isinstance(tip, dict) else tip
+                    add_text(f"{i}. {tip_text}")
+            else:
+                add_text(str(tips))
+
+        # Execute batch update
+        if requests_list:
+            docs_service.documents().batchUpdate(
+                documentId=doc_id,
+                body={'requests': requests_list}
+            ).execute()
+            safe_print(f"[API] Document content updated")
+
+        # Make the document accessible via link (anyone with link can view)
+        drive_service.permissions().create(
+            fileId=doc_id,
+            body={'type': 'anyone', 'role': 'reader'}
+        ).execute()
+        safe_print(f"[API] Document sharing enabled")
+
+        # Optionally send email with the link
+        email_sent = False
+        if send_email and recipient_email:
+            try:
+                # Use existing SMTP configuration
+                smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+                smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+                smtp_user = os.environ.get('SMTP_USER', '')
+                smtp_pass = os.environ.get('SMTP_PASS', '')
+
+                if smtp_user and smtp_pass:
+                    msg = MIMEMultipart()
+                    msg['From'] = smtp_user
+                    msg['To'] = recipient_email
+                    msg['Subject'] = f"Newsletter Draft Ready: {title}"
+
+                    body = f"""Your BriteCo Brief newsletter draft is ready for review!
+
+View and edit the document here:
+{doc_url}
+
+This is an automatically generated email from the BriteCo Brief newsletter tool.
+"""
+                    msg.attach(MIMEText(body, 'plain'))
+
+                    with smtplib.SMTP(smtp_host, smtp_port) as server:
+                        server.starttls()
+                        server.login(smtp_user, smtp_pass)
+                        server.send_message(msg)
+
+                    email_sent = True
+                    safe_print(f"[API] Email sent to {recipient_email}")
+            except Exception as e:
+                safe_print(f"[API] Email send failed: {e}")
+                # Don't fail the whole operation if email fails
+
         return jsonify({
             "success": True,
-            "message": "Google Docs export ready",
-            "note": "Full implementation coming soon"
+            "doc_url": doc_url,
+            "doc_id": doc_id,
+            "title": title,
+            "email_sent": email_sent,
+            "message": f"Newsletter exported to Google Docs{' and email sent' if email_sent else ''}"
         })
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         safe_print(f"[API] Export error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
