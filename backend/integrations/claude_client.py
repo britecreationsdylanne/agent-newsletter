@@ -18,7 +18,7 @@ class ClaudeClient:
             raise ValueError("ANTHROPIC_API_KEY not found in environment")
 
         self.client = Anthropic(api_key=self.api_key)
-        self.default_model = "claude-sonnet-4-5-20250929"  # Claude Sonnet 4.5 (current model for writing)
+        self.default_model = "claude-opus-4-5-20251101"  # Claude Opus 4.5 (frontier model for writing)
 
     def generate_content(
         self,

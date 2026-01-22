@@ -34,6 +34,7 @@ from config.brand_guidelines import (
     CONTENT_FILTERS, ONTRAPORT_CONFIG, TEAM_MEMBERS,
     get_style_guide_for_prompt, get_search_sources_prompt
 )
+from config.model_config import get_model_for_task
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
@@ -245,12 +246,18 @@ def analyze_industry_impact(results: list) -> list:
     """
     Use LLM to analyze each result for insurance industry impact.
     Generates newsletter-ready headlines and impact scores.
+    Model selection is driven by config/vision_models.yaml task_assignments.
     """
     if not results:
         return results
 
     try:
-        safe_print(f"[Insight Builder] Analyzing {len(results)} results with GPT...")
+        # Get model config for research enrichment task
+        model_config = get_model_for_task('research_enrichment')
+        model_id = model_config.get('id', 'gpt-5.2')
+        max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
+
+        safe_print(f"[Insight Builder] Analyzing {len(results)} results with {model_id}...")
 
         # Build context for GPT
         results_text = ""
@@ -289,12 +296,15 @@ Guidelines:
 
 Return ONLY the JSON array, no other text."""
 
-        response = openai_client.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=2000
-        )
+        # Build API call with correct parameter name based on model
+        api_params = {
+            "model": model_id,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.3,
+        }
+        api_params[max_tokens_param] = 2000
+
+        response = openai_client.client.chat.completions.create(**api_params)
 
         content = response.choices[0].message.content.strip()
 
@@ -318,11 +328,11 @@ Return ONLY the JSON array, no other text."""
         impact_order = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
         results.sort(key=lambda x: impact_order.get(x.get('impact', 'LOW'), 2))
 
-        safe_print(f"[Insight Builder] GPT analysis complete - enriched {len(results)} results")
+        safe_print(f"[Insight Builder] {model_id} analysis complete - enriched {len(results)} results")
         return results
 
     except Exception as e:
-        safe_print(f"[Insight Builder] GPT analysis error: {e} - returning original results")
+        safe_print(f"[Insight Builder] Analysis error: {e} - returning original results")
         # Add default values if GPT fails
         for r in results:
             r['headline'] = r.get('title', 'Industry Update')
@@ -335,12 +345,18 @@ Return ONLY the JSON array, no other text."""
 def analyze_story_angles(results: list, user_query: str) -> list:
     """
     Use LLM to analyze articles and surface interesting story angles for newsletters.
+    Model selection is driven by config/vision_models.yaml task_assignments.
     """
     if not results:
         return results
 
     try:
-        safe_print(f"[Source Explorer] Analyzing {len(results)} results for story angles...")
+        # Get model config for research enrichment task
+        model_config = get_model_for_task('research_enrichment')
+        model_id = model_config.get('id', 'gpt-5.2')
+        max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
+
+        safe_print(f"[Source Explorer] Analyzing {len(results)} results with {model_id}...")
 
         # Build context for GPT
         results_text = ""
@@ -379,12 +395,15 @@ Guidelines:
 
 Return ONLY the JSON array, no other text."""
 
-        response = openai_client.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.4,
-            max_tokens=2000
-        )
+        # Build API call with correct parameter name based on model
+        api_params = {
+            "model": model_id,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.4,
+        }
+        api_params[max_tokens_param] = 2000
+
+        response = openai_client.client.chat.completions.create(**api_params)
 
         content = response.choices[0].message.content.strip()
 
@@ -406,11 +425,11 @@ Return ONLY the JSON array, no other text."""
                 r['so_what'] = enriched[i].get('why_it_matters', r.get('so_what', ''))
                 r['industry_data'] = r.get('snippet', r.get('description', ''))
 
-        safe_print(f"[Source Explorer] GPT story analysis complete - enriched {len(results)} results")
+        safe_print(f"[Source Explorer] {model_id} story analysis complete - enriched {len(results)} results")
         return results
 
     except Exception as e:
-        safe_print(f"[Source Explorer] GPT analysis error: {e} - returning original results")
+        safe_print(f"[Source Explorer] Analysis error: {e} - returning original results")
         # Add default values if GPT fails
         for r in results:
             r['story_angle'] = r.get('snippet', '')[:150]
@@ -424,12 +443,18 @@ def enrich_results_with_llm(results: list, original_query: str) -> list:
     """
     Use LLM to generate newsletter-ready content from research results.
     Produces three-section format: headline, industry_data, so_what
+    Model selection is driven by config/vision_models.yaml task_assignments.
     """
     if not results:
         return results
 
     try:
-        safe_print(f"[Enrichment] Processing {len(results)} results with GPT...")
+        # Get model config for research enrichment task
+        model_config = get_model_for_task('research_enrichment')
+        model_id = model_config.get('id', 'gpt-5.2')
+        max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
+
+        safe_print(f"[Enrichment] Using model: {model_id}")
 
         # Build a single prompt to process all results at once
         results_text = ""
@@ -468,12 +493,15 @@ Guidelines:
 
 Return ONLY the JSON array, no other text."""
 
-        response = openai_client.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=2000
-        )
+        # Build API call with correct parameter name based on model
+        api_params = {
+            "model": model_id,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.3,
+        }
+        api_params[max_tokens_param] = 2000
+
+        response = openai_client.client.chat.completions.create(**api_params)
 
         content = response.choices[0].message.content.strip()
 
@@ -499,7 +527,7 @@ Return ONLY the JSON array, no other text."""
         impact_order = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
         results.sort(key=lambda x: impact_order.get(x.get('impact', 'LOW'), 2))
 
-        safe_print(f"[LLM Enrichment] Successfully enriched {len(results)} results")
+        safe_print(f"[LLM Enrichment] Successfully enriched {len(results)} results with {model_id}")
         return results
 
     except Exception as e:
@@ -1332,9 +1360,9 @@ What can insurance agents learn from this? How does it relate to client conversa
 
 Target: 150-200 words. Be engaging and informative."""
 
-            claims_research = openai_client.generate_content(
+            claims_research = claude_client.generate_content(
                 prompt=claims_prompt,
-                model="gpt-4o",
+                model="claude-opus-4-5-20251101",
                 temperature=0.3,
                 max_tokens=500
             )
@@ -1356,9 +1384,9 @@ URL: {topic.get('url', 'N/A')}
 Output format: [Summary text] - [Source Name]
 Example: State Farm announces 15% rate increase in California amid wildfire concerns - Insurance Journal"""
 
-                roundup_result = openai_client.generate_content(
+                roundup_result = claude_client.generate_content(
                     prompt=roundup_prompt,
-                    model="gpt-4o",
+                    model="claude-opus-4-5-20251101",
                     temperature=0.2,
                     max_tokens=100
                 )
@@ -1398,9 +1426,9 @@ Bullet points with specific statistics, dates, and facts.
 
 Target: 250-300 words. Be factual and cite specifics."""
 
-            spotlight_research = openai_client.generate_content(
+            spotlight_research = claude_client.generate_content(
                 prompt=spotlight_prompt,
-                model="gpt-4o",
+                model="claude-opus-4-5-20251101",
                 temperature=0.3,
                 max_tokens=800
             )
@@ -1421,9 +1449,9 @@ Summary: {topic.get('description', '')}
 Output format: [Tip title]: [Actionable advice]
 Example: Follow Up Fast: Respond to leads within 5 minutes to increase conversion rates by up to 400%."""
 
-                tip_result = openai_client.generate_content(
+                tip_result = claude_client.generate_content(
                     prompt=tip_prompt,
-                    model="gpt-4o",
+                    model="claude-opus-4-5-20251101",
                     temperature=0.3,
                     max_tokens=100
                 )
@@ -1640,9 +1668,9 @@ Requirements:
 
 Output ONLY the image generation prompt, nothing else."""
 
-            prompt_result = openai_client.generate_content(
+            prompt_result = claude_client.generate_content(
                 prompt=prompt_request,
-                model="gpt-4o",
+                model="claude-opus-4-5-20251101",
                 temperature=0.5,
                 max_tokens=150
             )

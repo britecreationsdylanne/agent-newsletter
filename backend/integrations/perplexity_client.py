@@ -374,14 +374,14 @@ Important:
         except:
             return 'Unknown'
 
-    def search_wedding_research(
+    def search_insurance_research(
         self,
         topic: str,
         geography: str = "",
         time_window: str = "30d"
     ) -> List[Dict]:
         """
-        Search for wedding industry research with citations
+        Search for P&C insurance industry research with citations
 
         Args:
             topic: Research topic or question
@@ -391,15 +391,16 @@ Important:
         Returns:
             Research findings with citations
         """
-        # Build wedding-focused query
+        # Build insurance-focused query
         query = f"""Find recent news and research about: {topic}
 
-Focus on information relevant to wedding venue owners and operators.
+Focus on information relevant to independent P&C insurance agents.
 Include:
 - Industry statistics and data
-- Market trends and forecasts
+- Rate changes and pricing trends
 - Regulatory or policy changes
-- Consumer behavior insights
+- Market trends and forecasts
+- Claims data and loss trends
 - Technology and operational developments
 
 {"Geographic focus: " + geography if geography else "Consider US market primarily."}
