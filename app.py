@@ -65,6 +65,9 @@ def html_to_plain_text(html_content):
 # Initialize AI clients
 openai_client = OpenAIClient()
 gemini_client = GeminiClient()
+if not gemini_client.is_available():
+    print("[WARNING] Gemini image generation not available - add GOOGLE_AI_API_KEY to .env")
+    print("         Get your API key at: https://aistudio.google.com/app/apikey")
 
 # Try to initialize Claude (optional)
 try:
@@ -697,7 +700,14 @@ def v2_search_sources():
         time_window = data.get('time_window', '30d')
         exclude_urls = data.get('exclude_urls', [])
 
-        safe_print(f"\n[API v2] Source Explorer: query='{query}', packs={source_packs}")
+        safe_print(f"\n[API v2] Source Explorer: query='{query}', packs={source_packs}, time_window={time_window}")
+
+        # Convert time window to human-readable for query
+        time_desc = {
+            '7d': 'past week',
+            '30d': 'past month',
+            '90d': 'past 3 months'
+        }.get(time_window, 'recent')
 
         # Insurance industry source packs (B2B and trade publications)
         SITE_PACKS = {
@@ -731,25 +741,25 @@ def v2_search_sources():
                 # Query 1: Site-specific with user query
                 f"""Search for: ({site_query}) {query}
 
-Find recent articles from these insurance industry sources.
+Find articles from the {time_desc} from these insurance industry sources.
 Return results with title, url, publisher, published_date, and summary.""",
 
                 # Query 2: Site-specific with broader topic
                 f"""Search for: ({site_query}) P&C insurance news trends
 
-Find recent business news about property and casualty insurance.
+Find business news from the {time_desc} about property and casualty insurance.
 Return results with title, url, publisher, published_date, and summary.""",
 
                 # Query 3: Fallback without site restriction
                 f"""Search for P&C insurance industry news from trade publications.
 
-Find articles about: {query}
+Find articles from the {time_desc} about: {query}
 Focus on business insights, trends, and industry analysis.
 Return results with title, url, publisher, published_date, and summary."""
             ]
         else:
             queries = [
-                f"""Search for P&C insurance industry news.
+                f"""Search for P&C insurance industry news from the {time_desc}.
 Find articles about: {query}
 Return results with title, url, publisher, published_date, and summary."""
             ]
@@ -1992,6 +2002,13 @@ def generate_images():
 
         print(f"\n[API] Generating images with Nano Banana (Gemini)...")
         print(f"[API] Received {len(prompts)} prompts")
+
+        # Check if Gemini is available
+        if not gemini_client or not gemini_client.is_available():
+            return jsonify({
+                'success': False,
+                'error': 'Gemini API not configured. Please add GOOGLE_AI_API_KEY to your .env file. Get a key from https://aistudio.google.com/app/apikey'
+            }), 503
 
         images = {}
 
