@@ -833,75 +833,38 @@
         <!-- Step 2B-Review: Spotlight Story Preview/Edit -->
         <div class="step" id="step2-spotlight-review">
             <h2>⭐ Review Spotlight Story</h2>
-            <p>Review your generated InsurNews Spotlight content. Click "Edit Mode" to make changes.</p>
+            <p>Review and edit your generated InsurNews Spotlight content. Click on any text to edit it directly.</p>
 
-            <!-- Toggle between Read and Edit mode -->
-            <div style="margin-bottom: 20px; text-align: right;">
-                <button id="spotlightModeToggle" onclick="toggleSpotlightMode()" class="btn-secondary btn" style="font-size: 13px; padding: 8px 16px;">
-                    ✏️ Edit Mode
-                </button>
-            </div>
-
-            <!-- READ MODE - Google Doc style display -->
-            <div id="spotlightReadMode" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <!-- Single editable view - Google Doc style -->
+            <div id="spotlightEditableView" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <!-- Document Page -->
-                <div style="background: white; max-width: 800px; margin: 0 auto; padding: 60px 72px; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); min-height: 600px; font-family: 'Arial', sans-serif;">
-                    <!-- Headline -->
-                    <h1 id="spotlightSubheaderDisplay" style="margin: 0 0 30px 0; font-size: 26px; color: #008181; line-height: 1.4; font-weight: 700; border-bottom: 2px solid #008181; padding-bottom: 20px;">
+                <div style="background: white; max-width: 800px; margin: 0 auto; padding: 50px 60px; box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); min-height: 500px; font-family: 'Arial', sans-serif;">
+                    <!-- Headline - Editable -->
+                    <div id="spotlightHeadlineEditable" contenteditable="true" style="margin: 0 0 25px 0; font-size: 24px; color: #008181; line-height: 1.4; font-weight: 700; border-bottom: 2px solid #008181; padding-bottom: 15px; outline: none; cursor: text;"
+                         onfocus="this.style.background='#f0f9f9'" onblur="this.style.background='transparent'">
                         Loading...
-                    </h1>
-
-                    <!-- Article Body Sections -->
-                    <div id="spotlightBodyDisplay" style="font-size: 14px; line-height: 1.8; color: #333;">
-                        <!-- H3 sections will be rendered here as readable article -->
                     </div>
 
-                    <!-- Agent Takeaway Box -->
-                    <div style="margin-top: 40px; padding: 24px; background: #f0f9f9; border-left: 4px solid #008181; border-radius: 0 8px 8px 0;">
-                        <h4 style="margin: 0 0 12px 0; color: #008181; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">💡 Agent Takeaway</h4>
-                        <p id="spotlightTakeawayDisplay" style="margin: 0; color: #333; font-size: 14px; line-height: 1.7;">
+                    <!-- Article Body Sections - Editable -->
+                    <div id="spotlightBodyEditable" style="font-size: 14px; line-height: 1.8; color: #333;">
+                        <!-- H3 sections will be rendered here as editable content -->
+                    </div>
+
+                    <!-- Agent Takeaway Box - Editable -->
+                    <div style="margin-top: 35px; padding: 20px; background: #f0f9f9; border-left: 4px solid #008181; border-radius: 0 8px 8px 0;">
+                        <h4 style="margin: 0 0 10px 0; color: #008181; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">💡 Agent Takeaway</h4>
+                        <div id="spotlightTakeawayEditable" contenteditable="true" style="margin: 0; color: #333; font-size: 14px; line-height: 1.7; outline: none; cursor: text;"
+                             onfocus="this.style.background='#e0f2f2'" onblur="this.style.background='transparent'">
                             Loading...
-                        </p>
-                    </div>
-
-                    <!-- Sources -->
-                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                        <p style="font-size: 11px; color: #666; margin: 0 0 10px 0; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Sources</p>
-                        <div id="spotlightSourcesDisplay" style="font-size: 12px; color: #008181;">
-                            <!-- Sources will be listed here -->
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- EDIT MODE - Form inputs (hidden by default) -->
-            <div id="spotlightEditMode" style="display: none; background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #3b82f6;">
-                <div style="background: #eff6ff; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
-                    <span style="font-size: 13px; color: #1e40af;">✏️ Edit Mode Active - Make your changes below</span>
-                </div>
-
-                <!-- Subheader -->
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Spotlight Headline</label>
-                    <input type="text" id="spotlightSubheaderEdit" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 18px; font-weight: 600;" placeholder="Enter headline...">
-                </div>
-
-                <!-- H3 Sections -->
-                <div id="spotlightH3Sections" style="margin-bottom: 20px;">
-                    <!-- H3 sections will be dynamically inserted here -->
-                </div>
-
-                <!-- Agent Takeaway -->
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Agent Takeaway</label>
-                    <textarea id="spotlightTakeawayEdit" rows="4" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px;" placeholder="Actionable insights for agents..."></textarea>
-                </div>
-
-                <!-- Sources (read-only in edit mode) -->
-                <div style="background: #f9fafb; padding: 15px; border-radius: 8px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Sources</label>
-                    <div id="spotlightSourcesList" style="font-size: 13px; color: #6b7280;">
-                        <!-- Sources will be listed here -->
+                    <!-- Sources - Read only -->
+                    <div style="margin-top: 35px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+                        <p style="font-size: 11px; color: #666; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Sources</p>
+                        <div id="spotlightSourcesEditable" style="font-size: 12px; color: #008181;">
+                            <!-- Sources will be listed here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1015,9 +978,9 @@
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <input type="text" id="explorerQuery" placeholder="e.g., P&C news, agent tips..." value="P&C insurance agent news" style="flex: 1;">
                             <select id="explorerTimeFrame" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; background: white; cursor: pointer;">
-                                <option value="7d">Past Week</option>
-                                <option value="30d" selected>Past Month</option>
-                                <option value="90d">Past 3 Months</option>
+                                <option value="7d">Last 7 days</option>
+                                <option value="30d" selected>Last 30 days</option>
+                                <option value="90d">Last 90 days</option>
                             </select>
                         </div>
                     </div>
@@ -2202,143 +2165,65 @@
             }
         }
 
-        // Display spotlight content in the review/edit page
+        // Display spotlight content in the single editable view
         function displaySpotlightReview(content) {
-            // === POPULATE READ MODE (article-like display) ===
-            // Headline
-            document.getElementById('spotlightSubheaderDisplay').textContent = content.subheader || 'Untitled Spotlight';
+            // Headline - editable
+            document.getElementById('spotlightHeadlineEditable').textContent = content.subheader || 'Untitled Spotlight';
 
-            // Build readable article body from H3 sections with Google Doc styling
-            const bodyDisplay = document.getElementById('spotlightBodyDisplay');
+            // Build editable article body from H3 sections
+            const bodyEditable = document.getElementById('spotlightBodyEditable');
             let bodyHtml = '';
             (content.h3s || []).forEach((h3, index) => {
-                bodyHtml += `<h3 style="margin: ${index === 0 ? '0' : '28px'} 0 14px 0; font-size: 16px; color: #008181; font-weight: 700;">${h3.title || ''}</h3>`;
-                // Split body into paragraphs and add proper indentation
-                const paragraphs = (h3.body || '').split(/\n\n|\n/).filter(p => p.trim());
-                paragraphs.forEach((para, pIndex) => {
-                    bodyHtml += `<p style="margin: 0 0 16px 0; text-indent: ${pIndex > 0 ? '2em' : '0'}; text-align: justify; line-height: 1.8;">${para.trim()}</p>`;
-                });
+                // Section title - editable
+                bodyHtml += `<h3 class="spotlight-section-title" data-index="${index}" contenteditable="true"
+                    style="margin: ${index === 0 ? '0' : '25px'} 0 12px 0; font-size: 16px; color: #008181; font-weight: 700; outline: none; cursor: text;"
+                    onfocus="this.style.background='#f0f9f9'" onblur="this.style.background='transparent'">${h3.title || ''}</h3>`;
+                // Section body - editable
+                bodyHtml += `<div class="spotlight-section-body" data-index="${index}" contenteditable="true"
+                    style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.8; text-align: justify; outline: none; cursor: text;"
+                    onfocus="this.style.background='#fafafa'" onblur="this.style.background='transparent'">${h3.body || ''}</div>`;
             });
-            bodyDisplay.innerHTML = bodyHtml || '<p style="color: #999;">No content sections available.</p>';
+            bodyEditable.innerHTML = bodyHtml || '<p style="color: #999;">No content sections available.</p>';
 
-            // Agent Takeaway
-            document.getElementById('spotlightTakeawayDisplay').textContent = content.agent_takeaway || 'No takeaway provided.';
+            // Agent Takeaway - editable
+            document.getElementById('spotlightTakeawayEditable').textContent = content.agent_takeaway || 'No takeaway provided.';
 
-            // Sources in read mode
-            const sourcesDisplay = document.getElementById('spotlightSourcesDisplay');
+            // Sources - read only
+            const sourcesEditable = document.getElementById('spotlightSourcesEditable');
             if (content.sources && content.sources.length > 0) {
-                sourcesDisplay.innerHTML = content.sources.map(source =>
+                sourcesEditable.innerHTML = content.sources.map(source =>
                     `<a href="${source.url}" target="_blank" style="color: #008181; text-decoration: none; margin-right: 15px;">${source.title || source.publisher} ↗</a>`
                 ).join('');
             } else {
-                sourcesDisplay.innerHTML = '<span style="color: #999;">No sources listed</span>';
-            }
-
-            // === POPULATE EDIT MODE (form inputs) ===
-            // Set subheader
-            document.getElementById('spotlightSubheaderEdit').value = content.subheader || '';
-
-            // Build H3 sections for editing
-            const h3Container = document.getElementById('spotlightH3Sections');
-            h3Container.innerHTML = '';
-
-            (content.h3s || []).forEach((h3, index) => {
-                const sectionDiv = document.createElement('div');
-                sectionDiv.style.cssText = 'margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border: 1px solid #bfdbfe;';
-                sectionDiv.innerHTML = `
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Section ${index + 1} Title</label>
-                    <input type="text" class="spotlight-h3-title" data-index="${index}" value="${h3.title || ''}" style="width: 100%; padding: 10px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">Section ${index + 1} Content</label>
-                    <textarea class="spotlight-h3-body" data-index="${index}" rows="5" style="width: 100%; padding: 10px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; line-height: 1.6;">${h3.body || ''}</textarea>
-                `;
-                h3Container.appendChild(sectionDiv);
-            });
-
-            // Set agent takeaway
-            document.getElementById('spotlightTakeawayEdit').value = content.agent_takeaway || '';
-
-            // Display sources in edit mode
-            const sourcesList = document.getElementById('spotlightSourcesList');
-            if (content.sources && content.sources.length > 0) {
-                sourcesList.innerHTML = content.sources.map(source =>
-                    `<div style="margin-bottom: 5px;">• <a href="${source.url}" target="_blank" style="color: #008181;">${source.title || source.publisher}</a></div>`
-                ).join('');
-            } else {
-                sourcesList.innerHTML = '<p style="color: #999;">No sources listed</p>';
-            }
-
-            // Reset to read mode by default
-            document.getElementById('spotlightReadMode').style.display = 'block';
-            document.getElementById('spotlightEditMode').style.display = 'none';
-            document.getElementById('spotlightModeToggle').innerHTML = '✏️ Edit Mode';
-        }
-
-        // Toggle between read and edit mode for spotlight review
-        function toggleSpotlightMode() {
-            const readMode = document.getElementById('spotlightReadMode');
-            const editMode = document.getElementById('spotlightEditMode');
-            const toggleBtn = document.getElementById('spotlightModeToggle');
-
-            if (editMode.style.display === 'none') {
-                // Switch to edit mode
-                readMode.style.display = 'none';
-                editMode.style.display = 'block';
-                toggleBtn.innerHTML = '👁️ Preview Mode';
-                toggleBtn.style.background = '#3b82f6';
-                toggleBtn.style.color = 'white';
-                toggleBtn.style.borderColor = '#3b82f6';
-            } else {
-                // Switch to read mode (and save edits first)
-                saveSpotlightEdits();
-                // Re-render read mode with updated content
-                displaySpotlightReadMode(spotlightGeneratedContent);
-                readMode.style.display = 'block';
-                editMode.style.display = 'none';
-                toggleBtn.innerHTML = '✏️ Edit Mode';
-                toggleBtn.style.background = '';
-                toggleBtn.style.color = '';
-                toggleBtn.style.borderColor = '';
+                sourcesEditable.innerHTML = '<span style="color: #999;">No sources listed</span>';
             }
         }
 
-        // Update just the read mode display (used when switching from edit back to read)
-        function displaySpotlightReadMode(content) {
-            document.getElementById('spotlightSubheaderDisplay').textContent = content.subheader || 'Untitled Spotlight';
-
-            const bodyDisplay = document.getElementById('spotlightBodyDisplay');
-            let bodyHtml = '';
-            (content.h3s || []).forEach((h3, index) => {
-                bodyHtml += `<h3 style="margin: ${index === 0 ? '0' : '28px'} 0 14px 0; font-size: 16px; color: #008181; font-weight: 700;">${h3.title || ''}</h3>`;
-                // Split body into paragraphs and add proper indentation
-                const paragraphs = (h3.body || '').split(/\n\n|\n/).filter(p => p.trim());
-                paragraphs.forEach((para, pIndex) => {
-                    bodyHtml += `<p style="margin: 0 0 16px 0; text-indent: ${pIndex > 0 ? '2em' : '0'}; text-align: justify; line-height: 1.8;">${para.trim()}</p>`;
-                });
-            });
-            bodyDisplay.innerHTML = bodyHtml || '<p style="color: #999;">No content sections available.</p>';
-
-            document.getElementById('spotlightTakeawayDisplay').textContent = content.agent_takeaway || 'No takeaway provided.';
-        }
-
-        // Save edits from the spotlight review page back to spotlightGeneratedContent
+        // Save edits from the spotlight editable view back to spotlightGeneratedContent
         function saveSpotlightEdits() {
-            // Save subheader
-            spotlightGeneratedContent.subheader = document.getElementById('spotlightSubheaderEdit').value;
+            // Save headline from contenteditable
+            const headlineEl = document.getElementById('spotlightHeadlineEditable');
+            if (headlineEl) {
+                spotlightGeneratedContent.subheader = headlineEl.textContent.trim();
+            }
 
-            // Save H3 sections
-            const h3Titles = document.querySelectorAll('.spotlight-h3-title');
-            const h3Bodies = document.querySelectorAll('.spotlight-h3-body');
+            // Save H3 sections from contenteditable divs
+            const h3Titles = document.querySelectorAll('.spotlight-section-title');
+            const h3Bodies = document.querySelectorAll('.spotlight-section-body');
 
             spotlightGeneratedContent.h3s = [];
-            h3Titles.forEach((titleInput, index) => {
+            h3Titles.forEach((titleEl, index) => {
                 spotlightGeneratedContent.h3s.push({
-                    title: titleInput.value,
-                    body: h3Bodies[index]?.value || ''
+                    title: titleEl.textContent.trim(),
+                    body: h3Bodies[index]?.textContent.trim() || ''
                 });
             });
 
-            // Save agent takeaway
-            spotlightGeneratedContent.agent_takeaway = document.getElementById('spotlightTakeawayEdit').value;
+            // Save agent takeaway from contenteditable
+            const takeawayEl = document.getElementById('spotlightTakeawayEditable');
+            if (takeawayEl) {
+                spotlightGeneratedContent.agent_takeaway = takeawayEl.textContent.trim();
+            }
 
             console.log('[Spotlight] Edits saved:', spotlightGeneratedContent);
         }
@@ -5941,11 +5826,33 @@
                 researchResults.explorer = [];
             }
 
-            // Re-highlight if this section already has a selection
+            // Re-attach click handlers and highlight existing selections
+            reattachResultClickHandlers();
             highlightExistingSelection(section);
 
             // Update progress tracker and next button
             updateSelectionProgress();
+        }
+
+        // Re-attach click handlers to result items after restoring from cache
+        function reattachResultClickHandlers() {
+            // Get current results for each card type
+            const allResults = {
+                perplexity: researchResults.perplexity || [],
+                insight: researchResults.insight || [],
+                explorer: researchResults.explorer || []
+            };
+
+            document.querySelectorAll('.research-result-item').forEach(item => {
+                const cardType = item.dataset.cardType;
+                const index = parseInt(item.dataset.index, 10);
+                const results = allResults[cardType] || [];
+                const result = results[index];
+
+                if (result) {
+                    item.onclick = () => selectResearchResult(cardType, index, item, result);
+                }
+            });
         }
 
         // Highlight already-selected results when switching tabs
