@@ -1009,12 +1009,12 @@
                         insurancenewsnet.com • insurancejournal.com • propertycasualty360.com • claimsjournal.com • carriermanagement.com • thinkadvisor.com • dig-in.com
                     </div>
                     <div class="research-card-filters">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <div class="checkbox-group">
-                                <label><input type="checkbox" value="insurance" checked class="explorerPack"> Insurance News</label>
-                                <label><input type="checkbox" value="claims" class="explorerPack"> Claims</label>
-                                <label><input type="checkbox" value="regulations" class="explorerPack"> Regulations</label>
-                            </div>
+                        <div class="checkbox-group" style="margin-bottom: 10px;">
+                            <label><input type="checkbox" value="insurance" checked class="explorerPack"> Insurance News</label>
+                            <label><input type="checkbox" value="claims" class="explorerPack"> Claims</label>
+                            <label><input type="checkbox" value="regulations" class="explorerPack"> Regulations</label>
+                        </div>
+                        <div style="margin-bottom: 10px;">
                             <select id="explorerTimeFrame" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 120px;">
                                 <option value="7d">Last 7 days</option>
                                 <option value="30d" selected>Last 30 days</option>
@@ -2710,19 +2710,21 @@
             html += '<div style="margin-bottom: 20px;">';
             html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Agent Advantage</h3>';
             html += '<div id="tipsContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">';
-            // Handle new format: { intro, tips: [...] }
+            // Handle new format: { intro, tips: [{ title, tip }] }
             if (generatedTipsContent && generatedTipsContent.intro) {
                 html += `<p style="margin-bottom: 15px;">${generatedTipsContent.intro}</p>`;
                 html += '<ol style="padding-left: 20px; margin: 0;">';
                 (generatedTipsContent.tips || []).forEach(item => {
-                    html += `<li style="margin-bottom: 10px;">${item.tip || item}</li>`;
+                    const title = item.title ? `<strong>${item.title}:</strong> ` : '';
+                    html += `<li style="margin-bottom: 10px;">${title}${item.tip || item}</li>`;
                 });
                 html += '</ol>';
             } else if (Array.isArray(generatedTipsContent)) {
                 // Old format: array of tips
                 html += '<ol style="padding-left: 20px; margin: 0;">';
                 generatedTipsContent.forEach(item => {
-                    html += `<li style="margin-bottom: 8px;">${item.tip || item}</li>`;
+                    const title = item.title ? `<strong>${item.title}:</strong> ` : '';
+                    html += `<li style="margin-bottom: 8px;">${title}${item.tip || item}</li>`;
                 });
                 html += '</ol>';
             } else {
@@ -5458,20 +5460,20 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
                 document.getElementById('subjectLineLoading').style.display = 'block';
                 document.getElementById('subjectLineOptions').style.display = 'none';
 
-                // Gather all newsletter content
+                // Gather all newsletter content using correct variable names
                 const newsletterContent = {
                     month: selectedMonth,
-                    news: {
-                        title: selectedNews.title,
-                        content: generatedNewsContent
+                    claims: {
+                        title: selectedClaims?.title || 'Curious Claims',
+                        content: generatedClaimsContent || ''
                     },
-                    tip: {
-                        title: selectedTip.title,
-                        content: generatedTipContent
+                    spotlight: {
+                        title: generatedSpotlightSubheader || 'Industry Spotlight',
+                        content: generatedSpotlightContent || ''
                     },
-                    trend: {
-                        title: selectedTrend.title,
-                        content: generatedTrendContent
+                    tips: {
+                        title: 'Agent Advantage',
+                        content: generatedTipsContent || ''
                     }
                 };
 
@@ -5699,6 +5701,17 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
 
             // Use shared three-section display
             displayThreeSectionResults(results, container, 'insight');
+        }
+
+        // Display perplexity results - wrapper for re-rendering after adding custom links
+        function displayPerplexityResults(results, container) {
+            if (!container) return;
+            container.innerHTML = '';
+            displayThreeSectionResults(results, container, 'perplexity');
+            // Update cache for current tab
+            if (currentResearchSection && tabSearchState[currentResearchSection]) {
+                tabSearchState[currentResearchSection].htmlCache.perplexity = container.innerHTML;
+            }
         }
 
         // Shared display function for three-section card layout (used by Insight Builder and Perplexity)

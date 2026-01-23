@@ -1784,7 +1784,8 @@ Output ONLY the intro and tips in this format, nothing else."""
 
                 for title, body in matches[:5]:
                     tips_items.append({
-                        'tip': f"**{title.strip()}**\n{body.strip()}",
+                        'title': title.strip(),
+                        'tip': body.strip(),
                         'source_url': topic.get('url', '')
                     })
 
@@ -1926,30 +1927,22 @@ Output ONLY the section text, no title or labels."""
             sections['roundup'] = research['roundup']
 
         # Use pre-generated InsurNews Spotlight content (already written in Step 2B)
+        # Keep the object structure for frontend to display properly
         if research.get('spotlight'):
             print("  - Formatting InsurNews Spotlight section...")
             spotlight_data = research['spotlight']
 
-            # Convert structured spotlight content to readable text
             if isinstance(spotlight_data, dict):
-                # Build the spotlight text from the structured content
-                spotlight_text = ""
-
-                # Add H3 sections
-                for h3 in spotlight_data.get('h3s', []):
-                    spotlight_text += f"**{h3.get('title', '')}**\n\n"
-                    spotlight_text += f"{h3.get('body', '')}\n\n"
-
-                # Add agent takeaway
-                if spotlight_data.get('agent_takeaway'):
-                    spotlight_text += f"**What This Means for You**\n\n{spotlight_data['agent_takeaway']}"
-
-                sections['spotlight'] = spotlight_text.strip()
+                # Keep the full object structure for frontend display
+                sections['spotlight'] = spotlight_data
                 sections['spotlight_subheader'] = spotlight_data.get('subheader', '')
                 sections['spotlight_sources'] = spotlight_data.get('sources', [])
             else:
-                # Fallback if it's already a string
-                sections['spotlight'] = str(spotlight_data)
+                # Fallback if it's already a string - wrap in object structure
+                sections['spotlight'] = {
+                    'subheader': 'Industry Spotlight',
+                    'h3s': [{'title': 'Overview', 'body': str(spotlight_data)}]
+                }
 
         # Agent Advantage tips are already formatted from research
         if research.get('agent_tips'):
@@ -2622,21 +2615,35 @@ def export_to_docs():
         safe_print(f"[API] Exporting to Google Docs: {title}")
 
         # Try both variable names for compatibility (with and without underscore prefix)
-        creds_json = os.environ.get('_GOOGLE_DOCS_CREDENTIALS') or os.environ.get('GOOGLE_DOCS_CREDENTIALS')
+        creds_json = os.environ.get('GOOGLE_DOCS_CREDENTIALS') or os.environ.get('_GOOGLE_DOCS_CREDENTIALS')
+
+        # Debug logging
+        safe_print(f"[API] GOOGLE_DOCS_CREDENTIALS exists: {bool(os.environ.get('GOOGLE_DOCS_CREDENTIALS'))}")
+        safe_print(f"[API] _GOOGLE_DOCS_CREDENTIALS exists: {bool(os.environ.get('_GOOGLE_DOCS_CREDENTIALS'))}")
+        if creds_json:
+            safe_print(f"[API] Credentials length: {len(creds_json)} chars, starts with: {creds_json[:50]}...")
 
         if not creds_json:
             return jsonify({
                 "success": False,
-                "error": "Google Docs credentials not configured. Please set _GOOGLE_DOCS_CREDENTIALS environment variable."
+                "error": "Google Docs credentials not configured. Set GOOGLE_DOCS_CREDENTIALS via Secret Manager."
             }), 500
 
         # Parse credentials
         try:
             creds_data = json.loads(creds_json)
+            safe_print(f"[API] Parsed credentials, project_id: {creds_data.get('project_id', 'unknown')}")
             credentials = service_account.Credentials.from_service_account_info(
                 creds_data,
                 scopes=['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
             )
+        except json.JSONDecodeError as e:
+            safe_print(f"[API] JSON parse error: {e}")
+            safe_print(f"[API] Credentials value (first 100 chars): {creds_json[:100] if creds_json else 'None'}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid JSON in credentials: {str(e)}"
+            }), 500
         except Exception as e:
             safe_print(f"[API] Credentials error: {e}")
             return jsonify({
