@@ -2623,20 +2623,29 @@
                 // Handle spotlight object structure: { subheader, h3s: [{ h3, body }] }
                 if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
                     if (content.h3s && Array.isArray(content.h3s)) {
-                        // Spotlight format - extract body paragraphs from h3s array
+                        // Spotlight format - extract body paragraphs from h3s array with proper spacing
                         let paragraphs = [];
                         content.h3s.forEach(h3Item => {
                             if (h3Item.body) {
-                                paragraphs.push(`<p style="margin-bottom: 12px;">${h3Item.body}</p>`);
+                                // Clean the body text and wrap in paragraph with good spacing
+                                paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${h3Item.body}</p>`);
                             }
                         });
                         contentStr = paragraphs.join('');
                     } else if (content.subheader && content.body) {
                         // Alternative format with direct body
-                        contentStr = `<p style="margin-bottom: 12px;">${content.body}</p>`;
+                        contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.body}</p>`;
+                    } else if (content.content) {
+                        // Handle {content: "..."} format
+                        contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.content}</p>`;
                     } else {
-                        // Unknown object structure, stringify as fallback
-                        contentStr = JSON.stringify(content);
+                        // Unknown object structure - try to extract readable text, not JSON
+                        const values = Object.values(content).filter(v => typeof v === 'string' && v.length > 20);
+                        if (values.length > 0) {
+                            contentStr = values.map(v => `<p style="margin: 0 0 16px 0; line-height: 1.7;">${v}</p>`).join('');
+                        } else {
+                            contentStr = JSON.stringify(content);
+                        }
                     }
                 } else {
                     contentStr = typeof content === 'string' ? content : JSON.stringify(content);
@@ -2644,10 +2653,12 @@
 
                 // Fix white text color
                 contentStr = contentStr.replace(/color:\s*#ffffff;?/gi, 'color: #1f2937;');
-                // Make all links blue and underlined to show where hyperlinks are
+
+                // Style all links blue - first remove any existing color styles on links, then add blue
+                // Match <a with any attributes and ensure we add blue styling
+                contentStr = contentStr.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>'); // Remove existing styles
                 contentStr = contentStr.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
-                // Also style any href links that don't have existing style
-                contentStr = contentStr.replace(/<a href="/gi, '<a style="color: #0066cc; text-decoration: underline;" href="');
+
                 return contentStr;
             }
 
@@ -3477,6 +3488,13 @@
                 document.getElementById('claimsPromptArticle').textContent = `For: ${selectedClaims?.title || 'Curious Claims'}`;
                 document.getElementById('spotlightPromptArticle').textContent = `For: ${generatedSpotlightSubheader || 'InsurNews Spotlight'}`;
                 document.getElementById('tipsPromptArticle').textContent = `For: Agent Advantage Tips`;
+
+                // Apply the default style (photorealistic) to all prompts on initial load
+                // This ensures the style modifier is added even without user interaction
+                updatePromptWithStyle('briteSpot');
+                updatePromptWithStyle('claims');
+                updatePromptWithStyle('spotlight');
+                updatePromptWithStyle('tips');
 
                 // Mark prompts as generated
                 promptsAlreadyGenerated = true;
@@ -6076,8 +6094,7 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
                     spotlightSearchResults.perplexity.unshift(article);
 
                     // Re-render the results
-                    const container = document.getElementById('spotlightPerplexityResults');
-                    displaySpotlightPerplexityResults(spotlightSearchResults.perplexity, container);
+                    displaySpotlightResults(spotlightSearchResults.perplexity, 'spotlightPerplexityResults', false);
 
                     // Update the added links list in modal (don't close - allow adding more)
                     updateSpotlightAddedLinksList(article.title || 'Article', url);
