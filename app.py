@@ -2542,12 +2542,13 @@ def send_preview():
                 "error": "SendGrid library not installed. Run: pip install sendgrid"
             }), 500
 
-        # Get SendGrid configuration
-        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
-        from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'marketing@brite.co')
-        from_name = os.environ.get('SENDGRID_FROM_NAME', 'BriteCo Brief')
+        # Get SendGrid configuration (check both with and without underscore prefix for Secret Manager)
+        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY') or os.environ.get('_SENDGRID_API_KEY')
+        from_email = os.environ.get('SENDGRID_FROM_EMAIL') or os.environ.get('_SENDGRID_FROM_EMAIL') or 'marketing@brite.co'
+        from_name = os.environ.get('SENDGRID_FROM_NAME') or os.environ.get('_SENDGRID_FROM_NAME') or 'BriteCo Brief'
 
         safe_print(f"[API] SendGrid API key exists: {bool(sendgrid_api_key)}")
+        safe_print(f"[API] Checking SENDGRID_API_KEY: {bool(os.environ.get('SENDGRID_API_KEY'))}, _SENDGRID_API_KEY: {bool(os.environ.get('_SENDGRID_API_KEY'))}")
         safe_print(f"[API] From email: {from_email}")
 
         if not sendgrid_api_key:
@@ -2817,9 +2818,10 @@ def export_to_docs():
         email_errors = []
         if send_email and recipients:
             try:
-                sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
-                from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'marketing@brite.co')
-                from_name = os.environ.get('SENDGRID_FROM_NAME', 'BriteCo Brief')
+                # Check both with and without underscore prefix for Secret Manager
+                sendgrid_api_key = os.environ.get('SENDGRID_API_KEY') or os.environ.get('_SENDGRID_API_KEY')
+                from_email = os.environ.get('SENDGRID_FROM_EMAIL') or os.environ.get('_SENDGRID_FROM_EMAIL') or 'marketing@brite.co'
+                from_name = os.environ.get('SENDGRID_FROM_NAME') or os.environ.get('_SENDGRID_FROM_NAME') or 'BriteCo Brief'
 
                 if sendgrid_api_key and SENDGRID_AVAILABLE:
                     sg = sendgrid.SendGridAPIClient(api_key=sendgrid_api_key)
