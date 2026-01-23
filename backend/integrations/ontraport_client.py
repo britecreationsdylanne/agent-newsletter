@@ -95,6 +95,7 @@ class OntraportClient:
         html_body: str,
         from_name: str = "BriteCo",
         from_email: Optional[str] = None,
+        object_id: int = 5,
     ) -> str:
         """
         Create an email message (campaign) in Ontraport
@@ -104,6 +105,7 @@ class OntraportClient:
             html_body: Complete HTML email content
             from_name: Sender name
             from_email: Sender email address
+            object_id: Ontraport object ID (default 5 for messages)
 
         Returns:
             Message ID
@@ -111,7 +113,7 @@ class OntraportClient:
         endpoint = "/objects"
 
         data = {
-            "objectID": 5,  # Message object type in Ontraport
+            "objectID": object_id,
             "subject": subject,
             "html": html_body,
             "from_name": from_name,
@@ -126,6 +128,59 @@ class OntraportClient:
         message_id = str(result['data'].get('id') or result['data'].get('message_id'))
 
         return message_id
+
+    def create_email(
+        self,
+        subject: str,
+        html_content: str,
+        plain_text: str = None,
+        from_email: str = None,
+        from_name: str = "BriteCo Insurance",
+        object_ids: List[str] = None,
+    ) -> Dict:
+        """
+        Create email in Ontraport for multiple object IDs (Agent Newsletter workflow)
+
+        Args:
+            subject: Email subject line
+            html_content: Complete HTML email content
+            plain_text: Plain text version (optional)
+            from_email: Sender email address
+            from_name: Sender name
+            object_ids: List of Ontraport object IDs to push to (default: ["10004", "10007"])
+
+        Returns:
+            Dict with success status and email IDs for each object
+        """
+        if object_ids is None:
+            object_ids = ["10004", "10007"]
+
+        results = []
+        email_ids = []
+
+        for obj_id in object_ids:
+            try:
+                email_id = self.create_email_message(
+                    subject=subject,
+                    html_body=html_content,
+                    from_name=from_name,
+                    from_email=from_email,
+                    object_id=int(obj_id),
+                )
+                results.append({"object_id": obj_id, "email_id": email_id, "success": True})
+                email_ids.append(email_id)
+            except Exception as e:
+                results.append({"object_id": obj_id, "error": str(e), "success": False})
+
+        # Return success if at least one succeeded
+        success = any(r.get("success") for r in results)
+
+        return {
+            "success": success,
+            "email_id": email_ids[0] if email_ids else None,
+            "email_ids": email_ids,
+            "results": results,
+        }
 
     def get_message(self, message_id: str) -> Dict:
         """

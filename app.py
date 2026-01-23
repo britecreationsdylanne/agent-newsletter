@@ -2335,16 +2335,16 @@ def send_preview():
 
         safe_print(f"[API] Sending preview to {len(recipients)} recipients...")
 
-        # Get SMTP configuration
-        smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
-        smtp_port = int(os.environ.get('SMTP_PORT', 587))
-        smtp_user = os.environ.get('SMTP_USER')
-        smtp_password = os.environ.get('SMTP_PASSWORD')
+        # Get SMTP configuration (using underscore prefix to match Cloud Run variables)
+        smtp_server = os.environ.get('_SMTP_SERVER', 'smtp.gmail.com')
+        smtp_port = int(os.environ.get('_SMTP_PORT', 587))
+        smtp_user = os.environ.get('_SMTP_USER')
+        smtp_password = os.environ.get('_SMTP_PASSWORD')
 
         if not smtp_user or not smtp_password:
             return jsonify({
                 "success": False,
-                "error": "SMTP credentials not configured. Add SMTP_USER and SMTP_PASSWORD environment variables."
+                "error": "SMTP credentials not configured. Add _SMTP_USER and _SMTP_PASSWORD environment variables."
             }), 500
 
         # Send email to each recipient
@@ -2409,9 +2409,14 @@ def export_to_docs():
 
         data = request.json
         content = data.get('content', {})
-        title = data.get('title', f"BriteCo Brief - {datetime.now().strftime('%B %Y')}")
+        title = data.get('title', f"Agent Newsletter ({datetime.now().strftime('%B')}, {datetime.now().year})")
+        month = data.get('month', datetime.now().strftime('%B'))
+        year = data.get('year', datetime.now().year)
         send_email = data.get('send_email', False)
-        recipient_email = data.get('recipient_email', '')
+        recipients = data.get('recipients', [])  # List of email addresses
+
+        # Google Drive folder ID for saving documents
+        GOOGLE_DRIVE_FOLDER_ID = '1P4f_5lsvk-AKiSuZ9pks8LhcuUbvVP2m'
 
         safe_print(f"[API] Exporting to Google Docs: {title}")
 
@@ -2447,6 +2452,24 @@ def export_to_docs():
         doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
 
         safe_print(f"[API] Created Google Doc: {doc_id}")
+
+        # Move document to the specified folder
+        try:
+            # Get current parents
+            file = drive_service.files().get(fileId=doc_id, fields='parents').execute()
+            previous_parents = ",".join(file.get('parents', []))
+
+            # Move to new folder
+            drive_service.files().update(
+                fileId=doc_id,
+                addParents=GOOGLE_DRIVE_FOLDER_ID,
+                removeParents=previous_parents,
+                fields='id, parents'
+            ).execute()
+            safe_print(f"[API] Moved document to folder: {GOOGLE_DRIVE_FOLDER_ID}")
+        except Exception as folder_error:
+            safe_print(f"[API] Warning: Could not move to folder: {folder_error}")
+            # Continue anyway - document is still created
 
         # Build document content from newsletter sections
         requests_list = []
@@ -2552,38 +2575,42 @@ def export_to_docs():
         ).execute()
         safe_print(f"[API] Document sharing enabled")
 
-        # Optionally send email with the link
-        email_sent = False
-        if send_email and recipient_email:
+        # Optionally send email with the link to multiple recipients
+        emails_sent = []
+        email_errors = []
+        if send_email and recipients:
             try:
-                # Use existing SMTP configuration
-                smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
-                smtp_port = int(os.environ.get('SMTP_PORT', '587'))
-                smtp_user = os.environ.get('SMTP_USER', '')
-                smtp_pass = os.environ.get('SMTP_PASS', '')
+                # Use SMTP configuration with underscore prefix (matching Cloud Run variables)
+                smtp_server = os.environ.get('_SMTP_SERVER', 'smtp.gmail.com')
+                smtp_port = int(os.environ.get('_SMTP_PORT', '587'))
+                smtp_user = os.environ.get('_SMTP_USER', '')
+                smtp_password = os.environ.get('_SMTP_PASSWORD', '')
 
-                if smtp_user and smtp_pass:
-                    msg = MIMEMultipart()
-                    msg['From'] = smtp_user
-                    msg['To'] = recipient_email
-                    msg['Subject'] = f"Newsletter Draft Ready: {title}"
+                if smtp_user and smtp_password:
+                    for recipient in recipients:
+                        try:
+                            msg = MIMEMultipart()
+                            msg['From'] = smtp_user
+                            msg['To'] = recipient
+                            msg['Subject'] = f"Agent Newsletter Copy ({month}, {year}) - Ready for Review"
 
-                    body = f"""Your BriteCo Brief newsletter draft is ready for review!
-
-View and edit the document here:
-{doc_url}
-
-This is an automatically generated email from the BriteCo Brief newsletter tool.
+                            body = f"""Hello, attached is the Agent ({month}, {year}) newsletter for review: {doc_url}
 """
-                    msg.attach(MIMEText(body, 'plain'))
+                            msg.attach(MIMEText(body, 'plain'))
 
-                    with smtplib.SMTP(smtp_host, smtp_port) as server:
-                        server.starttls()
-                        server.login(smtp_user, smtp_pass)
-                        server.send_message(msg)
+                            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                                server.starttls()
+                                server.login(smtp_user, smtp_password)
+                                server.send_message(msg)
 
-                    email_sent = True
-                    safe_print(f"[API] Email sent to {recipient_email}")
+                            emails_sent.append(recipient)
+                            safe_print(f"[API] Email sent to {recipient}")
+                        except Exception as email_error:
+                            error_msg = f"Failed to send to {recipient}: {str(email_error)}"
+                            email_errors.append(error_msg)
+                            safe_print(f"[API] {error_msg}")
+                else:
+                    safe_print("[API] SMTP credentials not configured (_SMTP_USER, _SMTP_PASSWORD)")
             except Exception as e:
                 safe_print(f"[API] Email send failed: {e}")
                 # Don't fail the whole operation if email fails
@@ -2593,8 +2620,9 @@ This is an automatically generated email from the BriteCo Brief newsletter tool.
             "doc_url": doc_url,
             "doc_id": doc_id,
             "title": title,
-            "email_sent": email_sent,
-            "message": f"Newsletter exported to Google Docs{' and email sent' if email_sent else ''}"
+            "emails_sent": emails_sent,
+            "email_errors": email_errors,
+            "message": f"Newsletter exported to Google Docs{f' and {len(emails_sent)} email(s) sent' if emails_sent else ''}"
         })
 
     except Exception as e:
@@ -2626,13 +2654,14 @@ def send_to_ontraport():
         # Convert to plain text for Ontraport
         plain_text = html_to_plain_text(html_content)
 
-        # Send to Ontraport objects
+        # Send to Ontraport objects (10004 and 10007)
         result = ontraport_client.create_email(
             subject=subject,
             html_content=html_content,
             plain_text=plain_text,
             from_email=ONTRAPORT_CONFIG['from_email'],
-            from_name=ONTRAPORT_CONFIG['from_name']
+            from_name=ONTRAPORT_CONFIG['from_name'],
+            object_ids=ONTRAPORT_CONFIG['objects']
         )
 
         if result.get('success'):

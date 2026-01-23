@@ -739,14 +739,24 @@
 
             <!-- Upload Link Modal for Spotlight -->
             <div id="spotlightUploadLinkModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; margin: 20px;">
-                    <h3 style="margin: 0 0 15px 0; color: #374151;">📎 Add Custom Article Link</h3>
-                    <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Paste a link to an article you'd like to include in the Spotlight story.</p>
-                    <input type="text" id="spotlightCustomLinkInput" placeholder="https://example.com/article..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; margin-bottom: 15px;">
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 550px; width: 90%; margin: 20px; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="margin: 0 0 15px 0; color: #374151;">📎 Add Custom Article Links</h3>
+                    <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Paste links to articles you'd like to include in the Spotlight story.</p>
+
+                    <!-- Added Links List -->
+                    <div id="spotlightAddedLinksList" style="margin-bottom: 15px; display: none;">
+                        <p style="font-size: 12px; font-weight: 600; color: #059669; margin-bottom: 8px;">✓ Added Links:</p>
+                        <div id="spotlightAddedLinksContainer" style="max-height: 150px; overflow-y: auto; border: 1px solid #d1fae5; border-radius: 6px; padding: 8px; background: #ecfdf5;"></div>
+                    </div>
+
+                    <input type="text" id="spotlightCustomLinkInput" placeholder="https://example.com/article..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; margin-bottom: 10px;">
                     <div id="spotlightUploadLinkError" style="color: #dc2626; font-size: 13px; margin-bottom: 15px; display: none;"></div>
-                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                        <button class="btn-secondary btn" onclick="hideSpotlightUploadModal()">Cancel</button>
-                        <button class="btn" id="spotlightFetchArticleBtn" onclick="fetchSpotlightCustomArticle()">Add Article</button>
+
+                    <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                        <button class="btn" id="spotlightFetchArticleBtn" onclick="fetchSpotlightCustomArticle()" style="background: #059669;">+ Add This Link</button>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-secondary btn" onclick="hideSpotlightUploadModal()">Done</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -903,14 +913,24 @@
 
             <!-- Upload Link Modal -->
             <div id="uploadLinkModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; margin: 20px;">
-                    <h3 style="margin: 0 0 15px 0; color: #374151;">📎 Add Custom Article Link</h3>
-                    <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Paste a link to an article you'd like to include. AI will analyze it and add it to your search results.</p>
-                    <input type="text" id="customLinkInput" placeholder="https://example.com/article..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; margin-bottom: 15px;">
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 550px; width: 90%; margin: 20px; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="margin: 0 0 15px 0; color: #374151;">📎 Add Custom Article Links</h3>
+                    <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Paste links to articles you'd like to include. AI will analyze each and add them to your search results.</p>
+
+                    <!-- Added Links List -->
+                    <div id="addedLinksList" style="margin-bottom: 15px; display: none;">
+                        <p style="font-size: 12px; font-weight: 600; color: #059669; margin-bottom: 8px;">✓ Added Links:</p>
+                        <div id="addedLinksContainer" style="max-height: 150px; overflow-y: auto; border: 1px solid #d1fae5; border-radius: 6px; padding: 8px; background: #ecfdf5;"></div>
+                    </div>
+
+                    <input type="text" id="customLinkInput" placeholder="https://example.com/article..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; margin-bottom: 10px;">
                     <div id="uploadLinkError" style="color: #dc2626; font-size: 13px; margin-bottom: 15px; display: none;"></div>
-                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                        <button class="btn-secondary btn" onclick="hideUploadLinkModal()">Cancel</button>
-                        <button class="btn" id="fetchArticleBtn" onclick="fetchCustomArticle()">Add Article</button>
+
+                    <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                        <button class="btn" id="fetchArticleBtn" onclick="fetchCustomArticle()" style="background: #059669;">+ Add This Link</button>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-secondary btn" onclick="hideUploadLinkModal()">Done</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -970,19 +990,19 @@
                         insurancenewsnet.com • insurancejournal.com • propertycasualty360.com • claimsjournal.com • carriermanagement.com • thinkadvisor.com • dig-in.com
                     </div>
                     <div class="research-card-filters">
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" value="insurance" checked class="explorerPack"> Insurance News</label>
-                            <label><input type="checkbox" value="claims" class="explorerPack"> Claims</label>
-                            <label><input type="checkbox" value="regulations" class="explorerPack"> Regulations</label>
-                        </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="explorerQuery" placeholder="e.g., P&C news, agent tips..." value="P&C insurance agent news" style="flex: 1;">
-                            <select id="explorerTimeFrame" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; background: white; cursor: pointer;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" value="insurance" checked class="explorerPack"> Insurance News</label>
+                                <label><input type="checkbox" value="claims" class="explorerPack"> Claims</label>
+                                <label><input type="checkbox" value="regulations" class="explorerPack"> Regulations</label>
+                            </div>
+                            <select id="explorerTimeFrame" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 120px;">
                                 <option value="7d">Last 7 days</option>
                                 <option value="30d" selected>Last 30 days</option>
                                 <option value="90d">Last 90 days</option>
                             </select>
                         </div>
+                        <input type="text" id="explorerQuery" placeholder="e.g., P&C news, agent tips..." value="P&C insurance agent news" style="width: 100%;">
                     </div>
                     <button class="research-card-search-btn" onclick="searchSources()">Search Sources</button>
                     <div class="research-card-results" id="explorerResults">
@@ -1091,13 +1111,36 @@
                 <div style="margin-bottom: 15px;">
                     <label style="display: flex; align-items: center; cursor: pointer;">
                         <input type="checkbox" id="sendDocLinkEmail" style="margin-right: 10px; width: 18px; height: 18px;">
-                        <span style="font-size: 14px;">Send document link via email</span>
+                        <span style="font-size: 14px; font-weight: 600;">Send email notification</span>
                     </label>
                 </div>
 
                 <div id="docEmailInputContainer" style="display: none; margin-bottom: 15px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Recipient Email:</label>
-                    <input type="email" id="docRecipientEmail" placeholder="team@brite.co" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Recipients:</label>
+
+                    <!-- Team member checkboxes -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                            <input type="checkbox" class="docRecipientCheckbox" value="john.ortbal@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                            <span>John Ortbal (john.ortbal@brite.co)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                            <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                            <span>Stef Lynn (stef.lynn@brite.co)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                            <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                            <span>Selena Fragassi (selena.fragassi@brite.co)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                            <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                            <span>Dylanne Crugnale (dylanne.crugnale@brite.co)</span>
+                        </label>
+                    </div>
+
+                    <!-- Additional emails input -->
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Additional emails (comma-separated):</label>
+                    <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;">
                 </div>
 
                 <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4;">
@@ -1664,7 +1707,7 @@
 
         // InsurNews Spotlight state (multi-source)
         let spotlightSelectedArticles = [];  // Array of 3-5 selected articles
-        let spotlightSearchResults = [];
+        let spotlightSearchResults = { perplexity: [], curated: [], insight: [] };  // Object with arrays for each card
         let spotlightGeneratedContent = null;  // { subheader, h3s, body, sources }
 
         // Research Dashboard state
@@ -2166,22 +2209,29 @@
         }
 
         // Display spotlight content in the single editable view
+        // Formatted like a final readable article - no H3 titles, flowing paragraphs, blue links
         function displaySpotlightReview(content) {
             // Headline - editable
             document.getElementById('spotlightHeadlineEditable').textContent = content.subheader || 'Untitled Spotlight';
 
-            // Build editable article body from H3 sections
+            // Build editable article body - flowing paragraphs without H3 section titles
             const bodyEditable = document.getElementById('spotlightBodyEditable');
             let bodyHtml = '';
+
+            // Helper to make links blue
+            function stylizeLinks(text) {
+                if (!text) return '';
+                // Style any existing <a> tags with blue color
+                return text.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
+            }
+
             (content.h3s || []).forEach((h3, index) => {
-                // Section title - editable
-                bodyHtml += `<h3 class="spotlight-section-title" data-index="${index}" contenteditable="true"
-                    style="margin: ${index === 0 ? '0' : '25px'} 0 12px 0; font-size: 16px; color: #008181; font-weight: 700; outline: none; cursor: text;"
-                    onfocus="this.style.background='#f0f9f9'" onblur="this.style.background='transparent'">${h3.title || ''}</h3>`;
-                // Section body - editable
-                bodyHtml += `<div class="spotlight-section-body" data-index="${index}" contenteditable="true"
-                    style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.8; text-align: justify; outline: none; cursor: text;"
-                    onfocus="this.style.background='#fafafa'" onblur="this.style.background='transparent'">${h3.body || ''}</div>`;
+                // NO H3 section titles - just flowing paragraphs
+                // Store the title as a hidden data attribute for saving edits later
+                const bodyContent = stylizeLinks(h3.body || '');
+                bodyHtml += `<p class="spotlight-section-body" data-index="${index}" data-title="${(h3.title || '').replace(/"/g, '&quot;')}" contenteditable="true"
+                    style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.9; text-align: left; outline: none; cursor: text; color: #333;"
+                    onfocus="this.style.background='#fafafa'" onblur="this.style.background='transparent'">${bodyContent}</p>`;
             });
             bodyEditable.innerHTML = bodyHtml || '<p style="color: #999;">No content sections available.</p>';
 
@@ -2207,15 +2257,15 @@
                 spotlightGeneratedContent.subheader = headlineEl.textContent.trim();
             }
 
-            // Save H3 sections from contenteditable divs
-            const h3Titles = document.querySelectorAll('.spotlight-section-title');
+            // Save H3 sections from contenteditable paragraphs
+            // Titles are stored in data-title attribute (hidden from view)
             const h3Bodies = document.querySelectorAll('.spotlight-section-body');
 
             spotlightGeneratedContent.h3s = [];
-            h3Titles.forEach((titleEl, index) => {
+            h3Bodies.forEach((bodyEl) => {
                 spotlightGeneratedContent.h3s.push({
-                    title: titleEl.textContent.trim(),
-                    body: h3Bodies[index]?.textContent.trim() || ''
+                    title: bodyEl.dataset.title || '',  // Preserve original title from data attribute
+                    body: bodyEl.innerHTML.trim()  // Use innerHTML to preserve any links
                 });
             });
 
@@ -2540,11 +2590,16 @@
         function displayGeneratedContent() {
             const container = document.getElementById('generatedContent');
 
-            // Helper function to clean content for display
+            // Helper function to clean content for display and style links blue
             function cleanContentForDisplay(content) {
                 if (!content) return 'Content not available';
                 let contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+                // Fix white text color
                 contentStr = contentStr.replace(/color:\s*#ffffff;?/gi, 'color: #1f2937;');
+                // Make all links blue and underlined to show where hyperlinks are
+                contentStr = contentStr.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
+                // Also style any href links that don't have existing style
+                contentStr = contentStr.replace(/<a href="/gi, '<a style="color: #0066cc; text-decoration: underline;" href="');
                 return contentStr;
             }
 
@@ -3080,10 +3135,22 @@
             const resultDiv = document.getElementById('exportDocsResult');
 
             const sendEmail = document.getElementById('sendDocLinkEmail')?.checked || false;
-            const recipientEmail = document.getElementById('docRecipientEmail')?.value.trim() || '';
 
-            if (sendEmail && !recipientEmail) {
-                alert('Please enter a recipient email address');
+            // Gather selected recipients from checkboxes
+            let recipients = [];
+            document.querySelectorAll('.docRecipientCheckbox:checked').forEach(cb => {
+                recipients.push(cb.value);
+            });
+
+            // Add additional emails if provided
+            const additionalEmails = document.getElementById('docAdditionalEmails')?.value.trim() || '';
+            if (additionalEmails) {
+                const extras = additionalEmails.split(',').map(e => e.trim()).filter(e => e.includes('@'));
+                recipients = recipients.concat(extras);
+            }
+
+            if (sendEmail && recipients.length === 0) {
+                alert('Please select at least one recipient or add an email address');
                 return;
             }
 
@@ -3095,7 +3162,7 @@
             try {
                 // Gather all newsletter content
                 const content = {
-                    introduction: document.getElementById('introductionContentBox')?.innerHTML || generatedIntroduction || '',
+                    introduction: document.getElementById('introContentBox')?.innerHTML || generatedIntroContent || '',
                     brite_spot: document.getElementById('briteSpotContentBox')?.innerHTML || briteSpotRewritten || briteSpotContent || '',
                     curious_claims: document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '',
                     roundup: document.getElementById('roundupContentBox')?.innerHTML || generatedRoundupContent || '',
@@ -3103,7 +3170,10 @@
                     agent_tips: generatedTipsContent || ''
                 };
 
-                const title = `BriteCo Brief - ${selectedMonth ? selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1) : ''} ${new Date().getFullYear()}`;
+                // Format month for title: "Agent Newsletter (January, 2026)"
+                const monthCapitalized = selectedMonth ? selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1) : '';
+                const year = new Date().getFullYear();
+                const title = `Agent Newsletter (${monthCapitalized}, ${year})`;
 
                 const response = await fetch(`${API_BASE}/api/export-to-docs`, {
                     method: 'POST',
@@ -3111,8 +3181,10 @@
                     body: JSON.stringify({
                         content: content,
                         title: title,
+                        month: monthCapitalized,
+                        year: year,
                         send_email: sendEmail,
-                        recipient_email: recipientEmail
+                        recipients: recipients
                     })
                 });
 
@@ -5579,15 +5651,36 @@
         }
 
         // Upload Link Modal Functions for Research Dashboard
+        let addedCustomLinks = [];  // Track links added in current modal session
+
         function showUploadLinkModal() {
             document.getElementById('uploadLinkModal').style.display = 'flex';
             document.getElementById('customLinkInput').value = '';
             document.getElementById('uploadLinkError').style.display = 'none';
+            document.getElementById('addedLinksList').style.display = 'none';
+            document.getElementById('addedLinksContainer').innerHTML = '';
+            addedCustomLinks = [];
             document.getElementById('customLinkInput').focus();
         }
 
         function hideUploadLinkModal() {
             document.getElementById('uploadLinkModal').style.display = 'none';
+            addedCustomLinks = [];
+        }
+
+        function updateAddedLinksList(title, url) {
+            const listDiv = document.getElementById('addedLinksList');
+            const container = document.getElementById('addedLinksContainer');
+            listDiv.style.display = 'block';
+
+            const linkItem = document.createElement('div');
+            linkItem.style.cssText = 'padding: 6px 8px; margin-bottom: 4px; background: white; border-radius: 4px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;';
+            linkItem.innerHTML = `
+                <span style="color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;" title="${url}">${title || url}</span>
+                <span style="color: #059669; font-size: 10px;">✓</span>
+            `;
+            container.appendChild(linkItem);
+            addedCustomLinks.push({ title, url });
         }
 
         async function fetchCustomArticle() {
@@ -5627,6 +5720,11 @@
                     // Add the article to the current results
                     const article = data.article;
 
+                    // Ensure perplexity array exists before adding
+                    if (!researchResults.perplexity) {
+                        researchResults.perplexity = [];
+                    }
+
                     // Add to perplexity results (they'll appear at the top)
                     researchResults.perplexity.unshift(article);
 
@@ -5638,14 +5736,12 @@
                     tabSearchState[currentResearchSection].results.perplexity = researchResults.perplexity;
                     tabSearchState[currentResearchSection].htmlCache.perplexity = container.innerHTML;
 
-                    hideUploadLinkModal();
+                    // Update the added links list in modal (don't close - allow adding more)
+                    updateAddedLinksList(article.title || 'Article', url);
 
-                    // Show success toast
-                    const toast = document.createElement('div');
-                    toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
-                    toast.textContent = '✓ Article added to results';
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 3000);
+                    // Clear input for next link
+                    document.getElementById('customLinkInput').value = '';
+                    document.getElementById('customLinkInput').focus();
                 } else {
                     errorDiv.textContent = data.error || 'Failed to fetch article';
                     errorDiv.style.display = 'block';
@@ -5656,7 +5752,7 @@
                 errorDiv.style.display = 'block';
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = 'Add Article';
+                btn.innerHTML = '+ Add This Link';
             }
         }
 
@@ -5665,11 +5761,27 @@
             document.getElementById('spotlightUploadLinkModal').style.display = 'flex';
             document.getElementById('spotlightCustomLinkInput').value = '';
             document.getElementById('spotlightUploadLinkError').style.display = 'none';
+            document.getElementById('spotlightAddedLinksList').style.display = 'none';
+            document.getElementById('spotlightAddedLinksContainer').innerHTML = '';
             document.getElementById('spotlightCustomLinkInput').focus();
         }
 
         function hideSpotlightUploadModal() {
             document.getElementById('spotlightUploadLinkModal').style.display = 'none';
+        }
+
+        function updateSpotlightAddedLinksList(title, url) {
+            const listDiv = document.getElementById('spotlightAddedLinksList');
+            const container = document.getElementById('spotlightAddedLinksContainer');
+            listDiv.style.display = 'block';
+
+            const linkItem = document.createElement('div');
+            linkItem.style.cssText = 'padding: 6px 8px; margin-bottom: 4px; background: white; border-radius: 4px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;';
+            linkItem.innerHTML = `
+                <span style="color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;" title="${url}">${title || url}</span>
+                <span style="color: #059669; font-size: 10px;">✓</span>
+            `;
+            container.appendChild(linkItem);
         }
 
         async function fetchSpotlightCustomArticle() {
@@ -5708,20 +5820,23 @@
                 if (data.success) {
                     // Add the article to the spotlight perplexity results
                     const article = data.article;
+
+                    // Ensure perplexity array exists before adding
+                    if (!spotlightSearchResults.perplexity) {
+                        spotlightSearchResults.perplexity = [];
+                    }
                     spotlightSearchResults.perplexity.unshift(article);
 
                     // Re-render the results
                     const container = document.getElementById('spotlightPerplexityResults');
                     displaySpotlightPerplexityResults(spotlightSearchResults.perplexity, container);
 
-                    hideSpotlightUploadModal();
+                    // Update the added links list in modal (don't close - allow adding more)
+                    updateSpotlightAddedLinksList(article.title || 'Article', url);
 
-                    // Show success toast
-                    const toast = document.createElement('div');
-                    toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
-                    toast.textContent = '✓ Article added to results';
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 3000);
+                    // Clear input for next link
+                    document.getElementById('spotlightCustomLinkInput').value = '';
+                    document.getElementById('spotlightCustomLinkInput').focus();
                 } else {
                     errorDiv.textContent = data.error || 'Failed to fetch article';
                     errorDiv.style.display = 'block';
@@ -5732,7 +5847,7 @@
                 errorDiv.style.display = 'block';
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = 'Add Article';
+                btn.innerHTML = '+ Add This Link';
             }
         }
 

@@ -59,7 +59,7 @@ CONTENT_FILTERS = {
 ONTRAPORT_CONFIG = {
     "objects": ["10004", "10007"],
     "from_email": "agent@brite.co",
-    "from_name": "BriteCo Brief"
+    "from_name": "BriteCo Insurance"
 }
 
 # Team members for preview emails
@@ -81,6 +81,150 @@ BRAND_VOICE = {
         "Political content",
         "Competitor bashing"
     ]
+}
+
+# Writing style guide extracted from 6 months of Agent newsletters (Aug 2025 - Jan 2026)
+WRITING_STYLE_GUIDE = {
+    "introduction": {
+        "patterns": [
+            "Start with a seasonal/monthly reference",
+            "Use 'we' to create partnership feel",
+            "Mention what's inside the newsletter",
+            "Keep it warm but brief (2-3 sentences max)"
+        ],
+        "example_openers": [
+            "Happy [Month]! As [seasonal reference], we're here to help you [benefit].",
+            "Welcome to [Month]'s edition of the Agent Newsletter!",
+            "As we head into [season], here's what's new in the P&C world.",
+            "[Month] is here, and we've got the latest updates to keep you informed."
+        ],
+        "phrases_to_use": [
+            "keeping you informed",
+            "staying ahead",
+            "industry insights",
+            "your success"
+        ]
+    },
+    "brite_spot": {
+        "patterns": [
+            "Lead with the benefit to agents",
+            "Mention specific BriteCo features or updates",
+            "Include a call-to-action when relevant",
+            "Use excitement without being salesy"
+        ],
+        "example_structures": [
+            "[Feature name] is now available! [What it does]. [How agents benefit].",
+            "We're excited to announce [update]. This means [benefit for agents].",
+            "New this month: [feature]. [Brief explanation]. [How to access/use it]."
+        ],
+        "phrases_to_use": [
+            "streamline your workflow",
+            "save you time",
+            "help your clients",
+            "new tools to help you succeed"
+        ]
+    },
+    "curious_claims": {
+        "patterns": [
+            "Start with 'The Claim:' - describe the unusual situation in 2-3 sentences",
+            "Follow with 'The Outcome:' - explain how it was resolved",
+            "End with 'Agent Takeaway:' - practical lesson for agents",
+            "Use storytelling to make it memorable"
+        ],
+        "example_structures": [
+            "The Claim: [Unusual situation described vividly]. The Outcome: [Resolution]. Agent Takeaway: [Practical lesson].",
+            "What happens when [scenario]? That's exactly what happened to [policyholder type]..."
+        ],
+        "tone_notes": [
+            "Be engaging but factual",
+            "Use specific details to paint a picture",
+            "Make the takeaway actionable",
+            "Avoid sensationalism"
+        ]
+    },
+    "news_roundup": {
+        "patterns": [
+            "5 bullet points, each ~25-30 words",
+            "Start each bullet with a strong action verb or key topic",
+            "Include source attribution in parentheses",
+            "Focus on P&C-relevant news only",
+            "Mix of industry trends, regulatory updates, and market news"
+        ],
+        "example_bullets": [
+            "Homeowners insurance premiums continue to rise as catastrophe losses mount, with average increases of X% nationwide. (Insurance Journal)",
+            "The NAIC issued new guidance on [topic], affecting how agents [action]. (PropertyCasualty360)",
+            "Auto insurers are adopting AI-powered claims processing, reducing settlement times by X%. (CarrierManagement)"
+        ],
+        "avoid": [
+            "Health/life insurance news",
+            "Political commentary",
+            "Personnel announcements (new CEO, promotions)",
+            "International news unless directly affecting US market"
+        ]
+    },
+    "spotlight": {
+        "patterns": [
+            "Executive summary: 2-3 sentences capturing the key story",
+            "Key facts and data: 3-5 bullet points with statistics",
+            "Industry impact: 1 paragraph on broader implications",
+            "What it means for agents: 1 paragraph with practical implications",
+            "Actionable insights: 2-3 bullet points agents can act on"
+        ],
+        "example_structure": [
+            "## [Headline]\n\n[2-3 sentence summary]\n\n### Key Facts\n- [Stat 1]\n- [Stat 2]\n- [Stat 3]\n\n### Industry Impact\n[Paragraph]\n\n### What This Means for You\n[Paragraph]\n\n### Action Items\n- [Actionable tip 1]\n- [Actionable tip 2]"
+        ],
+        "tone_notes": [
+            "Analytical but accessible",
+            "Data-driven with clear sources",
+            "Always connect back to agent relevance",
+            "Avoid jargon without explanation"
+        ]
+    },
+    "agent_advantage": {
+        "patterns": [
+            "5 actionable tips, each ~30 words",
+            "Start each tip with an action verb",
+            "Focus on sales, retention, and operations",
+            "Be specific and practical"
+        ],
+        "example_tips": [
+            "Review your clients' home values annually - rising construction costs mean many policies are underinsured. A quick coverage check builds trust and prevents claims gaps.",
+            "Leverage social media for client retention: Share seasonal safety tips and industry updates to stay top-of-mind without being salesy.",
+            "Cross-sell strategically: When renewing auto policies, mention umbrella coverage - it's an easy add that provides significant protection."
+        ],
+        "categories": [
+            "Client retention strategies",
+            "Sales techniques",
+            "Operational efficiency",
+            "Compliance reminders",
+            "Technology adoption"
+        ]
+    },
+    "general_writing_rules": {
+        "sentence_structure": [
+            "Keep sentences short and punchy (15-20 words average)",
+            "Use active voice over passive",
+            "Lead with the most important information",
+            "One idea per sentence"
+        ],
+        "formatting": [
+            "Use Title Case for headlines",
+            "Use sentence case for body text",
+            "Bold key terms sparingly",
+            "Use bullets for lists of 3+ items"
+        ],
+        "word_choice": [
+            "Use 'you' and 'your' to speak directly to agents",
+            "Use 'we' when referring to BriteCo",
+            "Avoid jargon or define it when necessary",
+            "Prefer concrete over abstract language"
+        ],
+        "transitions": [
+            "Use section headers to guide readers",
+            "Connect sections with brief transitions",
+            "End sections with forward-looking statements when appropriate"
+        ]
+    }
 }
 
 # Newsletter section guidelines with character limits
@@ -163,6 +307,14 @@ def get_style_guide_for_prompt(section_type=None):
     guide += f"- Perspective: {BRAND_VOICE['perspective']}\n"
     guide += "- AVOID: " + ", ".join(BRAND_VOICE['avoid']) + "\n\n"
 
+    # General Writing Rules
+    guide += "### WRITING RULES\n"
+    for rule in WRITING_STYLE_GUIDE['general_writing_rules']['sentence_structure'][:3]:
+        guide += f"- {rule}\n"
+    for rule in WRITING_STYLE_GUIDE['general_writing_rules']['word_choice'][:2]:
+        guide += f"- {rule}\n"
+    guide += "\n"
+
     # Content Focus
     guide += "### CONTENT FOCUS\n"
     guide += "- INCLUDE topics about: " + ", ".join(CONTENT_FILTERS['include'][:5]) + "\n"
@@ -186,9 +338,47 @@ def get_style_guide_for_prompt(section_type=None):
             guide += f"- {item}\n"
         if 'max_words' in section:
             guide += f"- Maximum: {section['max_words']} words\n"
-        guide += f"- Tone: {section.get('tone', 'Professional')}\n"
+        guide += f"- Tone: {section.get('tone', 'Professional')}\n\n"
+
+        # Add detailed writing style for this section
+        style_key = section_type.replace('insurnews_', '')  # Map section names
+        if style_key in WRITING_STYLE_GUIDE:
+            style = WRITING_STYLE_GUIDE[style_key]
+            guide += f"### {section_type.upper()} WRITING PATTERNS\n"
+            for pattern in style.get('patterns', [])[:4]:
+                guide += f"- {pattern}\n"
+            if 'example_openers' in style:
+                guide += "\nExample openers:\n"
+                for ex in style['example_openers'][:2]:
+                    guide += f'  "{ex}"\n'
+            if 'example_bullets' in style:
+                guide += "\nExample bullets:\n"
+                for ex in style['example_bullets'][:2]:
+                    guide += f'  "{ex}"\n'
+            if 'example_tips' in style:
+                guide += "\nExample tips:\n"
+                for ex in style['example_tips'][:2]:
+                    guide += f'  "{ex}"\n'
+            if 'phrases_to_use' in style:
+                guide += f"\nPhrases to incorporate: {', '.join(style['phrases_to_use'][:4])}\n"
 
     return guide
+
+
+def get_section_style_examples(section_type):
+    """
+    Get example content and patterns for a specific section type.
+
+    Args:
+        section_type: Section name (e.g., 'introduction', 'curious_claims')
+
+    Returns:
+        Dict with examples and patterns, or None if not found
+    """
+    style_key = section_type.replace('insurnews_', '')
+    if style_key in WRITING_STYLE_GUIDE:
+        return WRITING_STYLE_GUIDE[style_key]
+    return None
 
 
 def get_search_sources_prompt():
