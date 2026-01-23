@@ -25,3 +25,6 @@ google-auth>=2.23.0
 google-auth-oauthlib>=1.1.0
 google-auth-httplib2>=0.1.1
 
+# Email (SendGrid)
+sendgrid>=6.10.0
+

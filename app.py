@@ -8,16 +8,22 @@ import sys
 import json
 import re
 import requests
-import smtplib
 import base64
 from io import BytesIO
 from datetime import datetime
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+
+# SendGrid for email
+try:
+    import sendgrid
+    from sendgrid.helpers.mail import Mail, Email, To, Content, HtmlContent
+    SENDGRID_AVAILABLE = True
+except ImportError:
+    SENDGRID_AVAILABLE = False
+    print("[WARNING] SendGrid not installed. Email functionality disabled.")
 
 # Load environment
 load_dotenv()
@@ -2517,7 +2523,7 @@ CONTENT TO REVIEW:
 
 @app.route('/api/send-preview', methods=['POST'])
 def send_preview():
-    """Send newsletter preview to team members via SMTP email"""
+    """Send newsletter preview to team members via SendGrid"""
     try:
         data = request.json
         recipients = data.get('recipients', [])
@@ -2527,19 +2533,31 @@ def send_preview():
         if not recipients or not html_content:
             return jsonify({"success": False, "error": "Recipients and HTML content required"}), 400
 
-        safe_print(f"[API] Sending preview to {len(recipients)} recipients...")
+        safe_print(f"[API] Sending preview to {len(recipients)} recipients via SendGrid...")
 
-        # Get SMTP configuration (using underscore prefix to match Cloud Run variables)
-        smtp_server = os.environ.get('_SMTP_SERVER', 'smtp.gmail.com')
-        smtp_port = int(os.environ.get('_SMTP_PORT', 587))
-        smtp_user = os.environ.get('_SMTP_USER')
-        smtp_password = os.environ.get('_SMTP_PASSWORD')
-
-        if not smtp_user or not smtp_password:
+        # Check SendGrid availability
+        if not SENDGRID_AVAILABLE:
             return jsonify({
                 "success": False,
-                "error": "SMTP credentials not configured. Add _SMTP_USER and _SMTP_PASSWORD environment variables."
+                "error": "SendGrid library not installed. Run: pip install sendgrid"
             }), 500
+
+        # Get SendGrid configuration
+        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+        from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'marketing@brite.co')
+        from_name = os.environ.get('SENDGRID_FROM_NAME', 'BriteCo Brief')
+
+        safe_print(f"[API] SendGrid API key exists: {bool(sendgrid_api_key)}")
+        safe_print(f"[API] From email: {from_email}")
+
+        if not sendgrid_api_key:
+            return jsonify({
+                "success": False,
+                "error": "SendGrid API key not configured. Add SENDGRID_API_KEY environment variable."
+            }), 500
+
+        # Initialize SendGrid client
+        sg = sendgrid.SendGridAPIClient(api_key=sendgrid_api_key)
 
         # Send email to each recipient
         sent_count = 0
@@ -2547,25 +2565,33 @@ def send_preview():
 
         for recipient in recipients:
             try:
-                msg = MIMEMultipart('alternative')
-                msg['Subject'] = subject
-                msg['From'] = smtp_user
-                msg['To'] = recipient
+                safe_print(f"[API] Sending to: {recipient}")
 
-                html_part = MIMEText(html_content, 'html')
-                msg.attach(html_part)
+                message = Mail(
+                    from_email=(from_email, from_name),
+                    to_emails=recipient,
+                    subject=subject,
+                    html_content=html_content
+                )
 
-                with smtplib.SMTP(smtp_server, smtp_port) as server:
-                    server.starttls()
-                    server.login(smtp_user, smtp_password)
-                    server.sendmail(smtp_user, recipient, msg.as_string())
+                response = sg.send(message)
 
-                sent_count += 1
-                safe_print(f"[API] Email sent to: {recipient}")
+                safe_print(f"[API] SendGrid response status: {response.status_code}")
+
+                if response.status_code in [200, 201, 202]:
+                    sent_count += 1
+                    safe_print(f"[API] Email sent successfully to: {recipient}")
+                else:
+                    error_msg = f"SendGrid returned status {response.status_code} for {recipient}"
+                    safe_print(f"[API] {error_msg}")
+                    errors.append(error_msg)
 
             except Exception as email_error:
                 error_msg = f"Failed to send to {recipient}: {str(email_error)}"
                 safe_print(f"[API] {error_msg}")
+                # Log more details for debugging
+                if hasattr(email_error, 'body'):
+                    safe_print(f"[API] Error body: {email_error.body}")
                 errors.append(error_msg)
 
         if sent_count == len(recipients):
@@ -2573,7 +2599,7 @@ def send_preview():
                 "success": True,
                 "message": f"Preview sent to {sent_count} recipient(s)",
                 "recipients": recipients,
-                "from": smtp_user
+                "from": from_email
             })
         elif sent_count > 0:
             return jsonify({
@@ -2581,7 +2607,7 @@ def send_preview():
                 "message": f"Preview sent to {sent_count} of {len(recipients)} recipient(s)",
                 "recipients": recipients[:sent_count],
                 "errors": errors,
-                "from": smtp_user
+                "from": from_email
             })
         else:
             return jsonify({
@@ -2592,6 +2618,8 @@ def send_preview():
 
     except Exception as e:
         safe_print(f"[API] Send preview error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/export-to-docs', methods=['POST'])
@@ -2784,42 +2812,60 @@ def export_to_docs():
         ).execute()
         safe_print(f"[API] Document sharing enabled")
 
-        # Optionally send email with the link to multiple recipients
+        # Optionally send email with the link to multiple recipients via SendGrid
         emails_sent = []
         email_errors = []
         if send_email and recipients:
             try:
-                # Use SMTP configuration with underscore prefix (matching Cloud Run variables)
-                smtp_server = os.environ.get('_SMTP_SERVER', 'smtp.gmail.com')
-                smtp_port = int(os.environ.get('_SMTP_PORT', '587'))
-                smtp_user = os.environ.get('_SMTP_USER', '')
-                smtp_password = os.environ.get('_SMTP_PASSWORD', '')
+                sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+                from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'marketing@brite.co')
+                from_name = os.environ.get('SENDGRID_FROM_NAME', 'BriteCo Brief')
 
-                if smtp_user and smtp_password:
+                if sendgrid_api_key and SENDGRID_AVAILABLE:
+                    sg = sendgrid.SendGridAPIClient(api_key=sendgrid_api_key)
+
                     for recipient in recipients:
                         try:
-                            msg = MIMEMultipart()
-                            msg['From'] = smtp_user
-                            msg['To'] = recipient
-                            msg['Subject'] = f"Agent Newsletter Copy ({month}, {year}) - Ready for Review"
+                            email_html = f"""
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                                <h2 style="color: #008181;">Agent Newsletter Ready for Review</h2>
+                                <p>Hello,</p>
+                                <p>The <strong>{month} {year}</strong> Agent Newsletter has been exported to Google Docs and is ready for your review.</p>
+                                <p style="margin: 20px 0;">
+                                    <a href="{doc_url}" style="background: #008181; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                                        Open Google Doc
+                                    </a>
+                                </p>
+                                <p style="color: #666; font-size: 14px;">Or copy this link: {doc_url}</p>
+                                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                                <p style="color: #999; font-size: 12px;">Sent by BriteCo Brief Newsletter Generator</p>
+                            </div>
+                            """
 
-                            body = f"""Hello, attached is the Agent ({month}, {year}) newsletter for review: {doc_url}
-"""
-                            msg.attach(MIMEText(body, 'plain'))
+                            message = Mail(
+                                from_email=(from_email, from_name),
+                                to_emails=recipient,
+                                subject=f"Agent Newsletter ({month}, {year}) - Ready for Review",
+                                html_content=email_html
+                            )
 
-                            with smtplib.SMTP(smtp_server, smtp_port) as server:
-                                server.starttls()
-                                server.login(smtp_user, smtp_password)
-                                server.send_message(msg)
+                            response = sg.send(message)
 
-                            emails_sent.append(recipient)
-                            safe_print(f"[API] Email sent to {recipient}")
+                            if response.status_code in [200, 201, 202]:
+                                emails_sent.append(recipient)
+                                safe_print(f"[API] Email sent to {recipient}")
+                            else:
+                                error_msg = f"SendGrid returned status {response.status_code} for {recipient}"
+                                email_errors.append(error_msg)
+                                safe_print(f"[API] {error_msg}")
+
                         except Exception as email_error:
                             error_msg = f"Failed to send to {recipient}: {str(email_error)}"
                             email_errors.append(error_msg)
                             safe_print(f"[API] {error_msg}")
                 else:
-                    safe_print("[API] SMTP credentials not configured (_SMTP_USER, _SMTP_PASSWORD)")
+                    safe_print("[API] SendGrid not configured (SENDGRID_API_KEY not set)")
+                    email_errors.append("SendGrid not configured")
             except Exception as e:
                 safe_print(f"[API] Email send failed: {e}")
                 # Don't fail the whole operation if email fails
