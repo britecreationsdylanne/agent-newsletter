@@ -17,6 +17,7 @@ from email.mime.multipart import MIMEMultipart
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
+from bs4 import BeautifulSoup
 
 # Load environment
 load_dotenv()
@@ -1097,7 +1098,7 @@ Target: 500-600 words total. Be thorough, factual, and cite sources throughout."
 
 @app.route('/api/fetch-article', methods=['POST'])
 def fetch_article():
-    """Fetch and analyze an article from a user-provided URL"""
+    """Fetch and analyze an article from a user-provided URL using web scraping + OpenAI"""
     try:
         data = request.json
         url = data.get('url', '').strip()
@@ -1109,18 +1110,94 @@ def fetch_article():
         print(f"\n[API] Fetching article from URL: {url}")
         print(f"  - Section: {section}")
 
-        # Use OpenAI to fetch and analyze the article
-        fetch_prompt = f"""Analyze this article URL and extract key information for an insurance agent newsletter.
+        # Step 1: Fetch the webpage content using requests
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+        }
 
-URL: {url}
+        try:
+            response = requests.get(url, headers=headers, timeout=15)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"[API] Failed to fetch URL: {str(e)}")
+            return jsonify({'success': False, 'error': f'Failed to fetch article: {str(e)}'}), 400
+
+        # Step 2: Parse HTML with BeautifulSoup
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Extract title
+        title = ''
+        if soup.title:
+            title = soup.title.string or ''
+        # Try og:title if available
+        og_title = soup.find('meta', property='og:title')
+        if og_title and og_title.get('content'):
+            title = og_title.get('content')
+
+        # Extract meta description
+        meta_desc = ''
+        meta_tag = soup.find('meta', attrs={'name': 'description'})
+        if meta_tag and meta_tag.get('content'):
+            meta_desc = meta_tag.get('content')
+        # Try og:description
+        og_desc = soup.find('meta', property='og:description')
+        if og_desc and og_desc.get('content'):
+            meta_desc = og_desc.get('content')
+
+        # Extract publisher from og:site_name or domain
+        publisher = ''
+        og_site = soup.find('meta', property='og:site_name')
+        if og_site and og_site.get('content'):
+            publisher = og_site.get('content')
+        else:
+            # Extract from domain
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            publisher = parsed.netloc.replace('www.', '')
+
+        # Extract article body text
+        # Remove script, style, nav, footer elements
+        for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'iframe']):
+            element.decompose()
+
+        # Try to find article content
+        article_text = ''
+        article = soup.find('article')
+        if article:
+            article_text = article.get_text(separator=' ', strip=True)
+        else:
+            # Fallback to main content area or body
+            main = soup.find('main') or soup.find('div', class_=re.compile(r'content|article|post|story', re.I))
+            if main:
+                article_text = main.get_text(separator=' ', strip=True)
+            else:
+                article_text = soup.body.get_text(separator=' ', strip=True) if soup.body else ''
+
+        # Clean up whitespace
+        article_text = re.sub(r'\s+', ' ', article_text).strip()
+        # Limit to first 5000 chars to avoid token limits
+        article_text = article_text[:5000]
+
+        print(f"[API] Scraped {len(article_text)} chars from page")
+        print(f"  - Title: {title[:60]}...")
+
+        # Step 3: Use OpenAI to analyze the scraped content
+        analyze_prompt = f"""Analyze this article content and extract key information for an insurance agent newsletter.
+
+ARTICLE TITLE: {title}
+
+ARTICLE CONTENT:
+{article_text}
 
 Extract and return a JSON object with:
 {{
-    "title": "The article headline/title",
+    "title": "A concise, engaging headline for this article (use the original title if good, or improve it)",
     "description": "A 2-3 sentence summary of the article's main points",
-    "publisher": "The publication name (e.g., Insurance Journal, PropertyCasualty360)",
+    "publisher": "{publisher}",
     "snippet": "A longer summary (4-5 sentences) with key facts and data points",
-    "industry_data": "Any specific statistics, percentages, or data mentioned",
+    "industry_data": "Any specific statistics, percentages, or data mentioned (or empty string if none)",
     "agent_implications": "How this news affects independent insurance agents (2-3 sentences)",
     "content_type": "news" | "tip" | "trend" | "case_study" | "insight"
 }}
@@ -1128,7 +1205,7 @@ Extract and return a JSON object with:
 Focus on P&C insurance relevance. If the article is not insurance-related, still extract the information but note that in the description."""
 
         result = openai_client.generate_content(
-            prompt=fetch_prompt,
+            prompt=analyze_prompt,
             model="gpt-4.1-2025-04-14",
             temperature=0.3,
             max_tokens=800
@@ -1149,9 +1226,9 @@ Focus on P&C insurance relevance. If the article is not insurance-related, still
         except json.JSONDecodeError:
             # Fallback if parsing fails
             article_data = {
-                'title': 'Article from ' + url,
-                'description': content_text[:200],
-                'publisher': 'External Source',
+                'title': title or 'Article from ' + url,
+                'description': meta_desc or content_text[:200],
+                'publisher': publisher or 'External Source',
                 'snippet': content_text,
                 'industry_data': '',
                 'agent_implications': '',
@@ -1164,7 +1241,7 @@ Focus on P&C insurance relevance. If the article is not insurance-related, still
         article_data['headline'] = article_data.get('title', '')
         article_data['so_what'] = article_data.get('agent_implications', '')
 
-        print(f"[API] Article fetched: {article_data.get('title', 'Unknown')}")
+        print(f"[API] Article analyzed: {article_data.get('title', 'Unknown')}")
 
         return jsonify({
             'success': True,
@@ -2181,6 +2258,130 @@ Output ONLY the preview text, nothing else."""
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================================================
+# ROUTES - SUBJECT LINE OPTIONS
+# ============================================================================
+
+@app.route('/api/generate-subject-options', methods=['POST'])
+def generate_subject_options():
+    """Generate multiple subject line and preheader options with specified tone"""
+    try:
+        data = request.json
+        content = data.get('content', {})
+        tone = data.get('tone', 'professional')
+        month = content.get('month', 'january')
+
+        print(f"\n[API] Generating subject options for {month} with tone: {tone}...")
+
+        # Define tone guidelines
+        tone_guidelines = {
+            'professional': 'Professional and informative, establishes credibility',
+            'friendly': 'Warm, conversational, and approachable like talking to a colleague',
+            'urgent': 'Creates urgency and encourages immediate action (without being alarmist)',
+            'playful': 'Light-hearted and fun while maintaining professionalism',
+            'exclusive': 'Makes the reader feel like they\'re getting insider access'
+        }
+
+        tone_desc = tone_guidelines.get(tone, tone_guidelines['professional'])
+
+        # Generate subject lines
+        subject_prompt = f"""Create 4 email subject line options for the BriteCo Brief newsletter ({month.capitalize()} edition).
+
+Tone: {tone_desc}
+
+Newsletter sections include:
+- Curious Claims (unusual insurance claims stories)
+- Insurance News Roundup (P&C industry news)
+- InsurNews Spotlight (deep dive on trending topic)
+- Agent Advantage Tips (actionable advice for agents)
+
+Requirements:
+- Each subject line should be 40-60 characters
+- Make them engaging but not clickbait
+- Reference the month or a key topic when appropriate
+- Match the {tone} tone throughout
+
+Output EXACTLY 4 subject lines, one per line, numbered 1-4. No other text."""
+
+        subject_result = claude_client.generate_content(
+            prompt=subject_prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.7,
+            max_tokens=300
+        )
+
+        # Parse subject lines
+        subject_lines = []
+        for line in subject_result['content'].strip().split('\n'):
+            line = line.strip()
+            if line:
+                # Remove numbering like "1." or "1)" from start
+                cleaned = re.sub(r'^[\d]+[\.\)]\s*', '', line)
+                if cleaned:
+                    subject_lines.append(cleaned)
+
+        # Ensure we have at least 3 options
+        if len(subject_lines) < 3:
+            subject_lines = [
+                f"{month.capitalize()} BriteCo Brief: Your P&C Industry Update",
+                f"What Independent Agents Need to Know This {month.capitalize()}",
+                f"BriteCo Brief: {month.capitalize()}'s Must-Read Insurance Insights",
+                f"Your {month.capitalize()} Insurance Industry Roundup is Here"
+            ]
+
+        # Generate preheaders
+        preheader_prompt = f"""Create 4 email preheader (preview text) options to complement subject lines for the BriteCo Brief newsletter.
+
+Tone: {tone_desc}
+
+Requirements:
+- Each preheader should be 60-90 characters
+- Tease content to encourage opening
+- Complement subject lines without repeating them
+- Match the {tone} tone
+
+Output EXACTLY 4 preheader options, one per line, numbered 1-4. No other text."""
+
+        preheader_result = claude_client.generate_content(
+            prompt=preheader_prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.7,
+            max_tokens=400
+        )
+
+        # Parse preheaders
+        preheaders = []
+        for line in preheader_result['content'].strip().split('\n'):
+            line = line.strip()
+            if line:
+                cleaned = re.sub(r'^[\d]+[\.\)]\s*', '', line)
+                if cleaned:
+                    preheaders.append(cleaned)
+
+        # Ensure we have at least 3 options
+        if len(preheaders) < 3:
+            preheaders = [
+                "Curious claims, industry trends, and tips to grow your book of business.",
+                "From unusual claims to expert insights — your monthly P&C digest.",
+                "Stay ahead with the latest news and strategies for independent agents.",
+                "Industry updates, agent tips, and stories you won't want to miss."
+            ]
+
+        print(f"[API] Generated {len(subject_lines)} subject lines and {len(preheaders)} preheaders")
+
+        return jsonify({
+            'success': True,
+            'subject_lines': subject_lines[:4],
+            'preheaders': preheaders[:4],
+            'tone': tone,
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] Subject options generation failed: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
 # ROUTES - BRAND CHECK
 # ============================================================================
 
@@ -2420,12 +2621,13 @@ def export_to_docs():
 
         safe_print(f"[API] Exporting to Google Docs: {title}")
 
-        creds_json = os.environ.get('GOOGLE_DOCS_CREDENTIALS')
+        # Try both variable names for compatibility (with and without underscore prefix)
+        creds_json = os.environ.get('_GOOGLE_DOCS_CREDENTIALS') or os.environ.get('GOOGLE_DOCS_CREDENTIALS')
 
         if not creds_json:
             return jsonify({
                 "success": False,
-                "error": "Google Docs credentials not configured. Please set GOOGLE_DOCS_CREDENTIALS environment variable."
+                "error": "Google Docs credentials not configured. Please set _GOOGLE_DOCS_CREDENTIALS environment variable."
             }), 500
 
         # Parse credentials

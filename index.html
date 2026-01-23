@@ -580,16 +580,28 @@
 
         .checkbox-group {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+            flex-wrap: nowrap;
+            gap: 12px;
+            align-items: center;
         }
 
         .checkbox-group label {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 14px;
+            gap: 5px;
+            font-size: 13px;
             cursor: pointer;
+            white-space: nowrap;
+        }
+
+        @media screen and (max-width: 600px) {
+            .checkbox-group {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .checkbox-group label {
+                font-size: 12px;
+            }
         }
 
         .section-selection-header {
@@ -913,8 +925,11 @@
 
             <!-- Upload Link Modal -->
             <div id="uploadLinkModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 550px; width: 90%; margin: 20px; max-height: 80vh; overflow-y: auto;">
-                    <h3 style="margin: 0 0 15px 0; color: #374151;">📎 Add Custom Article Links</h3>
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 550px; width: 90%; margin: 20px; max-height: 80vh; overflow-y: auto; position: relative;">
+                    <!-- Close X Button -->
+                    <button onclick="hideUploadLinkModal()" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 24px; color: #9ca3af; cursor: pointer; padding: 4px 8px; line-height: 1;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+
+                    <h3 id="uploadLinkModalTitle" style="margin: 0 0 15px 0; color: #374151; padding-right: 30px;">📎 Add Custom Article Links to <span id="modalSectionName">Curious Claims</span></h3>
                     <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Paste links to articles you'd like to include. AI will analyze each and add them to your search results.</p>
 
                     <!-- Added Links List -->
@@ -926,11 +941,15 @@
                     <input type="text" id="customLinkInput" placeholder="https://example.com/article..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; margin-bottom: 10px;">
                     <div id="uploadLinkError" style="color: #dc2626; font-size: 13px; margin-bottom: 15px; display: none;"></div>
 
-                    <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 10px; justify-content: flex-start; align-items: center;">
                         <button class="btn" id="fetchArticleBtn" onclick="fetchCustomArticle()" style="background: #059669;">+ Add This Link</button>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="btn-secondary btn" onclick="hideUploadLinkModal()">Done</button>
-                        </div>
+                    </div>
+
+                    <!-- Add Another Link section - appears after first link -->
+                    <div id="addAnotherLinkSection" style="display: none; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                        <p style="font-size: 13px; color: #6b7280; margin-bottom: 10px;">Add another link:</p>
+                        <input type="text" id="anotherLinkInput" placeholder="https://example.com/another-article..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; margin-bottom: 10px;">
+                        <button class="btn" onclick="fetchAnotherCustomArticle()" style="background: #059669;">+ Add This Link</button>
                     </div>
                 </div>
             </div>
@@ -1108,44 +1127,49 @@
                 <h3 style="margin: 0 0 15px 0; color: #008181;">📄 Export to Google Docs</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Export your newsletter content to a Google Doc for review and collaboration.</p>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; cursor: pointer;">
-                        <input type="checkbox" id="sendDocLinkEmail" style="margin-right: 10px; width: 18px; height: 18px;">
-                        <span style="font-size: 14px; font-weight: 600;">Send email notification</span>
-                    </label>
-                </div>
-
-                <div id="docEmailInputContainer" style="display: none; margin-bottom: 15px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Recipients:</label>
-
-                    <!-- Team member checkboxes -->
-                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
-                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                            <input type="checkbox" class="docRecipientCheckbox" value="john.ortbal@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                            <span>John Ortbal (john.ortbal@brite.co)</span>
-                        </label>
-                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                            <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                            <span>Stef Lynn (stef.lynn@brite.co)</span>
-                        </label>
-                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                            <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                            <span>Selena Fragassi (selena.fragassi@brite.co)</span>
-                        </label>
-                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                            <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                            <span>Dylanne Crugnale (dylanne.crugnale@brite.co)</span>
-                        </label>
-                    </div>
-
-                    <!-- Additional emails input -->
-                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Additional emails (comma-separated):</label>
-                    <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;">
-                </div>
-
-                <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4;">
+                <!-- Primary Export Button -->
+                <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4; margin-bottom: 20px;">
                     <span id="exportDocsBtnText">📄 Export to Google Docs</span>
                 </button>
+
+                <!-- Email Notification Section -->
+                <div style="border-top: 1px solid #e5e7eb; padding-top: 15px;">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="sendDocLinkEmail" style="margin-right: 10px; width: 18px; height: 18px;">
+                            <span style="font-size: 14px; font-weight: 600;">Also send email notification with Google Doc link</span>
+                        </label>
+                        <p style="font-size: 12px; color: #9ca3af; margin: 5px 0 0 28px;">When checked, an email will be sent to selected recipients after the Doc is created.</p>
+                    </div>
+
+                    <div id="docEmailInputContainer" style="display: none; margin-bottom: 15px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Select recipients (uncheck to exclude):</label>
+
+                        <!-- Team member checkboxes -->
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="john.ortbal@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>John Ortbal (john.ortbal@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Stef Lynn (stef.lynn@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Selena Fragassi (selena.fragassi@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Dylanne Crugnale (dylanne.crugnale@brite.co)</span>
+                            </label>
+                        </div>
+
+                        <!-- Additional emails input -->
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Additional emails (comma-separated):</label>
+                        <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;">
+                    </div>
+                </div>
 
                 <div id="exportDocsResult" style="display: none; margin-top: 15px; padding: 15px; border-radius: 6px;"></div>
             </div>
@@ -1393,7 +1417,7 @@
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="goBackToPrompts()">← Back to Prompts</button>
                 <button class="btn-secondary btn" onclick="generateImagesFromPrompts(true)" style="background: #f59e0b; color: white; border-color: #f59e0b;">🔄 Regenerate All Images</button>
-                <button class="btn" onclick="generateMemePrompt()">Continue to Meme →</button>
+                <button class="btn" onclick="showSubjectLineStep()">Continue to Subject Line →</button>
             </div>
         </div>
 
@@ -1567,7 +1591,7 @@
             </div>
 
             <div class="buttons">
-                <button class="btn-secondary btn" onclick="showStep(11)">← Back to Meme</button>
+                <button class="btn-secondary btn" onclick="showStep(10)">← Back to Images</button>
                 <button class="btn" onclick="showNewsletterPreview()">Continue to Preview →</button>
             </div>
         </div>
@@ -2591,9 +2615,33 @@
             const container = document.getElementById('generatedContent');
 
             // Helper function to clean content for display and style links blue
-            function cleanContentForDisplay(content) {
+            function cleanContentForDisplay(content, sectionType = null) {
                 if (!content) return 'Content not available';
-                let contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+
+                let contentStr;
+
+                // Handle spotlight object structure: { subheader, h3s: [{ h3, body }] }
+                if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
+                    if (content.h3s && Array.isArray(content.h3s)) {
+                        // Spotlight format - extract body paragraphs from h3s array
+                        let paragraphs = [];
+                        content.h3s.forEach(h3Item => {
+                            if (h3Item.body) {
+                                paragraphs.push(`<p style="margin-bottom: 12px;">${h3Item.body}</p>`);
+                            }
+                        });
+                        contentStr = paragraphs.join('');
+                    } else if (content.subheader && content.body) {
+                        // Alternative format with direct body
+                        contentStr = `<p style="margin-bottom: 12px;">${content.body}</p>`;
+                    } else {
+                        // Unknown object structure, stringify as fallback
+                        contentStr = JSON.stringify(content);
+                    }
+                } else {
+                    contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+                }
+
                 // Fix white text color
                 contentStr = contentStr.replace(/color:\s*#ffffff;?/gi, 'color: #1f2937;');
                 // Make all links blue and underlined to show where hyperlinks are
@@ -4598,368 +4646,448 @@
             }
         }
 
-        // Briteco Newsletter Template Generator (NEW - uses template file)
-        function generateBritecoHTML(newsData, tipData, trendData, memeUrl, subjectLine, preheader) {
-            // Extract titles and content
-            const newsTitle = newsData.title || 'News Update';
-            // Use AI-generated short titles if available, otherwise use original titles
-            const tipTitle = generatedTipTitle || tipData.title || 'Tip of the Month';
-            const trendTitle = generatedTrendTitle || trendData.title || 'Trend Alert';
+        // Briteco Newsletter Template Generator (NEW BriteCo Brief Template - Jan 2026)
+        function generateBritecoHTML(data) {
+            // Extract all content from data object - Agent Newsletter 7-section template
+            const {
+                preheader = '',
+                subjectLine = 'The BriteCo Brief',
+                introText = '',
+                introCTAUrl = '#',
+                introCTAText = 'Learn More',
+                briteSpotText = '',
+                briteSpotImage = '',
+                briteSpotBullets = [],
+                claimsText = '',
+                claimsImage = '',
+                roundupItems = [],
+                spotlightSubheader = '',
+                spotlightText = '',
+                spotlightImage = '',
+                spotlightH2s = [],
+                tipsIntro = '',
+                tipsItems = [],
+                ctaUrl = 'https://insurance.brite.co',
+                ctaText = 'Access Your Dashboard'
+            } = data;
 
-            const newsContent = newsData.content || '';
-            const tipContent = tipData.content || '';
-            const trendContent = trendData.content || '';
+            // Helper to generate bullet items with teal circles
+            const generateBulletItems = (items) => {
+                if (!items || !Array.isArray(items) || items.length === 0) return '';
+                return items.map(item => `
+                    <tr>
+                        <td style="padding-top: 8px;" valign="top" width="20">
+                            <table border="0" cellpadding="0" cellspacing="0" role="presentation">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 11px; height: 11px; background-color: #31D7CA; border-radius: 50%; font-size: 1px; line-height: 1px;">&nbsp;</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                        <td style="padding-bottom: 12px;" valign="top">
+                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${item}</p>
+                        </td>
+                    </tr>
+                `).join('');
+            };
 
-            const tipSubtitle = tipData.subtitle || '';
-            const trendSubtitle = trendData.subtitle || '';
+            // Helper to generate news roundup items with checkmarks
+            const generateRoundupItems = (items) => {
+                if (!items || !Array.isArray(items) || items.length === 0) return '';
+                return items.map(item => `
+                    <tr>
+                        <td style="padding-right: 10px;" valign="top" width="41">
+                            <img alt="" src="https://brite.co/wp-content/uploads/2025/09/tickk.png" style="display: block; width: 31px; height: auto;" width="31" />
+                        </td>
+                        <td style="padding-bottom: 10px;" valign="top">
+                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${item.summary || item}</p>
+                        </td>
+                    </tr>
+                `).join('');
+            };
 
-            const newsImage = newsData.image || '';
-            const tipImage = tipData.image || '';
-            const trendImage = trendData.image || '';
+            // Helper to generate spotlight H2 sections
+            const generateSpotlightH2s = (h2s) => {
+                if (!h2s || !Array.isArray(h2s) || h2s.length === 0) return '';
+                return h2s.map(section => `
+                    <h2 class="dark-text" style="margin: 16px 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 20px; line-height: 26px; font-weight: 600; color: #3B3B3B;">${section.h3 || section.title || ''}</h2>
+                    <p class="dark-text-secondary" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
+                `).join('');
+            };
 
-            const newsUrl = newsData.url || '#';
-            const tipUrl = tipData.url || '#';
-            const trendUrl = trendData.url || '#';
+            // Helper to generate agent advantage tips with checkmarks and titles
+            const generateTipsItems = (items) => {
+                if (!items || !Array.isArray(items) || items.length === 0) return '';
+                return items.map(item => `
+                    <tr>
+                        <td style="padding-right: 10px;" valign="top" width="37">
+                            <img alt="" src="https://brite.co/wp-content/uploads/2025/09/tickk.png" style="display: block; width: 27px; height: auto;" width="27" />
+                        </td>
+                        <td style="padding-bottom: 16px;" valign="top">
+                            <p class="dark-text" style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 600; color: #3B3B3B;">${item.title || ''}</p>
+                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
+                        </td>
+                    </tr>
+                `).join('');
+            };
 
-            // Load and process template
+            // BriteCo Brief 7-Section Email Template (Agent Newsletter - Jan 2026)
+            const logoUrl = 'https://i.ontraport.com/194428.046960d3d5419045b9bf5943f00547e7.PNG';
+            const dashboardUrl = 'https://insurance.brite.co/events/venue_locations/[Referral Code]/dashboard';
+
             const template = `<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
-  <title>BriteCo Brief Newsletter</title>
-  <!--[if mso]>
-  <noscript>
-    <xml>
-      <o:OfficeDocumentSettings>
-        <o:PixelsPerInch>96</o:PixelsPerInch>
-      </o:OfficeDocumentSettings>
-    </xml>
-  </noscript>
-  <![endif]-->
-  <style>
-    :root { color-scheme: light dark; supported-color-schemes: light dark; }
-    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-    body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-
-    @media screen and (max-width: 600px) {
-      .mobile-full { width: 100% !important; }
-      .mobile-padding { padding-left: 20px !important; padding-right: 20px !important; }
-      .mobile-stack { display: block !important; width: 100% !important; }
-      .mobile-center { text-align: center !important; }
-      .mobile-img { width: 100% !important; height: auto !important; }
-      .mobile-column { display: block !important; width: 100% !important; padding-right: 0 !important; padding-left: 0 !important; padding-bottom: 12px !important; }
-      .mobile-column-last { padding-bottom: 0 !important; }
-      .mobile-hide { display: none !important; }
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .dark-mode-bg { background-color: #1a1a1a !important; }
-      .dark-mode-card { background-color: #272d3f !important; }
-      .dark-mode-text { color: #ffffff !important; }
-      .dark-mode-secondary { color: #cccccc !important; }
-      .dark-mode-border { border-color: #444444 !important; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>The BriteCo Brief</title>
+<!--[if mso]>
+<noscript>
+<xml>
+<o:OfficeDocumentSettings>
+<o:AllowPNG/>
+<o:PixelsPerInch>96</o:PixelsPerInch>
+</o:OfficeDocumentSettings>
+</xml>
+</noscript>
+<![endif]-->
+<style>
+:root { color-scheme: light dark; supported-color-schemes: light dark; }
+html, body { margin: 0 auto !important; padding: 0 !important; height: 100% !important; width: 100% !important; }
+* { -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+div[style*="margin: 16px 0"] { margin: 0 !important; }
+table, td { mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; }
+table { border-spacing: 0 !important; border-collapse: collapse !important; table-layout: fixed !important; margin: 0 auto !important; }
+img { -ms-interpolation-mode:bicubic; }
+a { text-decoration: none; }
+*[x-apple-data-detectors], .unstyle-auto-detected-links *, .aBn { border-bottom: 0 !important; cursor: default !important; color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+.x-gmail-data-detectors, .x-gmail-data-detectors *, .aBn { border-bottom: 0 !important; cursor: default !important; }
+.button-link { transition: all 100ms ease-in; }
+.button-td-primary:hover, .button-a-primary:hover { background: #31D7CA !important; border-color: #31D7CA !important; }
+@media (prefers-color-scheme: dark) {
+.email-bg { background: #1a1a1a !important; }
+.darkmode-bg { background: #2d2d2d !important; }
+.section-bg { background: #2d2d2d !important; }
+.dark-text { color: #ffffff !important; }
+.dark-text-secondary { color: #bbbbbb !important; }
+.dark-border { border-color: #444444 !important; }
+.hero-section { background: #1e4a4a !important; }
+.cta-section { background: #0d3f3f !important; }
+}
+[data-ogsc] .email-bg { background: #1a1a1a !important; }
+[data-ogsc] .darkmode-bg { background: #2d2d2d !important; }
+[data-ogsc] .section-bg { background: #2d2d2d !important; }
+[data-ogsc] .dark-text { color: #ffffff !important; }
+[data-ogsc] .dark-text-secondary { color: #bbbbbb !important; }
+[data-ogsc] .dark-border { border-color: #444444 !important; }
+[data-ogsc] .hero-section { background: #1e4a4a !important; }
+[data-ogsc] .cta-section { background: #0d3f3f !important; }
+@media screen and (max-width: 600px) {
+.mobile-full { width: 100% !important; max-width: 100% !important; }
+.mobile-padding { padding-left: 20px !important; padding-right: 20px !important; }
+.mobile-stack { display: block !important; width: 100% !important; }
+.mobile-center { text-align: center !important; }
+.mobile-img-full { width: 100% !important; height: auto !important; }
+}
+</style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;" class="dark-mode-bg">
+<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #f5f5f5;" class="email-bg">
 
-  <!-- WRAPPER -->
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5;" class="dark-mode-bg">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
+<!-- Preheader - Hidden text that shows in email preview -->
+<div style="display: none; max-height: 0px; overflow: hidden;">
+${preheader}
+</div>
+<!-- Insert invisible ‌‌ character to hide preview text -->
+<div style="display: none; max-height: 0px; overflow: hidden;">
+&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+</div>
 
-        <!-- CONTAINER -->
-        <table role="presentation" cellpadding="0" cellspacing="0" width="560" class="mobile-full" style="max-width: 560px;">
+<center role="article" aria-roledescription="email" lang="en" style="width: 100%; background-color: #f5f5f5;" class="email-bg">
+<!--[if mso | IE]>
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5;">
+<tr>
+<td>
+<![endif]-->
 
-          <!-- HEADER - NAVY BLOCK -->
-          <tr>
-            <td style="background-color: #272d3f; padding: 24px 40px; border-radius: 4px 4px 0 0;" class="mobile-padding">
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td class="mobile-center">
-                    <!-- LOGO: Replace src with your hosted logo -->
-                    <img src="{{LOGO_URL}}" alt="BriteCo" width="140" style="max-width: 140px; height: auto;">
-                  </td>
-                  <td align="right" class="mobile-center" style="padding-top: 4px;">
-                    <a href="{{DASHBOARD_URL}}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 12px; font-weight: 700; padding: 10px 18px; text-decoration: none; border-radius: 5px;">YOUR DASHBOARD</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+<table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto;" class="mobile-full">
 
-          <!-- MAIN CONTENT - WHITE -->
-          <tr>
-            <td style="background-color: #ffffff;" class="dark-mode-card">
+<!-- HEADER WITH LOGO -->
+<tr>
+<td style="padding: 20px 40px; text-align: center;" class="mobile-padding">
+<a href="https://brite.co" target="_blank">
+<img src="${logoUrl}" width="180" alt="BriteCo" style="width: 180px; max-width: 180px; height: auto; display: block; margin: 0 auto;">
+</a>
+</td>
+</tr>
 
-              <!-- HERO/MEME IMAGE -->
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="padding: 40px 40px 0 40px;" class="mobile-padding">
-                    <img src="{{MEME_IMAGE}}" alt="Monthly Meme" width="480" style="width: 100%; max-width: 480px; height: auto; display: block; border-radius: 4px;">
-                  </td>
-                </tr>
-              </table>
+<!-- HERO SECTION - TEAL BACKGROUND -->
+<tr>
+<td class="hero-section" style="background-color: #008181; padding: 50px 40px; text-align: center;" class="mobile-padding">
+<h1 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 36px; line-height: 42px; font-weight: 700; color: #ffffff;">The BriteCo Brief</h1>
+<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; color: #e0f7f7;">Your monthly P&C insurance insights</p>
+${introText ? `<p class="dark-text-secondary" style="margin: 0 0 25px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #ffffff;">${introText}</p>` : ''}
+<a href="${introCTAUrl}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; padding: 14px 28px; text-decoration: none; border-radius: 6px;" class="button-link">${introCTAText}</a>
+</td>
+</tr>
 
-              {{HEADER_INTRO}}
+<!-- SECTION 2: BRITE SPOT -->
+<tr>
+<td class="section-bg" style="background-color: #ffffff; padding: 40px;" class="mobile-padding">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr>
+<td>
+<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">Brite Spot</p>
+<h2 class="dark-text" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">BriteCo Updates</h2>
+</td>
+</tr>
+<tr>
+<td>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr>
+${briteSpotImage ? `<td width="200" valign="top" class="mobile-stack" style="padding-right: 20px;">
+<img src="${briteSpotImage}" width="200" alt="Brite Spot" style="width: 200px; max-width: 200px; height: auto; display: block; border-radius: 8px;" class="mobile-img-full">
+</td>` : ''}
+<td valign="top" class="mobile-stack">
+<p class="dark-text-secondary" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${briteSpotText}</p>
+${generateBulletItems(briteSpotBullets)}
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
 
-              <!-- AGENDA PANEL - TEAL BLOCK -->
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="padding: 40px 40px 0 40px;" class="mobile-padding">
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #e5f2f2; border-radius: 8px;">
-                      <tr>
-                        <td style="padding: 28px 32px;">
-                          <!-- AGENDA TITLE -->
-                          <h1 style="margin: 0 0 20px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 28px; font-weight: 600; color: #272d3f; text-align: center; line-height: 36px;" class="dark-mode-text">{{AGENDA_TITLE}}</h1>
+<!-- SECTION 3: CURIOUS CLAIMS -->
+<tr>
+<td class="section-bg" style="background-color: #F8F9FA; padding: 40px;" class="mobile-padding">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr>
+<td>
+<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">Curious Claims</p>
+<h2 class="dark-text" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">Unusual Insurance Stories</h2>
+</td>
+</tr>
+<tr>
+<td>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr>
+${claimsImage ? `<td width="180" valign="top" class="mobile-stack" style="padding-right: 20px;">
+<img src="${claimsImage}" width="180" alt="Curious Claims" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 8px;" class="mobile-img-full">
+</td>` : ''}
+<td valign="top" class="mobile-stack">
+<div class="dark-text-secondary" style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${claimsText}</div>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
 
-                          <!-- AGENDA ITEMS -->
-                          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                            <tr>
-                              <td style="padding: 12px 0; border-top: 1px solid #ffffff;">
-                                <span style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 14px; font-weight: 600; color: #008181;">01</span>
-                                <span style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 15px; font-weight: 500; color: #272d3f; padding-left: 16px;">{{NEWS_TITLE}}</span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 12px 0; border-top: 1px solid #ffffff;">
-                                <span style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 14px; font-weight: 600; color: #008181;">02</span>
-                                <span style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 15px; font-weight: 500; color: #272d3f; padding-left: 16px;">{{TIP_TITLE}}</span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 12px 0 0 0; border-top: 1px solid #ffffff;">
-                                <span style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 14px; font-weight: 600; color: #008181;">03</span>
-                                <span style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 15px; font-weight: 500; color: #272d3f; padding-left: 16px;">{{TREND_TITLE}}</span>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
+<!-- SECTION 4: NEWS ROUNDUP -->
+<tr>
+<td class="section-bg" style="background-color: #ffffff; padding: 40px;" class="mobile-padding">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr>
+<td>
+<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">News Roundup</p>
+<h2 class="dark-text" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">Industry Headlines</h2>
+</td>
+</tr>
+<tr>
+<td>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+${generateRoundupItems(roundupItems)}
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
 
-              <!-- SECTION 1: NEWS - LIGHT GREY BOX -->
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="padding: 24px 40px;" class="mobile-padding">
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #E1E7EF; border-radius: 8px;">
-                      <tr>
-                        <td style="padding: 24px;">
-                          <p style="margin: 0 0 8px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 11px; font-weight: 700; color: #008181; text-transform: uppercase; letter-spacing: 1.5px;">News You Can Use</p>
+<!-- SECTION 5: SPOTLIGHT -->
+<tr>
+<td class="section-bg" style="background-color: #F8F9FA; padding: 40px;" class="mobile-padding">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr>
+<td>
+<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">InsurNews Spotlight</p>
+${spotlightSubheader ? `<h2 class="dark-text" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">${spotlightSubheader}</h2>` : ''}
+</td>
+</tr>
+${spotlightImage ? `<tr>
+<td style="padding-bottom: 20px;">
+<img src="${spotlightImage}" width="520" alt="Spotlight" style="width: 100%; max-width: 520px; height: auto; display: block; border-radius: 8px;">
+</td>
+</tr>` : ''}
+<tr>
+<td>
+<div class="dark-text-secondary" style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${spotlightText}</div>
+${generateSpotlightH2s(spotlightH2s)}
+</td>
+</tr>
+</table>
+</td>
+</tr>
 
-                          <h2 style="margin: 0 0 8px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 20px; font-weight: 700; color: #272d3f; line-height: 1.3;" class="dark-mode-text">{{NEWS_TITLE}}</h2>
+<!-- SECTION 6: AGENT ADVANTAGE -->
+<tr>
+<td class="section-bg" style="background-color: #ffffff; padding: 40px;" class="mobile-padding">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr>
+<td>
+<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">Agent Advantage</p>
+<h2 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">Tips for Success</h2>
+${tipsIntro ? `<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${tipsIntro}</p>` : ''}
+</td>
+</tr>
+<tr>
+<td>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+${generateTipsItems(tipsItems)}
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
 
-                          {{NEWS_SUBTITLE}}
+<!-- SECTION 7: CTA BANNER -->
+<tr>
+<td class="cta-section" style="background-color: #008181; padding: 40px; text-align: center;" class="mobile-padding">
+<h2 style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 26px; line-height: 32px; font-weight: 700; color: #ffffff;">Wait Before You Go...</h2>
+<p style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; color: #e0f7f7;">Access your agent dashboard for more resources and tools</p>
+<a href="${ctaUrl}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; padding: 14px 28px; text-decoration: none; border-radius: 6px;" class="button-link">${ctaText}</a>
+</td>
+</tr>
 
-                          <!-- NEWS IMAGE - Full width inside the color block -->
-                          <img src="{{NEWS_IMAGE}}" alt="News Image" width="432" style="width: 100%; max-width: 432px; height: auto; display: block; border-radius: 4px; margin-bottom: 16px;">
+<!-- FOOTER -->
+<tr>
+<td style="background-color: #3B3B3B; padding: 30px 40px; text-align: center;" class="mobile-padding">
+<a href="https://brite.co" target="_blank">
+<img src="${logoUrl}" width="120" alt="BriteCo" style="width: 120px; max-width: 120px; height: auto; display: block; margin: 0 auto 15px auto;">
+</a>
+<p style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 18px; font-weight: 400; color: #bbbbbb;">
+BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
+</p>
+<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 18px; font-weight: 400; color: #888888;">
+<a href="https://brite.co/privacy" style="color: #888888; text-decoration: underline;">Privacy Policy</a> |
+<a href="https://brite.co/terms" style="color: #888888; text-decoration: underline;">Terms of Service</a>
+</p>
+</td>
+</tr>
 
-                          {{NEWS_CONTENT}}
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
+</table>
 
-              <!-- SECTION 2: TIP/INSIGHT - TEAL BOX -->
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="padding: 12px 40px;" class="mobile-padding">
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #A9C1CB; border-radius: 8px;">
-                      <tr>
-                        <td style="padding: 24px;">
-                          <p style="margin: 0 0 8px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 11px; font-weight: 700; color: #272d3f; text-transform: uppercase; letter-spacing: 1.5px;">BriteCo Insight</p>
-
-                          <h3 style="margin: 0 0 8px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 20px; font-weight: 700; color: #272d3f; line-height: 1.3;" class="dark-mode-text">{{TIP_TITLE}}</h3>
-
-                          {{TIP_SUBTITLE}}
-
-                          <!-- TIP IMAGE - Full width inside the color block -->
-                          <img src="{{TIP_IMAGE}}" alt="Insight Image" width="432" style="width: 100%; max-width: 432px; height: auto; display: block; border-radius: 4px; margin-bottom: 16px;">
-
-                          {{TIP_CONTENT}}
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- SECTION 3: TREND - DARK BLUE BOX -->
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="padding: 12px 40px 48px 40px;" class="mobile-padding">
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #466F88; border-radius: 8px;">
-                      <tr>
-                        <td style="padding: 24px;">
-                          <p style="margin: 0 0 8px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 11px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 1.5px;">Trend Alert</p>
-
-                          <h3 style="margin: 0 0 8px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 20px; font-weight: 700; color: #ffffff; line-height: 1.3;">{{TREND_TITLE}}</h3>
-
-                          {{TREND_SUBTITLE}}
-
-                          <!-- TREND IMAGE - Full width inside the color block -->
-                          <img src="{{TREND_IMAGE}}" alt="Trend Image" width="432" style="width: 100%; max-width: 432px; height: auto; display: block; border-radius: 4px; margin-bottom: 16px;">
-
-                          {{TREND_CONTENT}}
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td style="background-color: #272d3f; padding: 40px; text-align: center; border-radius: 0 0 4px 4px;" class="mobile-padding">
-              <h2 style="margin: 0 0 8px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 26px; font-weight: 600; color: #ffffff;">Let's Connect</h2>
-              <p style="margin: 0 0 20px 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 15px; font-weight: 500; color: #ffffff;">Empowering independent agents with industry insights.</p>
-              <a href="{{DASHBOARD_URL}}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 14px; font-weight: 700; padding: 12px 24px; text-decoration: none; border-radius: 5px;">My Dashboard →</a>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+<!--[if mso | IE]>
+</td>
+</tr>
+</table>
+<![endif]-->
+</center>
 
 </body>
 </html>
 `;
 
-            //  Template replacement placeholders
-            const logoUrl = 'https://i.ontraport.com/194428.046960d3d5419045b9bf5943f00547e7.PNG';
-            const dashboardUrl = 'https://insurance.brite.co/events/venue_locations/[Referral Code]/dashboard';
-
-            // Format content - backend already returns <p> wrapped content, add read more link on new line
-            const formatNewsContent = (content) => {
-                // Content already has <p> tags with styling and margin from backend
-                return `${content}<p style="margin-top: 12px;"><a href="${newsUrl}" style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 14px; font-weight: 700; color: #FE8916; text-decoration: none;">Read more →</a></p>`;
-            };
-
-            const formatTipContent = (content) => {
-                // Content already has <p> tags with styling and margin from backend
-                return `${content}<p style="margin-top: 12px;"><a href="${tipUrl}" style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 13px; font-weight: 700; color: #FE8916; text-decoration: none;">Read more →</a></p>`;
-            };
-
-            const formatTrendContent = (content) => {
-                // Content already has <p> tags with styling and margin from backend
-                return `${content}<p style="margin-top: 12px;"><a href="${trendUrl}" style="font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 13px; font-weight: 700; color: #FE8916; text-decoration: none;">Read more →</a></p>`;
-            };
-
-            // Generate meme HTML - text is already burned into the image by the server
-            const generateMemeHTML = () => {
-                const meme = generatedImages.meme;
-                if (!meme) {
-                    return memeUrl || 'https://placehold.co/480x280/272d3f/31D7CA?text=Monthly+Meme';
-                }
-
-                // The server already burned the text into the image, so just return the URL
-                // This ensures email clients display the meme correctly
-                return meme.url || memeUrl;
-            };
-
-            // Generate header intro HTML (appears below the meme, before the agenda)
-            const generateHeaderIntroHTML = () => {
-                if (!headerIntroContent || headerIntroContent.trim() === '') {
-                    return ''; // Return empty if no intro content
-                }
-
-                return `
-              <!-- HEADER INTRO TEXT -->
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="padding: 30px 40px 0 40px;" class="mobile-padding">
-                    <p style="margin: 0; font-family: 'Gilroy', Trebuchet MS, sans-serif; font-size: 15px; font-weight: 400; color: #4a5568; line-height: 1.6; text-align: center;">
-                      ${headerIntroContent}
-                    </p>
-                  </td>
-                </tr>
-              </table>`;
-            };
-
-            // Apply replacements to template
-            return template
-                .replace(/{{LOGO_URL}}/g, logoUrl)
-                .replace(/{{DASHBOARD_URL}}/g, dashboardUrl)
-                .replace(/{{MEME_IMAGE}}/g, generateMemeHTML())
-                .replace(/{{HEADER_INTRO}}/g, generateHeaderIntroHTML())
-                .replace(/{{AGENDA_TITLE}}/g, "In This Month's BriteCo Brief")
-                .replace(/{{NEWS_TITLE}}/g, newsTitle)
-                .replace(/{{TIP_TITLE}}/g, tipTitle)
-                .replace(/{{TREND_TITLE}}/g, trendTitle)
-                .replace(/{{NEWS_IMAGE}}/g, newsImage || 'https://placehold.co/480x260/008181/ffffff?text=News+Image')
-                .replace(/{{NEWS_SUBTITLE}}/g, '')
-                .replace(/{{NEWS_CONTENT}}/g, formatNewsContent(newsContent))
-                .replace(/{{TIP_SUBTITLE}}/g, tipSubtitle)
-                .replace(/{{TIP_IMAGE}}/g, tipImage || 'https://placehold.co/432x130/008181/ffffff?text=Tip+Image')
-                .replace(/{{TIP_CONTENT}}/g, formatTipContent(tipContent))
-                .replace(/{{TREND_SUBTITLE}}/g, trendSubtitle)
-                .replace(/{{TREND_IMAGE}}/g, trendImage || 'https://placehold.co/432x130/7DA3AF/ffffff?text=Trend+Image')
-                .replace(/{{TREND_CONTENT}}/g, formatTrendContent(trendContent));
+            // Return the template with all values interpolated
+            return template;
         }
 
         function generateNewsletterHTML() {
             // Get subject line and preheader
-            const subjectLine = document.getElementById('finalSubjectLine')?.value || 'Your Monthly Newsletter';
-            const preheader = document.getElementById('finalPreheader')?.value || 'Latest insights inside';
+            const subjectLine = document.getElementById('finalSubjectLine')?.value || 'The BriteCo Brief';
+            const preheader = document.getElementById('finalPreheader')?.value || 'Your monthly P&C insurance insights';
 
-            // Prepare claims data (maps to "news" in template)
-            const newsData = {
-                title: selectedClaims?.title || 'Curious Claims',
-                content: document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '',
-                image: generatedImages.claims?.url || '',
-                url: selectedClaims?.source_url || selectedClaims?.url || '#'
-            };
+            // Get introduction content
+            const introText = document.getElementById('introContentBox')?.innerText || generatedIntroContent || '';
 
-            // Prepare spotlight data (maps to "tip" in template)
-            const tipData = {
-                title: generatedSpotlightSubheader || 'InsurNews Spotlight',
-                content: document.getElementById('spotlightContentBox')?.innerHTML || generatedSpotlightContent || '',
-                subtitle: '',
-                image: generatedImages.spotlight?.url || '',
-                url: '#'
-            };
+            // Get Brite Spot content
+            const briteSpotText = document.getElementById('briteSpotContentBox')?.innerHTML || generatedBriteSpotContent || '';
 
-            // Prepare tips data (maps to "trend" in template)
-            // Handle new format { intro, tips: [...] } or old array format
-            let tipsHtml = document.getElementById('tipsContentBox')?.innerHTML;
-            if (!tipsHtml) {
-                if (generatedTipsContent && generatedTipsContent.intro) {
-                    tipsHtml = `<p>${generatedTipsContent.intro}</p><ol>` +
-                        (generatedTipsContent.tips || []).map(t => `<li>${t.tip || t}</li>`).join('') + '</ol>';
+            // Get claims content
+            const claimsText = document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '';
+
+            // Get roundup content - array of news items
+            let roundupItems = [];
+            if (Array.isArray(generatedRoundupContent)) {
+                roundupItems = generatedRoundupContent.map(item => ({
+                    summary: typeof item === 'string' ? item : (item.summary || item.headline || item.text || '')
+                }));
+            }
+
+            // Get spotlight content - with subheader and h3s structure
+            const spotlightSubheader = generatedSpotlightSubheader || '';
+            let spotlightText = '';
+            let spotlightH2s = [];
+
+            // Handle spotlight structured content { subheader, h3s: [...] }
+            if (generatedSpotlightContent && typeof generatedSpotlightContent === 'object') {
+                if (generatedSpotlightContent.h3s && Array.isArray(generatedSpotlightContent.h3s)) {
+                    spotlightH2s = generatedSpotlightContent.h3s;
+                }
+                if (generatedSpotlightContent.body) {
+                    spotlightText = generatedSpotlightContent.body;
+                }
+            } else {
+                spotlightText = document.getElementById('spotlightContentBox')?.innerHTML || generatedSpotlightContent || '';
+            }
+
+            // Get tips content - array of tips with titles
+            let tipsIntro = '';
+            let tipsItems = [];
+
+            if (generatedTipsContent) {
+                if (generatedTipsContent.intro) {
+                    tipsIntro = generatedTipsContent.intro;
+                }
+                if (generatedTipsContent.tips && Array.isArray(generatedTipsContent.tips)) {
+                    tipsItems = generatedTipsContent.tips.map(tip => ({
+                        title: tip.title || '',
+                        tip: tip.tip || tip.description || (typeof tip === 'string' ? tip : '')
+                    }));
                 } else if (Array.isArray(generatedTipsContent)) {
-                    tipsHtml = generatedTipsContent.map(t => t.tip || t).join('<br>');
-                } else {
-                    tipsHtml = generatedTipsContent || '';
+                    tipsItems = generatedTipsContent.map(tip => ({
+                        title: tip.title || '',
+                        tip: tip.tip || tip.description || (typeof tip === 'string' ? tip : '')
+                    }));
                 }
             }
-            const trendData = {
-                title: 'Agent Advantage',
-                content: tipsHtml,
-                subtitle: '',
-                image: generatedImages.tips?.url || '',
-                url: '#'
+
+            // Build data object for template
+            const data = {
+                preheader,
+                subjectLine,
+                introText,
+                introCTAUrl: 'https://insurance.brite.co',
+                introCTAText: 'Access Your Dashboard',
+                briteSpotText,
+                briteSpotImage: generatedImages.britespot?.url || '',
+                briteSpotBullets: [], // Can be populated if brite spot has bullet points
+                claimsText,
+                claimsImage: generatedImages.claims?.url || '',
+                roundupItems,
+                spotlightSubheader,
+                spotlightText,
+                spotlightImage: generatedImages.spotlight?.url || '',
+                spotlightH2s,
+                tipsIntro,
+                tipsItems,
+                ctaUrl: 'https://insurance.brite.co',
+                ctaText: 'Access Your Dashboard'
             };
 
-            // Get meme URL
-            const memeUrl = generatedImages.meme?.url || '';
-
-            // Call Briteco template function (now embedded above)
-            return generateBritecoHTML(newsData, tipData, trendData, memeUrl, subjectLine, preheader);
+            // Call template function with data object
+            return generateBritecoHTML(data);
         }
 
         // Send test email
@@ -5653,13 +5781,27 @@
         // Upload Link Modal Functions for Research Dashboard
         let addedCustomLinks = [];  // Track links added in current modal session
 
+        // Map section keys to display names
+        const sectionDisplayNames = {
+            'claims': 'Curious Claims',
+            'roundup': 'News Roundup',
+            'spotlight': 'InsurNews Spotlight',
+            'tips': 'Agent Advantage'
+        };
+
         function showUploadLinkModal() {
             document.getElementById('uploadLinkModal').style.display = 'flex';
             document.getElementById('customLinkInput').value = '';
             document.getElementById('uploadLinkError').style.display = 'none';
             document.getElementById('addedLinksList').style.display = 'none';
             document.getElementById('addedLinksContainer').innerHTML = '';
+            document.getElementById('addAnotherLinkSection').style.display = 'none';
             addedCustomLinks = [];
+
+            // Update modal title with current section name
+            const sectionName = sectionDisplayNames[currentResearchSection] || 'This Section';
+            document.getElementById('modalSectionName').textContent = sectionName;
+
             document.getElementById('customLinkInput').focus();
         }
 
@@ -5668,20 +5810,50 @@
             addedCustomLinks = [];
         }
 
-        function updateAddedLinksList(title, url) {
+        function updateAddedLinksList(title, url, linkIndex) {
             const listDiv = document.getElementById('addedLinksList');
             const container = document.getElementById('addedLinksContainer');
             listDiv.style.display = 'block';
 
             const linkItem = document.createElement('div');
+            linkItem.id = `addedLink_${linkIndex}`;
             linkItem.style.cssText = 'padding: 6px 8px; margin-bottom: 4px; background: white; border-radius: 4px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;';
             linkItem.innerHTML = `
-                <span style="color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;" title="${url}">${title || url}</span>
-                <span style="color: #059669; font-size: 10px;">✓</span>
+                <span style="color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 350px;" title="${url}">${title || url}</span>
+                <button onclick="removeAddedLink(${linkIndex}, '${url}')" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 16px; padding: 0 4px; line-height: 1;" title="Remove this link">&times;</button>
             `;
             container.appendChild(linkItem);
-            addedCustomLinks.push({ title, url });
+            addedCustomLinks.push({ title, url, index: linkIndex });
+
+            // Show "Add another link" section after first link is added
+            document.getElementById('addAnotherLinkSection').style.display = 'block';
         }
+
+        function removeAddedLink(linkIndex, url) {
+            // Remove from DOM
+            const linkItem = document.getElementById(`addedLink_${linkIndex}`);
+            if (linkItem) linkItem.remove();
+
+            // Remove from addedCustomLinks array
+            addedCustomLinks = addedCustomLinks.filter(link => link.index !== linkIndex);
+
+            // Remove from researchResults.perplexity
+            if (researchResults.perplexity) {
+                researchResults.perplexity = researchResults.perplexity.filter(article => article.url !== url);
+                // Re-render results
+                const container = document.getElementById('perplexityResults');
+                displayPerplexityResults(researchResults.perplexity, container);
+            }
+
+            // Hide the list if no more links
+            if (addedCustomLinks.length === 0) {
+                document.getElementById('addedLinksList').style.display = 'none';
+                document.getElementById('addAnotherLinkSection').style.display = 'none';
+            }
+        }
+
+        // Counter for unique link IDs
+        let customLinkCounter = 0;
 
         async function fetchCustomArticle() {
             const url = document.getElementById('customLinkInput').value.trim();
@@ -5737,7 +5909,8 @@
                     tabSearchState[currentResearchSection].htmlCache.perplexity = container.innerHTML;
 
                     // Update the added links list in modal (don't close - allow adding more)
-                    updateAddedLinksList(article.title || 'Article', url);
+                    customLinkCounter++;
+                    updateAddedLinksList(article.title || 'Article', url, customLinkCounter);
 
                     // Clear input for next link
                     document.getElementById('customLinkInput').value = '';
@@ -5753,6 +5926,68 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '+ Add This Link';
+            }
+        }
+
+        // Fetch article from "Add another link" input
+        async function fetchAnotherCustomArticle() {
+            const url = document.getElementById('anotherLinkInput').value.trim();
+            const errorDiv = document.getElementById('uploadLinkError');
+
+            if (!url) {
+                errorDiv.textContent = 'Please enter a URL';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                errorDiv.textContent = 'Please enter a valid URL starting with http:// or https://';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/fetch-article`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: url,
+                        section: currentResearchSection
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const article = data.article;
+
+                    if (!researchResults.perplexity) {
+                        researchResults.perplexity = [];
+                    }
+
+                    researchResults.perplexity.unshift(article);
+
+                    const container = document.getElementById('perplexityResults');
+                    displayPerplexityResults(researchResults.perplexity, container);
+
+                    tabSearchState[currentResearchSection].results.perplexity = researchResults.perplexity;
+                    tabSearchState[currentResearchSection].htmlCache.perplexity = container.innerHTML;
+
+                    customLinkCounter++;
+                    updateAddedLinksList(article.title || 'Article', url, customLinkCounter);
+
+                    // Clear the "another link" input
+                    document.getElementById('anotherLinkInput').value = '';
+                } else {
+                    errorDiv.textContent = data.error || 'Failed to fetch article';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error fetching article:', error);
+                errorDiv.textContent = 'Error: ' + error.message;
+                errorDiv.style.display = 'block';
             }
         }
 
@@ -6364,15 +6599,29 @@
             }
         }
 
+        // Navigate to subject line step (skipping meme)
+        function showSubjectLineStep() {
+            showStep(12);
+        }
+
         function updateProgress(step) {
-            const totalSteps = 15;
-            const progress = ((step - 1) / (totalSteps - 1)) * 100;
+            const totalSteps = 14; // Reduced from 15 (meme step removed)
+
+            // Map internal step numbers to display numbers (skip 11 which was meme)
+            const stepToDisplay = {
+                1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10,
+                // Step 11 (meme) is skipped
+                12: 11, 13: 12, 14: 13, 15: 14
+            };
+
+            const displayStep = stepToDisplay[step] || step;
+            const progress = ((displayStep - 1) / (totalSteps - 1)) * 100;
             document.getElementById('progressBar').style.width = progress + '%';
 
             // Update step counter text
-            document.getElementById('progressStep').textContent = `Step ${step} of ${totalSteps}`;
+            document.getElementById('progressStep').textContent = `Step ${displayStep} of ${totalSteps}`;
 
-            // Step labels for clarity (15 steps total)
+            // Step labels for clarity (14 steps total, meme removed)
             const stepLabels = {
                 1: 'Select Month',
                 2: 'Research Dashboard',
@@ -6384,7 +6633,7 @@
                 8: 'Edit Prompts',
                 9: 'Generating Images',
                 10: 'Review Images',
-                11: 'Meme',
+                // 11 was Meme - removed
                 12: 'Subject Line',
                 13: 'Preview',
                 14: 'Test Email',
