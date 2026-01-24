@@ -2193,9 +2193,9 @@ def generate_images():
 
                     # Section-specific image sizes
                     if section_name == 'spotlight':
-                        # Full-width banner for InsureNews Spotlight (below title)
+                        # Full-width banner for InsureNews Spotlight (below title, 25% shorter)
                         target_width = 490
-                        target_height = 350
+                        target_height = 263
                     else:
                         # Square images for other sections (180x180)
                         target_width = 180

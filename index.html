@@ -2498,8 +2498,10 @@
             // Normalize the content first
             const content = normalizeSpotlightContent(rawContent);
 
-            // Headline - editable
-            document.getElementById('spotlightHeadlineEditable').textContent = content.subheader || 'Untitled Spotlight';
+            // Headline - editable (convert **text** to bold)
+            let headlineText = content.subheader || 'Untitled Spotlight';
+            headlineText = headlineText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            document.getElementById('spotlightHeadlineEditable').innerHTML = headlineText;
 
             // Build editable article body - flowing paragraphs without H3 section titles
             const bodyEditable = document.getElementById('spotlightBodyEditable');
@@ -2508,9 +2510,12 @@
             // Helper to make links blue, convert markdown links, headers, and bold to HTML
             function stylizeLinks(text) {
                 if (!text) return '';
-                // Convert markdown headers ## and ### to bold with proper styling
+                // Convert markdown headers ## and ### to bold - handle both line-start and after newlines
                 text = text.replace(/^###\s*(.+)$/gm, '<strong style="display: block; font-size: 16px; color: #282D3E; margin: 16px 0 8px 0;">$1</strong>');
                 text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
+                // Also handle ## after double newline or in middle of text
+                text = text.replace(/\n\n##\s*([^\n]+)/g, '\n\n<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
                 // Convert markdown bold **text** to <strong>
                 text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
                 // Convert markdown links [text](url) to HTML
@@ -3046,6 +3051,9 @@
                 // Handle ### first (more specific), then ##
                 contentStr = contentStr.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
                 contentStr = contentStr.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+                // Also handle ## after newlines (not just line start)
+                contentStr = contentStr.replace(/\n\n##\s*([^\n]+)/g, '\n\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+                contentStr = contentStr.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
                 // Convert markdown bold **text** to <strong>
                 contentStr = contentStr.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 
@@ -4637,13 +4645,39 @@
                     }
 
                     // Regenerate section image with custom prompt
-                    const section = imageType === 'news' ? selectedNews :
-                                    imageType === 'tip' ? selectedTip : selectedTrend;
+                    // Map section types to their content sources
+                    let section = { title: imageType, season: '' };
+                    let sectionContentObj = null;
 
-                    // Get the generated content for this section and extract text
-                    const sectionContentObj = imageType === 'news' ? generatedNewsContent :
-                                             imageType === 'tip' ? generatedTipContent :
-                                             generatedTrendContent;
+                    switch(imageType) {
+                        case 'briteSpot':
+                            section = { title: 'Brite Spot', season: '' };
+                            sectionContentObj = generatedBriteSpotContent || briteSpotContent || '';
+                            break;
+                        case 'claims':
+                            section = selectedClaims || { title: 'Curious Claims', season: '' };
+                            sectionContentObj = generatedClaimsContent || '';
+                            break;
+                        case 'spotlight':
+                            section = { title: generatedSpotlightSubheader || 'InsurNews Spotlight', season: '' };
+                            sectionContentObj = generatedSpotlightContent || spotlightGeneratedContent || '';
+                            break;
+                        case 'tips':
+                            section = { title: 'Agent Advantage', season: '' };
+                            sectionContentObj = generatedTipsContent || '';
+                            break;
+                        case 'news':
+                            section = selectedNews || { title: 'News', season: '' };
+                            sectionContentObj = generatedNewsContent || '';
+                            break;
+                        case 'tip':
+                            section = selectedTip || { title: 'Tip', season: '' };
+                            sectionContentObj = generatedTipContent || '';
+                            break;
+                        default:
+                            section = selectedTrend || { title: imageType, season: '' };
+                            sectionContentObj = generatedTrendContent || '';
+                    }
 
                     // Use same extraction helper as generateImages
                     function extractContentText(content) {
@@ -5626,7 +5660,7 @@ ${generateBulletItems(briteSpotBullets)}
 <td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tr>
-<td width="180" valign="top" class="mobile-stack mobile-stack-padding" style="padding-right: 25px;">
+<td width="180" valign="top" class="mobile-stack mobile-stack-padding" style="padding-right: 35px;">
 <img src="${claimsImage || assets.blankImage}" width="180" alt="Curious Claims" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px; margin-bottom: 15px;" class="mobile-img-full">
 </td>
 <td valign="top" class="mobile-stack">
@@ -5836,9 +5870,12 @@ ${generateTipsItems(tipsItems)}
         // Helper to convert markdown to HTML (links, bold, headers)
         function convertMarkdownLinksToHTML(text) {
             if (!text) return text;
-            // Convert markdown headers ## and ### to bold
+            // Convert markdown headers ## and ### to bold - handle line start
             text = text.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
             text = text.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+            // Also handle ## after newlines (not just line start)
+            text = text.replace(/\n\n##\s*([^\n]+)/g, '\n\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+            text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
             // Convert markdown bold **text** to <strong>
             text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
             // Convert [text](url) to <a href="url">text</a>
