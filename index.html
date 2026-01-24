@@ -854,6 +854,11 @@
                             <label><input type="checkbox" value="regulations" class="spotlightSourcePack"> Regulations</label>
                         </div>
                         <input type="text" id="spotlightCuratedQuery" placeholder="e.g., market news, industry updates..." value="P&C insurance industry news">
+                        <select id="spotlightCuratedTimeWindow">
+                            <option value="7d">Last 7 days</option>
+                            <option value="30d" selected>Last 30 days</option>
+                            <option value="90d">Last 90 days</option>
+                        </select>
                     </div>
                     <button class="research-card-search-btn" onclick="searchSpotlightCurated()">Search Sources</button>
                     <div class="research-card-results" id="spotlightCuratedResults">
@@ -1292,20 +1297,6 @@
                     <textarea id="tipsImagePromptText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 14px; font-family: inherit;" placeholder="Prompt will appear here..."></textarea>
                 </div>
 
-                <!-- Info callout about image sizing -->
-                <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: start; gap: 10px;">
-                        <div style="font-size: 20px;">ℹ️</div>
-                        <div>
-                            <div style="font-weight: 600; color: #1e40af; margin-bottom: 5px;">Images Auto-Sized for Newsletter</div>
-                            <div style="font-size: 14px; color: #64748b; line-height: 1.5;">
-                                Generated images will be automatically resized to the correct dimensions for the newsletter template:
-                                <strong>All sections (180×180px square)</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="buttons">
                     <button class="btn-secondary btn" onclick="showStep(7)">← Back</button>
                     <button class="btn-secondary btn" onclick="generateImages(true)" style="background: #f59e0b; color: white; border-color: #f59e0b;">🔄 Regenerate Prompts</button>
@@ -1337,19 +1328,6 @@
         <div class="step" id="step10">
             <h2>🖼️ Article Images</h2>
             <p>Review and customize images for your newsletter sections</p>
-
-            <!-- Info callout about downloading at correct size -->
-            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: start; gap: 10px;">
-                    <div style="font-size: 20px;">✓</div>
-                    <div>
-                        <div style="font-weight: 600; color: #047857; margin-bottom: 5px;">Ready for Ontraport</div>
-                        <div style="font-size: 14px; color: #065f46; line-height: 1.5;">
-                            When you download these images using the <strong>📥 Export</strong> button, they'll already be sized correctly for hosting on Ontraport — no resizing needed!
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Brite Spot Image -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
@@ -1433,6 +1411,14 @@
                 <button class="btn-secondary btn" onclick="regenerateImage('tips')" style="margin-right: 10px;">🔄 Regenerate</button>
                 <button class="btn-secondary btn" onclick="exportImage('tips')" style="margin-right: 10px;">📥 Export</button>
                 <button class="btn-secondary btn" onclick="resizeImage('tips')">🔍 Resize</button>
+            </div>
+
+            <!-- Tip at bottom of page -->
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 6px; margin-top: 20px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 16px;">✓</span>
+                    <span style="font-size: 13px; color: #065f46;"><strong>Ready for Ontraport:</strong> Exported images are already sized correctly — no resizing needed!</span>
+                </div>
             </div>
 
             <div class="buttons">
@@ -2111,6 +2097,7 @@
         // Search Card 3: Source Explorer (Curated Sources)
         async function searchSpotlightCurated() {
             const query = document.getElementById('spotlightCuratedQuery').value;
+            const timeWindow = document.getElementById('spotlightCuratedTimeWindow').value;
             const resultsDiv = document.getElementById('spotlightCuratedResults');
 
             // Get selected source packs
@@ -2133,6 +2120,7 @@
                     body: JSON.stringify({
                         query: query,
                         source_packs: selectedPacks,
+                        time_window: timeWindow,
                         exclude_urls: shownSpotlightArticles
                     })
                 });
@@ -3110,6 +3098,7 @@
                 html += '<h3 style="margin: 0 0 5px 0; color: #008181;">BriteCo Brief Intro</h3>';
                 html += `<div id="headerIntroContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${headerIntroDisplay}</div>`;
                 html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('headerIntro')">Edit</button>`;
+                html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('headerIntro')">💾 Save</button>`;
                 html += `</div>`;
             }
 
@@ -3121,6 +3110,7 @@
                 html += '<h3 style="margin: 0 0 5px 0; color: #008181;">The Brite Spot</h3>';
                 html += `<div id="briteSpotContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${briteSpotDisplayContent}</div>`;
                 html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('briteSpot')">Edit</button>`;
+                html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('briteSpot')">💾 Save</button>`;
                 html += `</div>`;
             }
 
@@ -3130,6 +3120,7 @@
             html += `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${selectedClaims?.title || 'Curious Claims'}</h4>`;
             html += `<div id="claimsContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${claimsContent}</div>`;
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('claims')">Edit</button>`;
+            html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('claims')">💾 Save</button>`;
             html += `</div>`;
 
             // Helper to make links blue in any text (defined early for use in all sections)
@@ -3158,6 +3149,7 @@
             }
             html += '</ul>';
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('roundup')">Edit</button>`;
+            html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('roundup')">💾 Save</button>`;
             html += `</div>`;
 
             // INSURNEWS SPOTLIGHT SECTION
@@ -3166,6 +3158,7 @@
             html += `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${generatedSpotlightSubheader || 'Industry Spotlight'}</h4>`;
             html += `<div id="spotlightContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${spotlightContent}</div>`;
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('spotlight')">Edit</button>`;
+            html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('spotlight')">💾 Save</button>`;
             html += `</div>`;
 
             // Helper to make links blue in any text
@@ -3208,6 +3201,7 @@
             }
             html += '</div>';
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('tips')">Edit</button>`;
+            html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('tips')">💾 Save</button>`;
             html += `</div>`;
 
             container.innerHTML = html;
@@ -3227,6 +3221,71 @@
                     box.style.padding = '0';
                 }, 2000);
             }
+        }
+
+        function saveSection(sectionType) {
+            const boxId = `${sectionType}ContentBox`;
+            const box = document.getElementById(boxId);
+            if (!box) return;
+
+            const content = box.innerHTML;
+
+            // Update the corresponding global variable based on section type
+            switch(sectionType) {
+                case 'headerIntro':
+                    headerIntroContent = content;
+                    break;
+                case 'briteSpot':
+                    briteSpotContent = content;
+                    briteSpotRewritten = content;
+                    generatedBriteSpotContent = content;
+                    break;
+                case 'claims':
+                    generatedClaimsContent = content;
+                    break;
+                case 'roundup':
+                    // Parse list items back to array
+                    const listItems = box.querySelectorAll('li');
+                    generatedRoundupContent = Array.from(listItems).map(li => li.innerHTML);
+                    break;
+                case 'spotlight':
+                    generatedSpotlightContent = content;
+                    spotlightGeneratedContent = content;
+                    break;
+                case 'tips':
+                    generatedTipsContent = content;
+                    break;
+            }
+
+            // Visual feedback - green border flash
+            box.style.border = '2px solid #10b981';
+            box.style.padding = '10px';
+            box.style.borderRadius = '4px';
+            box.style.background = '#ecfdf5';
+
+            // Find the save button and update text briefly
+            const saveBtn = box.parentElement.querySelector('.save-section-btn');
+            if (saveBtn) {
+                const originalText = saveBtn.textContent;
+                saveBtn.textContent = '✓ Saved!';
+                saveBtn.style.background = '#10b981';
+                saveBtn.style.borderColor = '#10b981';
+                saveBtn.style.color = 'white';
+                setTimeout(() => {
+                    saveBtn.textContent = originalText;
+                    saveBtn.style.background = '';
+                    saveBtn.style.borderColor = '';
+                    saveBtn.style.color = '';
+                }, 1500);
+            }
+
+            setTimeout(() => {
+                box.style.border = 'none';
+                box.style.padding = '0';
+                box.style.background = 'transparent';
+            }, 1500);
+
+            console.log(`[Save] ${sectionType} section saved`);
         }
 
         async function checkBrandGuidelines() {
@@ -3502,23 +3561,26 @@
         }
 
         function ignoreSuggestion(suggestionId) {
-            // Get the suggestion element (card)
+            // Get the suggestion element
             const suggestionElement = document.getElementById(suggestionId);
             if (!suggestionElement) return;
 
-            // Animate and remove the suggestion card
-            suggestionElement.style.transition = 'all 0.3s ease';
-            suggestionElement.style.opacity = '0';
-            suggestionElement.style.transform = 'translateX(-20px)';
-            setTimeout(() => {
-                suggestionElement.remove();
-                updateSuggestionsCount();
-            }, 300);
+            // Get the original text (the strikethrough part) to preserve it
+            const originalSpan = suggestionElement.querySelector('span[style*="line-through"]');
+            const originalText = originalSpan ? originalSpan.textContent : '';
+
+            // Replace the entire suggestion span with just the original text (styled normally)
+            const preservedSpan = document.createElement('span');
+            preservedSpan.textContent = originalText;
+            suggestionElement.replaceWith(preservedSpan);
+
+            // Update the count
+            updateSuggestionsCount();
 
             // Show info message
             const toast = document.createElement('div');
             toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #6b7280; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
-            toast.textContent = 'Suggestion ignored';
+            toast.textContent = 'Suggestion ignored - original text kept';
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 2000);
         }
@@ -5966,16 +6028,8 @@ ${generateTipsItems(tipsItems)}
                 console.log('[ONTRAPORT] Response:', data);
 
                 if (data.success) {
-                    // Show success message
-                    let successMsg = '✅ SUCCESS!\n\n' +
-                          'Your newsletter has been pushed to Ontraport!\n\n' +
-                          '📧 Subject: ' + subject + '\n' +
-                          '📅 Month: ' + (selectedMonth || 'Newsletter') + '\n' +
-                          '📋 Status: Draft (ready for review)\n\n' +
-                          'You can now find it in your Ontraport messages and schedule it for sending.';
-
-                    alert(successMsg);
-
+                    // Simple success message
+                    alert('✅ Successfully pushed to Ontraport!');
                     console.log('✅ Ontraport campaign created:', data);
                 } else {
                     alert('❌ Error pushing to Ontraport:\n\n' + (data.error || 'Unknown error'));

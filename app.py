@@ -2193,9 +2193,9 @@ def generate_images():
 
                     # Section-specific image sizes
                     if section_name == 'spotlight':
-                        # Full-width banner for InsureNews Spotlight
+                        # Full-width banner for InsureNews Spotlight (below title)
                         target_width = 490
-                        target_height = 200
+                        target_height = 350
                     else:
                         # Square images for other sections (180x180)
                         target_width = 180
@@ -2527,6 +2527,8 @@ BRAND GUIDELINES TO CHECK:
 - DON'T: Refer to website as www.brite.co
 
 Review the following newsletter content and identify SPECIFIC phrases that need to be changed.
+
+IMPORTANT: Skip over hyperlinks and URLs - do not flag them as issues. Hyperlinks in formats like [text](url) or <a href="...">text</a> should be left as-is.
 
 Return a JSON object with an array of suggested changes:
 {{
@@ -2866,9 +2868,7 @@ def export_to_docs():
         if content.get('header_intro'):
             add_text(content['header_intro'])
 
-        if content.get('introduction'):
-            add_text('Introduction', bold=True)
-            add_text(content['introduction'])
+        # Note: Introduction section removed - BriteCo Brief header_intro is used instead
 
         if content.get('brite_spot'):
             add_text('The Brite Spot', bold=True)
