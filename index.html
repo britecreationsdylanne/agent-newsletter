@@ -12,6 +12,11 @@
             box-sizing: border-box;
         }
 
+        /* Preview-only: More space between Claims image and text */
+        #newsletterPreview .claims-content {
+            padding-left: 15px;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #018181 0%, #272d3f 100%);
@@ -2510,14 +2515,20 @@
             // Helper to make links blue, convert markdown links, headers, and bold to HTML
             function stylizeLinks(text) {
                 if (!text) return '';
-                // Convert markdown headers ## and ### to bold - handle both line-start and after newlines
+                // Convert markdown headers ## and ### to bold - handle all positions
+                // First handle ### (more specific)
                 text = text.replace(/^###\s*(.+)$/gm, '<strong style="display: block; font-size: 16px; color: #282D3E; margin: 16px 0 8px 0;">$1</strong>');
+                text = text.replace(/(?:>|\n)###\s*([^\n<]+)/g, '$&'.replace(/###\s*([^\n<]+)/, '<strong style="display: block; font-size: 16px; color: #282D3E; margin: 16px 0 8px 0;">$1</strong>'));
+                // Then handle ## headers - at line start
                 text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
-                // Also handle ## after double newline or in middle of text
-                text = text.replace(/\n\n##\s*([^\n]+)/g, '\n\n<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
+                // Handle ## after newlines
                 text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
-                // Convert markdown bold **text** to <strong>
+                // Handle ## after closing HTML tags like </p>## or ><p>##
+                text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
+                // Convert markdown bold **text** to <strong> (must have content between)
                 text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                // Clean up any stray ** that weren't part of a proper pair
+                text = text.replace(/\*\*/g, '');
                 // Convert markdown links [text](url) to HTML
                 text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #0066cc; text-decoration: underline;">$1</a>');
                 // Style any existing <a> tags with blue color
@@ -3052,10 +3063,13 @@
                 contentStr = contentStr.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
                 contentStr = contentStr.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
                 // Also handle ## after newlines (not just line start)
-                contentStr = contentStr.replace(/\n\n##\s*([^\n]+)/g, '\n\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
                 contentStr = contentStr.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+                // Handle ## after closing HTML tags like </p>## or >##
+                contentStr = contentStr.replace(/>##\s*([^<\n]+)/g, '><strong style="font-size: 17px; color: #282D3E;">$1</strong>');
                 // Convert markdown bold **text** to <strong>
                 contentStr = contentStr.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                // Clean up any stray ** that weren't part of a proper pair
+                contentStr = contentStr.replace(/\*\*/g, '');
 
                 // Convert markdown links [text](url) to HTML links first
                 contentStr = contentStr.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
@@ -5874,10 +5888,13 @@ ${generateTipsItems(tipsItems)}
             text = text.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
             text = text.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
             // Also handle ## after newlines (not just line start)
-            text = text.replace(/\n\n##\s*([^\n]+)/g, '\n\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
             text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+            // Handle ## after closing HTML tags like </p>## or >##
+            text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="font-size: 17px; color: #282D3E;">$1</strong>');
             // Convert markdown bold **text** to <strong>
             text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            // Clean up any stray ** that weren't part of a proper pair
+            text = text.replace(/\*\*/g, '');
             // Convert [text](url) to <a href="url">text</a>
             return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #008181; text-decoration: underline;">$1</a>');
         }
@@ -5887,8 +5904,12 @@ ${generateTipsItems(tipsItems)}
             const subjectLine = document.getElementById('finalSubjectLine')?.value || 'The BriteCo Brief';
             const preheader = document.getElementById('finalPreheader')?.value || 'Your monthly P&C insurance insights';
 
-            // Get introduction content
-            const introText = document.getElementById('introContentBox')?.innerText || generatedIntroContent || '';
+            // Get introduction content from Newsletter Header Intro (page 1 box 1)
+            // Try: 1) Step 5 editable box, 2) saved headerIntroContent, 3) page 1 input
+            const introText = document.getElementById('headerIntroContentBox')?.innerText
+                || headerIntroContent
+                || document.getElementById('headerIntroInput')?.value?.trim()
+                || '';
 
             // Get Brite Spot content (paragraph + bullets from Step 1)
             // Try to get from Step 1 inputs first, then fall back to contenteditable box or generated content

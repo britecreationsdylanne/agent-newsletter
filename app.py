@@ -2884,10 +2884,10 @@ def export_to_docs():
             if isinstance(content['roundup'], list):
                 for item in content['roundup']:
                     bullet = item.get('summary', item) if isinstance(item, dict) else item
-                    roundup_text += f"• {bullet}\n"
+                    roundup_text += f"• {bullet}\n\n"  # Double newline for spacing between bullets
             else:
                 roundup_text = content['roundup']
-            add_text(roundup_text)
+            add_text(roundup_text.rstrip())  # Remove trailing whitespace
 
         if content.get('spotlight'):
             add_text('InsurNews Spotlight', bold=True)
