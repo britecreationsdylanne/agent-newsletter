@@ -139,48 +139,67 @@ class OntraportClient:
         object_ids: List[str] = None,
     ) -> Dict:
         """
-        Create email in Ontraport for multiple object IDs (Agent Newsletter workflow)
+        Create email in Ontraport with Message + Campaign (Venue Voice pattern)
 
         Args:
             subject: Email subject line
             html_content: Complete HTML email content
-            plain_text: Plain text version (optional)
+            plain_text: Plain text version (optional, not used by Ontraport)
             from_email: Sender email address
             from_name: Sender name
-            object_ids: List of Ontraport object IDs to push to (default: ["10004", "10007"])
+            object_ids: Not used (kept for API compatibility)
 
         Returns:
-            Dict with success status and email IDs for each object
+            Dict with success status, message_id, campaign_id, and preview_url
         """
-        if object_ids is None:
-            object_ids = ["10004", "10007"]
+        try:
+            # Step 1: Create email message (objectID=5 for Messages)
+            message_id = self.create_email_message(
+                subject=subject,
+                html_body=html_content,
+                from_name=from_name,
+                from_email=from_email,
+                object_id=5,  # Standard Message object type
+            )
 
-        results = []
-        email_ids = []
+            if not message_id:
+                return {
+                    "success": False,
+                    "error": "Failed to create message - no ID returned"
+                }
 
-        for obj_id in object_ids:
-            try:
-                email_id = self.create_email_message(
-                    subject=subject,
-                    html_body=html_content,
-                    from_name=from_name,
-                    from_email=from_email,
-                    object_id=int(obj_id),
-                )
-                results.append({"object_id": obj_id, "email_id": email_id, "success": True})
-                email_ids.append(email_id)
-            except Exception as e:
-                results.append({"object_id": obj_id, "error": str(e), "success": False})
+            # Step 2: Create campaign (as draft)
+            campaign_name = f"BriteCo Brief - {subject}"
+            campaign_id = self.create_campaign(
+                name=campaign_name,
+                message_id=message_id,
+                send_immediately=False,  # Always create as draft for review
+            )
 
-        # Return success if at least one succeeded
-        success = any(r.get("success") for r in results)
+            # Step 3: Get preview URL
+            preview_url = self.get_campaign_preview_url(message_id)
 
-        return {
-            "success": success,
-            "email_id": email_ids[0] if email_ids else None,
-            "email_ids": email_ids,
-            "results": results,
-        }
+            print(f"[Ontraport] Newsletter campaign created successfully!")
+            print(f"  - Message ID: {message_id}")
+            print(f"  - Campaign ID: {campaign_id}")
+            print(f"  - Preview URL: {preview_url}")
+
+            return {
+                "success": True,
+                "message_id": message_id,
+                "campaign_id": campaign_id,
+                "preview_url": preview_url,
+                "email_id": message_id,  # For backwards compatibility
+                "status": "draft",
+            }
+
+        except Exception as e:
+            error_msg = str(e)
+            print(f"[Ontraport] Error creating newsletter: {error_msg}")
+            return {
+                "success": False,
+                "error": error_msg
+            }
 
     def get_message(self, message_id: str) -> Dict:
         """
