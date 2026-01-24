@@ -414,3 +414,235 @@ def get_section_structure(section_type):
     if section_type in NEWSLETTER_GUIDELINES['sections']:
         return NEWSLETTER_GUIDELINES['sections'][section_type]
     return None
+
+
+# ============================================================================
+# HUMANIZATION GUIDELINES - Critical for avoiding AI-sounding content
+# Extracted from BriteCo-Brief-Style-Guide.md (6 months of newsletters)
+# ============================================================================
+
+AI_TELLS_TO_AVOID = {
+    "overused_transitions": [
+        "Additionally",
+        "Furthermore",
+        "It's worth noting that",
+        "It's important to understand",
+        "In today's [industry/world]",
+        "Navigating the [X] landscape",
+        "At the end of the day",
+        "Moving forward",
+        "In this regard",
+        "Leverage" # as a verb
+    ],
+    "empty_intensifiers": [
+        "Very",
+        "Extremely",
+        "Incredibly",
+        "Highly",
+        "Significantly",
+        "Robust",
+        "Comprehensive",
+        "Cutting-edge",
+        "Innovative",
+        "Seamless",
+        "Seamlessly"
+    ],
+    "hollow_openers": [
+        "In the ever-evolving world of...",
+        "As we all know...",
+        "It goes without saying...",
+        "Needless to say...",
+        "When it comes to...",
+        "In terms of...",
+        "The fact of the matter is..."
+    ],
+    "vague_language": [
+        "Many homeowners are affected",  # Say "47% of homeowners"
+        "In recent years",  # Say "Since 2023"
+        "A significant number of",  # Use actual numbers
+        "Various factors contribute to",  # Name the factors
+        "This can lead to issues"  # Say what the specific problem is
+    ],
+    "vocabulary_red_flags": [
+        "Landscape" # used metaphorically
+        "Navigate" # used metaphorically
+        "Robust",
+        "Comprehensive",
+        "Various",
+        "Numerous",
+        "Solutions",
+        "Empower",
+        "Foster",
+        "Ensure" # overused
+        "Impactful"
+    ]
+}
+
+HUMAN_WRITING_PATTERNS = {
+    "natural_expressions": [
+        "It's hard to believe...",
+        "Here's what you need to know...",
+        "The twist?",
+        "Not surprising...",
+        "In fact...",
+        "That said...",
+        "The reality is...",
+        "Bottom line:",
+        "For one thing...",
+        "But will it be covered by insurance?"
+    ],
+    "sentence_variety": [
+        "Vary sentence length - mix short punchy sentences with longer ones",
+        "Use contractions (don't, won't, it's) - real humans use them",
+        "Start some sentences with 'And' or 'But' for flow",
+        "Use occasional sentence fragments for emphasis",
+        "Ask rhetorical questions to engage readers"
+    ],
+    "specificity_rules": [
+        "Use specific names, dates, and places",
+        "Cite exact percentages and dollar amounts",
+        "Quote real publications by name: 'According to PropertyCasualty360...'",
+        "Include telling details that make stories real",
+        "Name actual states, companies, and people when possible"
+    ]
+}
+
+SECTION_TONE_CALIBRATION = {
+    "news_roundup": {
+        "tone": "Straight, factual",
+        "rules": [
+            "No editorializing",
+            "Let statistics speak",
+            "Neutral presentation",
+            "Start each bullet with bold topic phrase"
+        ]
+    },
+    "curious_claims": {
+        "tone": "Lightest touch, playful",
+        "rules": [
+            "Puns and wordplay welcome in headlines",
+            "Storytelling mode",
+            "Can show amusement at absurd situations",
+            "Use vivid, specific details"
+        ]
+    },
+    "brite_spot": {
+        "tone": "Warm, supportive",
+        "rules": [
+            "Celebratory without being over-the-top",
+            "Clear and direct CTAs",
+            "Lead with agent benefit",
+            "Use 'we' and 'you' frequently"
+        ]
+    },
+    "spotlight": {
+        "tone": "Authoritative but accessible",
+        "rules": [
+            "Show your work with source citations",
+            "Can express concern about trends",
+            "Always end with practical implications for agents",
+            "Use subheadings to break up content"
+        ]
+    },
+    "agent_advantage": {
+        "tone": "Coach-like, practical",
+        "rules": [
+            "Direct advice using 'you should...'",
+            "Encouraging without being preachy",
+            "Practical, implementable tips",
+            "Each tip is actionable immediately"
+        ]
+    }
+}
+
+# Before/After examples for prompts
+HUMANIZATION_EXAMPLES = {
+    "news_roundup": {
+        "ai_style": "**Insurance industry trends** are showing significant changes in 2026, with various factors contributing to the evolving landscape that agents should be aware of.",
+        "human_style": "**Property & Casualty Premiums** Will Rise 7% on Average By the End of 2025, with Much of the Share Tied to Increased Rates for Homes and Autos"
+    },
+    "intro": {
+        "ai_style": "Welcome to this month's edition of The BriteCo Brief. In this issue, we will be exploring various important topics that are relevant to insurance professionals in today's ever-changing market environment.",
+        "human_style": "It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history. We look at how the industry is better prepared today, provide tips on retaining small business customers, and examine the curious world of alien abduction insurance."
+    },
+    "curious_claims": {
+        "ai_style": "In an interesting development in the insurance world, a unique claim has emerged that showcases the diverse nature of insurance cases.",
+        "human_style": "A driver in western North Carolina recently got the surprise of her life when she found a surprise guest in her passenger seat. As Melissa Schlarb traversed Route 74 near the Great Smoky Mountains, a dead cat came crashing through her windshield."
+    },
+    "spotlight": {
+        "ai_style": "The current state of homeowners insurance is characterized by various challenges that are impacting consumers and industry professionals alike. Multiple factors are contributing to this situation.",
+        "human_style": "The wild swings we saw in homeowners insurance and home market prices in 2025 are not slowing down any time soon. New reports show the drastic measures some property owners are going to—from tapping into home warranties to forgoing homeownership altogether."
+    },
+    "agent_advantage": {
+        "ai_style": "**Maintain Regular Communication.** It is important for agents to maintain regular communication with their clients throughout the policy period. This helps to build relationships.",
+        "human_style": "**Schedule Annual Reviews.** Don't wait for renewal time. Proactive mid-year check-ins show clients you're invested in their protection year-round."
+    }
+}
+
+
+def get_humanization_guidelines(section_type=None):
+    """
+    Get humanization guidelines to avoid AI-sounding content.
+
+    Args:
+        section_type: Optional section name for section-specific tone
+
+    Returns:
+        Formatted string for AI prompts
+    """
+    guide = "\n## CRITICAL: HUMANIZATION GUIDELINES\n\n"
+    guide += "Your writing must sound like it was written by a human, not AI.\n\n"
+
+    # Words/phrases to avoid
+    guide += "### NEVER USE THESE (AI Tells):\n"
+    guide += "- Transitions: " + ", ".join(AI_TELLS_TO_AVOID['overused_transitions'][:6]) + "\n"
+    guide += "- Intensifiers: " + ", ".join(AI_TELLS_TO_AVOID['empty_intensifiers'][:6]) + "\n"
+    guide += "- Openers: " + ", ".join([x.split("...")[0] for x in AI_TELLS_TO_AVOID['hollow_openers'][:4]]) + "\n\n"
+
+    # Natural writing patterns
+    guide += "### DO USE THESE (Human Patterns):\n"
+    for pattern in HUMAN_WRITING_PATTERNS['sentence_variety'][:4]:
+        guide += f"- {pattern}\n"
+    guide += "\n"
+
+    # Specificity
+    guide += "### BE SPECIFIC:\n"
+    for rule in HUMAN_WRITING_PATTERNS['specificity_rules'][:3]:
+        guide += f"- {rule}\n"
+    guide += "\n"
+
+    # Section-specific tone
+    if section_type and section_type in SECTION_TONE_CALIBRATION:
+        section = SECTION_TONE_CALIBRATION[section_type]
+        guide += f"### TONE FOR THIS SECTION: {section['tone'].upper()}\n"
+        for rule in section['rules']:
+            guide += f"- {rule}\n"
+        guide += "\n"
+
+        # Add before/after example if available
+        if section_type in HUMANIZATION_EXAMPLES:
+            ex = HUMANIZATION_EXAMPLES[section_type]
+            guide += "### EXAMPLE - DON'T vs DO:\n"
+            guide += f"DON'T: \"{ex['ai_style'][:100]}...\"\n"
+            guide += f"DO: \"{ex['human_style'][:100]}...\"\n"
+
+    return guide
+
+
+def get_full_style_guide_for_section(section_type):
+    """
+    Get the complete style guide for a section, combining structure + humanization.
+
+    Args:
+        section_type: Section name
+
+    Returns:
+        Complete formatted style guide for AI prompts
+    """
+    # Get the existing style guide
+    guide = get_style_guide_for_prompt(section_type)
+
+    # Add humanization guidelines
+    guide += get_humanization_guidelines(section_type)
+
+    return guide

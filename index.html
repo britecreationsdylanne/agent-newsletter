@@ -698,9 +698,22 @@
 
                 <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
                     <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #272d3f;">
-                        Brite Spot Content <span style="color: #666; font-weight: 400;">(max 100 words)</span>
+                        Brite Spot - Intro Paragraph
                     </label>
-                    <textarea id="briteSpotInput" rows="5" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="Enter your BriteCo news, feature announcement, or company update here..."></textarea>
+                    <textarea id="briteSpotInput" rows="3" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="Enter a short intro paragraph about BriteCo news or updates..."></textarea>
+                    <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                        A brief introduction paragraph that appears before the bullet points.
+                    </div>
+                </div>
+
+                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #272d3f;">
+                        Brite Spot - Bullet Points <span style="color: #666; font-weight: 400;">(one per line)</span>
+                    </label>
+                    <textarea id="briteSpotBulletsInput" rows="5" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="Enter each bullet point on a new line:
+• New feature announcement
+• Updated dashboard tools
+• Partner integration news"></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                         <span id="briteSpotWordCount" style="font-size: 13px; color: #666;">0 / 100 words</span>
                         <div style="display: flex; gap: 10px;">
@@ -709,14 +722,14 @@
                                 <option value="informative" selected>Informative</option>
                                 <option value="professional">Professional</option>
                             </select>
-                            <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpot()">🤖 AI Rewrite</button>
+                            <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpot()">AI Rewrite</button>
                         </div>
                     </div>
                 </div>
 
                 <div id="briteSpotRewriteResult" style="display: none; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-weight: 600; color: #15803d;">✓ AI Rewritten Version</span>
+                        <span style="font-weight: 600; color: #15803d;">AI Rewritten Version</span>
                         <button class="btn" style="padding: 6px 12px; font-size: 13px;" onclick="useBriteSpotRewrite()">Use This Version</button>
                     </div>
                     <div id="briteSpotRewriteText" style="color: #166534; line-height: 1.6;"></div>
@@ -1669,20 +1682,14 @@
             <p>Send your newsletter to Ontraport with pre-configured BriteCo settings</p>
 
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                <div style="margin-bottom: 20px; padding: 15px; background-color: #f9fafb; border-radius: 6px; border-left: 4px solid #008181;">
-                    <p style="margin: 0 0 8px 0; font-weight: 600; color: #272d3f;">Pre-configured Settings:</p>
-                    <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #555;">
-                        <li>From: BriteCo Event Insurance (eventinsurance@brite.co)</li>
-                        <li>Reply-To: eventinsurance@brite.co</li>
-                    </ul>
+                <div style="padding: 15px; background-color: #f0fdf4; border-radius: 6px; border-left: 4px solid #22c55e; margin-bottom: 20px;">
+                    <p style="margin: 0; font-weight: 600; color: #166534;">Subject Line:</p>
+                    <p id="ontraportSubjectDisplay" style="margin: 5px 0 0 0; font-size: 16px; color: #272d3f;"></p>
                 </div>
+                <!-- Hidden input for pushToOntraport function -->
+                <input type="hidden" id="subject">
 
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">Subject Line:</label>
-                    <input type="text" id="subject" placeholder="Your Monthly Venue Newsletter" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;">
-                </div>
-
-                <button class="btn" onclick="pushToOntraport(event)">🚀 Push to Ontraport</button>
+                <button class="btn" onclick="pushToOntraport(event)" style="width: 100%; padding: 15px; font-size: 16px;">🚀 Push to Ontraport</button>
             </div>
 
             <div class="buttons">
@@ -1735,6 +1742,7 @@
 
         // Brite Spot state
         let briteSpotContent = '';
+        let briteSpotBullets = [];  // Array of bullet point strings
         let briteSpotRewritten = '';
 
         // InsurNews Spotlight state (multi-source)
@@ -1887,23 +1895,36 @@
         // BRITE SPOT FUNCTIONS
         // ============================================================================
 
-        // Update word count for Brite Spot
+        // Update word count for Brite Spot (paragraph + bullets)
         document.addEventListener('DOMContentLoaded', function() {
             const briteSpotInput = document.getElementById('briteSpotInput');
+            const briteSpotBulletsInput = document.getElementById('briteSpotBulletsInput');
             if (briteSpotInput) {
                 briteSpotInput.addEventListener('input', updateBriteSpotWordCount);
+            }
+            if (briteSpotBulletsInput) {
+                briteSpotBulletsInput.addEventListener('input', updateBriteSpotWordCount);
             }
         });
 
         function updateBriteSpotWordCount() {
-            const input = document.getElementById('briteSpotInput');
+            const paragraphInput = document.getElementById('briteSpotInput');
+            const bulletsInput = document.getElementById('briteSpotBulletsInput');
             const counter = document.getElementById('briteSpotWordCount');
-            if (input && counter) {
-                const words = input.value.trim().split(/\s+/).filter(w => w.length > 0);
-                const count = words.length;
-                counter.textContent = `${count} / 100 words`;
-                counter.style.color = count > 100 ? '#dc2626' : '#666';
-                briteSpotContent = input.value;
+            if (counter) {
+                // Count words from both paragraph and bullets
+                let totalWords = 0;
+                if (paragraphInput) {
+                    const words = paragraphInput.value.trim().split(/\s+/).filter(w => w.length > 0);
+                    totalWords += words.length;
+                    briteSpotContent = paragraphInput.value;
+                }
+                if (bulletsInput) {
+                    const words = bulletsInput.value.trim().split(/\s+/).filter(w => w.length > 0);
+                    totalWords += words.length;
+                }
+                counter.textContent = `${totalWords} / 100 words`;
+                counter.style.color = totalWords > 100 ? '#dc2626' : '#666';
             }
         }
 
@@ -1959,11 +1980,22 @@
                 console.log('[Brite Spot] Saved header intro:', headerIntroContent);
             }
 
-            // Save brite spot content
+            // Save brite spot paragraph content
             const briteSpotInput = document.getElementById('briteSpotInput');
             if (briteSpotInput) {
                 briteSpotContent = briteSpotInput.value.trim();
-                console.log('[Brite Spot] Saved content:', briteSpotContent?.substring(0, 100));
+                console.log('[Brite Spot] Saved paragraph:', briteSpotContent?.substring(0, 100));
+            }
+
+            // Save brite spot bullets content
+            const briteSpotBulletsInput = document.getElementById('briteSpotBulletsInput');
+            if (briteSpotBulletsInput) {
+                const bulletsText = briteSpotBulletsInput.value.trim();
+                // Parse bullets - split by newline and filter empty lines
+                briteSpotBullets = bulletsText.split('\n')
+                    .map(line => line.replace(/^[•\-\*]\s*/, '').trim())  // Remove bullet prefixes
+                    .filter(line => line.length > 0);
+                console.log('[Brite Spot] Saved bullets:', briteSpotBullets);
             }
         }
 
@@ -3007,11 +3039,30 @@
             // Get content as strings
             let introContent = cleanContentForDisplay(generatedIntroContent);
             let claimsContent = cleanContentForDisplay(generatedClaimsContent);
-            let spotlightContent = cleanContentForDisplay(generatedSpotlightContent);
+            // Spotlight: use generatedSpotlightContent OR fall back to Step 2B spotlightGeneratedContent
+            let spotlightDataForDisplay = generatedSpotlightContent || spotlightGeneratedContent || null;
+            let spotlightContent = cleanContentForDisplay(spotlightDataForDisplay);
 
-            // Get Brite Spot content - try multiple sources
-            let briteSpotDisplayContent = generatedBriteSpotContent || briteSpotRewritten || briteSpotContent || '';
-            briteSpotDisplayContent = cleanContentForDisplay(briteSpotDisplayContent);
+            // Get Brite Spot content - try multiple sources (now paragraph + bullets)
+            let briteSpotParagraph = briteSpotContent || '';
+            let briteSpotBulletsList = briteSpotBullets || [];
+
+            // Build combined Brite Spot display with paragraph and bullets
+            let briteSpotDisplayContent = '';
+            if (briteSpotParagraph) {
+                briteSpotDisplayContent = `<p style="margin: 0 0 12px 0;">${briteSpotParagraph}</p>`;
+            }
+            if (briteSpotBulletsList.length > 0) {
+                briteSpotDisplayContent += '<ul style="margin: 0; padding-left: 20px;">';
+                briteSpotBulletsList.forEach(bullet => {
+                    briteSpotDisplayContent += `<li style="margin-bottom: 6px;">${bullet}</li>`;
+                });
+                briteSpotDisplayContent += '</ul>';
+            }
+            // Fallback to old generated content if no new paragraph/bullets
+            if (!briteSpotDisplayContent) {
+                briteSpotDisplayContent = cleanContentForDisplay(generatedBriteSpotContent || briteSpotRewritten || '');
+            }
 
             // Get header intro from Step 1 input
             let headerIntroDisplay = headerIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
@@ -3589,21 +3640,34 @@
             try {
                 // Gather all newsletter content from editable boxes (user may have edited)
                 const spotlightBox = document.getElementById('spotlightContentBox');
-                let spotlightExport = '';
-                if (spotlightBox && spotlightBox.innerHTML) {
-                    // User edited content in Step 5 - use that
+                let spotlightExport = null;
+
+                // Try Step 5 editable box first
+                if (spotlightBox && spotlightBox.innerHTML && spotlightBox.innerHTML.trim() !== '' && !spotlightBox.innerHTML.includes('Content not available')) {
                     spotlightExport = {
                         subheader: generatedSpotlightSubheader || (spotlightGeneratedContent?.subheader || 'Industry Spotlight'),
                         body: spotlightBox.innerHTML
                     };
-                } else if (generatedSpotlightContent) {
+                }
+                // Fall back to Step 4 generated content
+                if (!spotlightExport && generatedSpotlightContent) {
                     spotlightExport = generatedSpotlightContent;
-                } else if (spotlightGeneratedContent) {
+                }
+                // Fall back to Step 2B generated content
+                if (!spotlightExport && spotlightGeneratedContent) {
                     spotlightExport = spotlightGeneratedContent;
                 }
 
+                console.log('[Export] Spotlight export data:', spotlightExport);
+
+                // Get BriteCo Brief Intro - check Step 5 box first, then saved content, then Step 1 input
+                const headerIntroExport = document.getElementById('headerIntroContentBox')?.innerHTML
+                    || headerIntroContent
+                    || document.getElementById('headerIntroInput')?.value?.trim()
+                    || '';
+
                 const content = {
-                    header_intro: document.getElementById('headerIntroContentBox')?.innerHTML || headerIntroContent || '',
+                    header_intro: headerIntroExport,
                     introduction: document.getElementById('introContentBox')?.innerHTML || generatedIntroContent || '',
                     brite_spot: document.getElementById('briteSpotContentBox')?.innerHTML || briteSpotRewritten || briteSpotContent || '',
                     curious_claims: document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '',
@@ -5151,13 +5215,14 @@
         }
 
         // Briteco Newsletter Template Generator (NEW BriteCo Brief Template - Jan 2026)
+        // Based on "good" email template with proper table structure, VML fallbacks, borders, and WordPress assets
         function generateBritecoHTML(data) {
             // Extract all content from data object - Agent Newsletter 7-section template
             const {
                 preheader = '',
                 subjectLine = 'The BriteCo Brief',
                 introText = '',
-                introCTAUrl = '#',
+                introCTAUrl = 'https://brite.co/agents',
                 introCTAText = 'Learn More',
                 briteSpotText = '',
                 briteSpotImage = '',
@@ -5171,77 +5236,97 @@
                 spotlightH2s = [],
                 tipsIntro = '',
                 tipsItems = [],
-                ctaUrl = 'https://insurance.brite.co',
-                ctaText = 'Access Your Dashboard'
+                ctaUrl = 'https://brite.co/agents',
+                ctaText = 'Partner With Us'
             } = data;
+
+            // WordPress hosted assets - matching Ontraport template
+            const assets = {
+                logo: 'https://brite.co/wp-content/uploads/2025/09/briteco-logo-1.png',
+                logoFooter: 'https://brite.co/wp-content/uploads/2025/09/footer-logo.png',
+                heroBg: 'https://brite.co/wp-content/uploads/2025/09/section-1-bg.png',
+                briteSpotBanner: 'https://brite.co/wp-content/uploads/2025/09/brite-spot-1.png',
+                curiousClaimsBanner: 'https://brite.co/wp-content/uploads/2025/09/cusrious-claims.png',
+                newsRoundupBanner: 'https://brite.co/wp-content/uploads/2025/09/news-roundup.png',
+                spotlightBanner: 'https://brite.co/wp-content/uploads/2025/09/spotlight.png',
+                agentAdvantageBanner: 'https://brite.co/wp-content/uploads/2025/09/agent-advantage.png',
+                ctaBg: 'https://brite.co/wp-content/uploads/2025/09/section-bg.png',
+                checkmark: 'https://brite.co/wp-content/uploads/2025/09/tickk.png',
+                blankImage: 'https://brite.co/wp-content/uploads/2025/09/blank-image.png'
+            };
 
             // Helper to generate bullet items with teal circles
             const generateBulletItems = (items) => {
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
-                return items.map(item => `
+                return `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+                    <tbody>
+                    ${items.map(item => `
                     <tr>
-                        <td style="padding-top: 8px;" valign="top" width="20">
+                        <td style="padding-top: 6px;" valign="top" width="20">
                             <table border="0" cellpadding="0" cellspacing="0" role="presentation">
                                 <tbody>
                                     <tr>
-                                        <td style="width: 11px; height: 11px; background-color: #31D7CA; border-radius: 50%; font-size: 1px; line-height: 1px;">&nbsp;</td>
+                                        <td style="width: 10px; height: 10px; background-color: #31D7CA; border-radius: 50%; font-size: 1px; line-height: 1px;">&nbsp;</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </td>
-                        <td style="padding-bottom: 12px;" valign="top">
-                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${item}</p>
+                        <td style="padding-bottom: 10px; padding-left: 10px;" valign="top">
+                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 24px; font-weight: 400; color: #3B3B3B;">${item}</p>
                         </td>
                     </tr>
-                `).join('');
+                    `).join('')}
+                    </tbody>
+                </table>`;
             };
 
             // Helper to generate news roundup items with checkmarks
             const generateRoundupItems = (items) => {
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
-                return items.map(item => `
+                return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right: 10px;" valign="top" width="41">
-                            <img alt="" src="https://brite.co/wp-content/uploads/2025/09/tickk.png" style="display: block; width: 31px; height: auto;" width="31" />
+                        <td style="padding-right: 12px; padding-top: 2px;" valign="top" width="32">
+                            <img alt="" src="${assets.checkmark}" style="display: block; width: 24px; height: auto;" width="24" />
                         </td>
-                        <td style="padding-bottom: 10px;" valign="top">
-                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${item.summary || item}</p>
+                        <td style="padding-bottom: ${index === items.length - 1 ? '0' : '16px'};" valign="top">
+                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 24px; font-weight: 400; color: #3B3B3B;">${item.summary || item}</p>
                         </td>
                     </tr>
                 `).join('');
             };
 
-            // Helper to generate spotlight H2 sections
+            // Helper to generate spotlight H2 sections (using H3 content from generated spotlight)
             const generateSpotlightH2s = (h2s) => {
                 if (!h2s || !Array.isArray(h2s) || h2s.length === 0) return '';
                 return h2s.map(section => `
-                    <h2 class="dark-text" style="margin: 16px 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 20px; line-height: 26px; font-weight: 600; color: #3B3B3B;">${section.h3 || section.title || ''}</h2>
-                    <p class="dark-text-secondary" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
+                    <tr>
+                        <td style="padding-top: 20px;">
+                            <h3 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 24px; font-weight: 600; color: #282D3E;">${section.h3 || section.title || ''}</h3>
+                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
+                        </td>
+                    </tr>
                 `).join('');
             };
 
             // Helper to generate agent advantage tips with checkmarks and titles
             const generateTipsItems = (items) => {
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
-                return items.map(item => `
+                return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right: 10px;" valign="top" width="37">
-                            <img alt="" src="https://brite.co/wp-content/uploads/2025/09/tickk.png" style="display: block; width: 27px; height: auto;" width="27" />
+                        <td style="padding-right: 12px; padding-top: 2px;" valign="top" width="32">
+                            <img alt="" src="${assets.checkmark}" style="display: block; width: 24px; height: auto;" width="24" />
                         </td>
-                        <td style="padding-bottom: 16px;" valign="top">
-                            <p class="dark-text" style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 600; color: #3B3B3B;">${item.title || ''}</p>
-                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
+                        <td style="padding-bottom: ${index === items.length - 1 ? '0' : '18px'};" valign="top">
+                            <p class="dark-text" style="margin: 0 0 4px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 22px; font-weight: 600; color: #008181;">${item.title || ''}</p>
+                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 24px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
                         </td>
                     </tr>
                 `).join('');
             };
 
-            // BriteCo Brief 7-Section Email Template (Agent Newsletter - Jan 2026)
-            const logoUrl = 'https://i.ontraport.com/194428.046960d3d5419045b9bf5943f00547e7.PNG';
-            const dashboardUrl = 'https://insurance.brite.co/events/venue_locations/[Referral Code]/dashboard';
-
+            // BriteCo Brief Email Template with proper structure, borders, spacers, and VML
             const template = `<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -5260,6 +5345,9 @@
 </o:OfficeDocumentSettings>
 </xml>
 </noscript>
+<style>
+td, th, p, a, li, span { font-family: Arial, Helvetica, sans-serif !important; }
+</style>
 <![endif]-->
 <style>
 :root { color-scheme: light dark; supported-color-schemes: light dark; }
@@ -5268,99 +5356,117 @@ html, body { margin: 0 auto !important; padding: 0 !important; height: 100% !imp
 div[style*="margin: 16px 0"] { margin: 0 !important; }
 table, td { mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; }
 table { border-spacing: 0 !important; border-collapse: collapse !important; table-layout: fixed !important; margin: 0 auto !important; }
-img { -ms-interpolation-mode:bicubic; }
-a { text-decoration: none; }
-*[x-apple-data-detectors], .unstyle-auto-detected-links *, .aBn { border-bottom: 0 !important; cursor: default !important; color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
-.x-gmail-data-detectors, .x-gmail-data-detectors *, .aBn { border-bottom: 0 !important; cursor: default !important; }
+img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+a { text-decoration: none; color: #008181; }
+a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
 .button-link { transition: all 100ms ease-in; }
-.button-td-primary:hover, .button-a-primary:hover { background: #31D7CA !important; border-color: #31D7CA !important; }
+.button-link:hover { background-color: #FF9933 !important; }
+
+/* Dark mode styles */
 @media (prefers-color-scheme: dark) {
-.email-bg { background: #1a1a1a !important; }
-.darkmode-bg { background: #2d2d2d !important; }
-.section-bg { background: #2d2d2d !important; }
+.email-bg { background-color: #1a1a1a !important; }
+.section-bg { background-color: #2d2d2d !important; }
+.section-border { border-color: #444444 !important; }
 .dark-text { color: #ffffff !important; }
-.dark-text-secondary { color: #bbbbbb !important; }
-.dark-border { border-color: #444444 !important; }
-.hero-section { background: #1e4a4a !important; }
-.cta-section { background: #0d3f3f !important; }
+.dark-text-secondary { color: #cccccc !important; }
+.dark-text-muted { color: #999999 !important; }
 }
-[data-ogsc] .email-bg { background: #1a1a1a !important; }
-[data-ogsc] .darkmode-bg { background: #2d2d2d !important; }
-[data-ogsc] .section-bg { background: #2d2d2d !important; }
+[data-ogsc] .email-bg { background-color: #1a1a1a !important; }
+[data-ogsc] .section-bg { background-color: #2d2d2d !important; }
+[data-ogsc] .section-border { border-color: #444444 !important; }
 [data-ogsc] .dark-text { color: #ffffff !important; }
-[data-ogsc] .dark-text-secondary { color: #bbbbbb !important; }
-[data-ogsc] .dark-border { border-color: #444444 !important; }
-[data-ogsc] .hero-section { background: #1e4a4a !important; }
-[data-ogsc] .cta-section { background: #0d3f3f !important; }
+[data-ogsc] .dark-text-secondary { color: #cccccc !important; }
+[data-ogsc] .dark-text-muted { color: #999999 !important; }
+
+/* Mobile styles */
 @media screen and (max-width: 600px) {
 .mobile-full { width: 100% !important; max-width: 100% !important; }
 .mobile-padding { padding-left: 20px !important; padding-right: 20px !important; }
-.mobile-stack { display: block !important; width: 100% !important; }
+.mobile-stack { display: block !important; width: 100% !important; max-width: 100% !important; }
+.mobile-stack-padding { padding-right: 0 !important; padding-bottom: 15px !important; }
 .mobile-center { text-align: center !important; }
-.mobile-img-full { width: 100% !important; height: auto !important; }
+.mobile-img-full { width: 100% !important; height: auto !important; max-width: 100% !important; }
+.mobile-hide { display: none !important; }
+.mobile-spacer { height: 15px !important; }
 }
 </style>
 </head>
-<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #f5f5f5;" class="email-bg">
+<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #ffffff;" class="email-bg">
 
-<!-- Preheader - Hidden text that shows in email preview -->
-<div style="display: none; max-height: 0px; overflow: hidden;">
-${preheader}
-</div>
-<!-- Insert invisible ‌‌ character to hide preview text -->
-<div style="display: none; max-height: 0px; overflow: hidden;">
-&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
-</div>
+<!-- Preheader -->
+<div style="display: none; max-height: 0px; overflow: hidden;">${preheader}</div>
+<div style="display: none; max-height: 0px; overflow: hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 
-<center role="article" aria-roledescription="email" lang="en" style="width: 100%; background-color: #f5f5f5;" class="email-bg">
+<div role="article" aria-roledescription="email" aria-label="${subjectLine}" lang="en" style="font-size: 16px; font-family: Montserrat, Helvetica, Arial, sans-serif; background-color: #ffffff;">
 <!--[if mso | IE]>
-<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5;">
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff;">
 <tr>
-<td>
+<td align="center">
 <![endif]-->
 
-<table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto;" class="mobile-full">
+<!-- Outer Container -->
+<table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="580" style="margin: 0 auto; max-width: 580px;" class="mobile-full">
+
+<!-- Top Spacer -->
+<tr><td style="height: 20px; font-size: 1px; line-height: 1px;">&nbsp;</td></tr>
 
 <!-- HEADER WITH LOGO -->
 <tr>
-<td style="padding: 20px 40px; text-align: center;" class="mobile-padding">
+<td style="background-color: #ffffff; padding: 25px 45px; text-align: center; border: 1px solid #282D3E; border-bottom: none;" class="mobile-padding">
 <a href="https://brite.co" target="_blank">
-<img src="${logoUrl}" width="180" alt="BriteCo" style="width: 180px; max-width: 180px; height: auto; display: block; margin: 0 auto;">
+<img src="${assets.logo}" width="140" alt="BriteCo" style="width: 140px; max-width: 140px; height: auto; display: block; margin: 0 auto;">
 </a>
 </td>
 </tr>
 
-<!-- HERO SECTION - TEAL BACKGROUND -->
+<!-- HERO SECTION - Light background with geometric pattern -->
 <tr>
-<td class="hero-section" style="background-color: #008181; padding: 50px 40px; text-align: center;" class="mobile-padding">
-<h1 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 36px; line-height: 42px; font-weight: 700; color: #ffffff;">The BriteCo Brief</h1>
-<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; color: #e0f7f7;">Your monthly P&C insurance insights</p>
-${introText ? `<p class="dark-text-secondary" style="margin: 0 0 25px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #ffffff;">${introText}</p>` : ''}
-<a href="${introCTAUrl}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; padding: 14px 28px; text-decoration: none; border-radius: 6px;" class="button-link">${introCTAText}</a>
+<td style="border: 1px solid #282D3E; border-top: none;" class="section-border">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #EDF5F5; background-image: url('${assets.heroBg}'); background-repeat: repeat; background-position: center;">
+<tr>
+<td style="padding: 50px 45px; text-align: center;" class="mobile-padding">
+<h1 style="margin: 0 0 20px 0; font-family: Georgia, serif; font-size: 32px; line-height: 38px; font-weight: 700; color: #008181; font-style: italic;">The BriteCo Brief</h1>
+${introText ? `<p style="margin: 0 0 28px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 24px; font-weight: 400; color: #555555;">${introText}</p>` : ''}
+<!--[if mso]>
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${introCTAUrl}" style="height:46px;v-text-anchor:middle;width:200px;" arcsize="50%" strokecolor="#FE8916" fillcolor="#FE8916">
+<w:anchorlock/>
+<center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">${introCTAText.toUpperCase()}</center>
+</v:roundrect>
+<![endif]-->
+<!--[if !mso]><!-->
+<a href="${introCTAUrl}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 700; padding: 14px 28px; text-decoration: none; border-radius: 25px; text-transform: uppercase; letter-spacing: 0.5px;" class="button-link">${introCTAText}</a>
+<!--<![endif]-->
+</td>
+</tr>
+</table>
 </td>
 </tr>
 
-<!-- SECTION 2: BRITE SPOT -->
+<!-- 25px Spacer -->
+<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+
+<!-- SECTION: BRITE SPOT - Image on RIGHT -->
 <tr>
-<td class="section-bg" style="background-color: #ffffff; padding: 40px;" class="mobile-padding">
+<td style="border: 1px solid #282D3E;" class="section-border">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<!-- Section Banner -->
 <tr>
 <td>
-<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">Brite Spot</p>
-<h2 class="dark-text" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">BriteCo Updates</h2>
+<img src="${assets.briteSpotBanner}" width="580" alt="The Brite Spot" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
 </td>
 </tr>
+<!-- Section Content - Text LEFT, Image RIGHT -->
 <tr>
-<td>
+<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tr>
-${briteSpotImage ? `<td width="200" valign="top" class="mobile-stack" style="padding-right: 20px;">
-<img src="${briteSpotImage}" width="200" alt="Brite Spot" style="width: 200px; max-width: 200px; height: auto; display: block; border-radius: 8px;" class="mobile-img-full">
-</td>` : ''}
-<td valign="top" class="mobile-stack">
-<p class="dark-text-secondary" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${briteSpotText}</p>
+<td valign="top" class="mobile-stack" style="padding-right: 25px;">
+${briteSpotText ? `<p class="dark-text-secondary" style="margin: 0 0 18px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${briteSpotText}</p>` : ''}
 ${generateBulletItems(briteSpotBullets)}
 </td>
+<td width="180" valign="top" class="mobile-stack">
+<img src="${briteSpotImage || assets.blankImage}" width="180" alt="Brite Spot" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+</td>
 </tr>
 </table>
 </td>
@@ -5369,25 +5475,29 @@ ${generateBulletItems(briteSpotBullets)}
 </td>
 </tr>
 
-<!-- SECTION 3: CURIOUS CLAIMS -->
+<!-- 25px Spacer -->
+<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+
+<!-- SECTION: CURIOUS CLAIMS - Image on LEFT -->
 <tr>
-<td class="section-bg" style="background-color: #F8F9FA; padding: 40px;" class="mobile-padding">
+<td style="border: 1px solid #282D3E;" class="section-border">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<!-- Section Banner -->
 <tr>
 <td>
-<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">Curious Claims</p>
-<h2 class="dark-text" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">Unusual Insurance Stories</h2>
+<img src="${assets.curiousClaimsBanner}" width="580" alt="Curious Claims" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
 </td>
 </tr>
+<!-- Section Content - Image LEFT, Text RIGHT -->
 <tr>
-<td>
+<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tr>
-${claimsImage ? `<td width="180" valign="top" class="mobile-stack" style="padding-right: 20px;">
-<img src="${claimsImage}" width="180" alt="Curious Claims" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 8px;" class="mobile-img-full">
-</td>` : ''}
+<td width="180" valign="top" class="mobile-stack mobile-stack-padding" style="padding-right: 25px;">
+<img src="${claimsImage || assets.blankImage}" width="180" alt="Curious Claims" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+</td>
 <td valign="top" class="mobile-stack">
-<div class="dark-text-secondary" style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${claimsText}</div>
+<div class="dark-text-secondary" style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${claimsText}</div>
 </td>
 </tr>
 </table>
@@ -5397,20 +5507,26 @@ ${claimsImage ? `<td width="180" valign="top" class="mobile-stack" style="paddin
 </td>
 </tr>
 
-<!-- SECTION 4: NEWS ROUNDUP -->
+<!-- 25px Spacer -->
+<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+
+<!-- SECTION: NEWS ROUNDUP -->
 <tr>
-<td class="section-bg" style="background-color: #ffffff; padding: 40px;" class="mobile-padding">
+<td style="border: 1px solid #282D3E;" class="section-border">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<!-- Section Banner -->
 <tr>
 <td>
-<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">News Roundup</p>
-<h2 class="dark-text" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">Industry Headlines</h2>
+<img src="${assets.newsRoundupBanner}" width="580" alt="News Roundup" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
 </td>
 </tr>
+<!-- Section Content -->
 <tr>
-<td>
+<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tbody>
 ${generateRoundupItems(roundupItems)}
+</tbody>
 </table>
 </td>
 </tr>
@@ -5418,46 +5534,85 @@ ${generateRoundupItems(roundupItems)}
 </td>
 </tr>
 
-<!-- SECTION 5: SPOTLIGHT -->
+<!-- 25px Spacer -->
+<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+
+<!-- SECTION: INSURNEWS SPOTLIGHT - Two column intro + full width body -->
 <tr>
-<td class="section-bg" style="background-color: #F8F9FA; padding: 40px;" class="mobile-padding">
+<td style="border: 1px solid #282D3E;" class="section-border">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<!-- Section Banner -->
 <tr>
 <td>
-<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">InsurNews Spotlight</p>
-${spotlightSubheader ? `<h2 class="dark-text" style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">${spotlightSubheader}</h2>` : ''}
+<img src="${assets.spotlightBanner}" width="580" alt="InsurNews Spotlight" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
 </td>
 </tr>
-${spotlightImage ? `<tr>
-<td style="padding-bottom: 20px;">
-<img src="${spotlightImage}" width="520" alt="Spotlight" style="width: 100%; max-width: 520px; height: auto; display: block; border-radius: 8px;">
-</td>
-</tr>` : ''}
+<!-- Section Content -->
 <tr>
-<td>
-<div class="dark-text-secondary" style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${spotlightText}</div>
-${generateSpotlightH2s(spotlightH2s)}
+<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<!-- Two column intro: Text LEFT, Image RIGHT -->
+<tr>
+<td valign="top" class="mobile-stack" style="padding-right: 25px;">
+${spotlightSubheader ? `<p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${spotlightSubheader}</p>` : ''}
+</td>
+<td width="180" valign="top" class="mobile-stack">
+<img src="${spotlightImage || assets.blankImage}" width="180" alt="Spotlight" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+</td>
+</tr>
+<!-- Full width continuation -->
+<tr>
+<td colspan="2" style="padding-top: 20px;">
+${spotlightText ? `<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${spotlightText}</p>` : ''}
+${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.map(section => `
+<h3 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 17px; line-height: 24px; font-weight: 700; color: #282D3E;">${section.h3 || section.title || ''}</h3>
+<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
+`).join('') : ''}
+</td>
+</tr>
+</table>
 </td>
 </tr>
 </table>
 </td>
 </tr>
 
-<!-- SECTION 6: AGENT ADVANTAGE -->
+<!-- 25px Spacer -->
+<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+
+<!-- SECTION: AGENT ADVANTAGE - Two column intro + full width tips -->
 <tr>
-<td class="section-bg" style="background-color: #ffffff; padding: 40px;" class="mobile-padding">
+<td style="border: 1px solid #282D3E;" class="section-border">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<!-- Section Banner -->
 <tr>
 <td>
-<p style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; color: #008181; text-transform: uppercase; letter-spacing: 1px;">Agent Advantage</p>
-<h2 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 24px; line-height: 30px; font-weight: 700; color: #3B3B3B;">Tips for Success</h2>
-${tipsIntro ? `<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${tipsIntro}</p>` : ''}
+<img src="${assets.agentAdvantageBanner}" width="580" alt="Agent Advantage" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
 </td>
 </tr>
+<!-- Section Content -->
 <tr>
-<td>
+<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<!-- Two column intro: Text LEFT, Image RIGHT -->
+<tr>
+<td valign="top" class="mobile-stack" style="padding-right: 25px;">
+${tipsIntro ? `<p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${tipsIntro}</p>` : ''}
+</td>
+<td width="180" valign="top" class="mobile-stack">
+<img src="${assets.blankImage}" width="180" alt="Agent Advantage" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+</td>
+</tr>
+<!-- Tips with checkmarks -->
+<tr>
+<td colspan="2" style="padding-top: 25px;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tbody>
 ${generateTipsItems(tipsItems)}
+</tbody>
+</table>
+</td>
+</tr>
 </table>
 </td>
 </tr>
@@ -5465,30 +5620,63 @@ ${generateTipsItems(tipsItems)}
 </td>
 </tr>
 
-<!-- SECTION 7: CTA BANNER -->
+<!-- 25px Spacer -->
+<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+
+<!-- CTA SECTION - "Wait Before You Go..." with teal background + pattern -->
 <tr>
-<td class="cta-section" style="background-color: #008181; padding: 40px; text-align: center;" class="mobile-padding">
-<h2 style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 26px; line-height: 32px; font-weight: 700; color: #ffffff;">Wait Before You Go...</h2>
-<p style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; color: #e0f7f7;">Access your agent dashboard for more resources and tools</p>
-<a href="${ctaUrl}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; padding: 14px 28px; text-decoration: none; border-radius: 6px;" class="button-link">${ctaText}</a>
+<td align="center" style="border: 1px solid #282D3E;" class="section-border">
+<!--[if mso]>
+<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:580px;">
+<v:fill type="tile" src="${assets.ctaBg}" color="#008181"/>
+<v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
+<![endif]-->
+<div style="background-color: #008181; background-image: url('${assets.ctaBg}'); background-repeat: repeat; background-position: center;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<tr>
+<td style="padding: 45px 45px; text-align: center;" class="mobile-padding">
+<h2 style="margin: 0 0 12px 0; font-family: Georgia, serif; font-size: 26px; line-height: 32px; font-weight: 700; color: #ffffff; font-style: italic;">Wait Before You Go...</h2>
+<p style="margin: 0 0 24px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; color: #ffffff;">Earn 12% recurring commissions on every policy</p>
+<!--[if mso]>
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:46px;v-text-anchor:middle;width:200px;" arcsize="50%" strokecolor="#FE8916" fillcolor="#FE8916">
+<w:anchorlock/>
+<center style="color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;">${ctaText.toUpperCase()}</center>
+</v:roundrect>
+<![endif]-->
+<!--[if !mso]><!-->
+<a href="${ctaUrl}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 700; padding: 14px 28px; text-decoration: none; border-radius: 25px; text-transform: uppercase; letter-spacing: 0.5px;" class="button-link">${ctaText}</a>
+<!--<![endif]-->
+</td>
+</tr>
+</table>
+</div>
+<!--[if mso]>
+</v:textbox>
+</v:rect>
+<![endif]-->
 </td>
 </tr>
 
-<!-- FOOTER -->
+<!-- 25px Spacer -->
+<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+
+<!-- FOOTER - White background -->
 <tr>
-<td style="background-color: #3B3B3B; padding: 30px 40px; text-align: center;" class="mobile-padding">
+<td style="background-color: #ffffff; padding: 30px 45px; text-align: center; border: 1px solid #282D3E;" class="mobile-padding">
 <a href="https://brite.co" target="_blank">
-<img src="${logoUrl}" width="120" alt="BriteCo" style="width: 120px; max-width: 120px; height: auto; display: block; margin: 0 auto 15px auto;">
+<img src="${assets.logoFooter}" width="80" alt="BriteCo" style="width: 80px; max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto;">
 </a>
-<p style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 18px; font-weight: 400; color: #bbbbbb;">
-BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
+<p style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 20px; font-weight: 400; color: #555555;">
+805 Greenwood St Evanston IL 60201
 </p>
-<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 18px; font-weight: 400; color: #888888;">
-<a href="https://brite.co/privacy" style="color: #888888; text-decoration: underline;">Privacy Policy</a> |
-<a href="https://brite.co/terms" style="color: #888888; text-decoration: underline;">Terms of Service</a>
+<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 20px; font-weight: 400;">
+<a href="https://brite.co" style="color: #008181; text-decoration: none;">Brite.Co</a>
 </p>
 </td>
 </tr>
+
+<!-- Bottom Spacer -->
+<tr><td style="height: 20px; font-size: 1px; line-height: 1px;">&nbsp;</td></tr>
 
 </table>
 
@@ -5497,7 +5685,7 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
 </tr>
 </table>
 <![endif]-->
-</center>
+</div>
 
 </body>
 </html>
@@ -5522,8 +5710,22 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
             // Get introduction content
             const introText = document.getElementById('introContentBox')?.innerText || generatedIntroContent || '';
 
-            // Get Brite Spot content
-            const briteSpotText = document.getElementById('briteSpotContentBox')?.innerHTML || generatedBriteSpotContent || '';
+            // Get Brite Spot content (paragraph + bullets from Step 1)
+            // Try to get from Step 1 inputs first, then fall back to contenteditable box or generated content
+            let briteSpotTextForTemplate = briteSpotContent || '';
+            let briteSpotBulletsForTemplate = briteSpotBullets || [];
+
+            // If no Step 1 content, try contenteditable box (may have been edited)
+            if (!briteSpotTextForTemplate) {
+                const contentBoxHtml = document.getElementById('briteSpotContentBox')?.innerHTML || generatedBriteSpotContent || '';
+                // Extract paragraph from HTML if needed
+                if (contentBoxHtml.includes('<p')) {
+                    const match = contentBoxHtml.match(/<p[^>]*>([\s\S]*?)<\/p>/);
+                    if (match) briteSpotTextForTemplate = match[1];
+                } else {
+                    briteSpotTextForTemplate = contentBoxHtml.replace(/<\/?[^>]+(>|$)/g, '');
+                }
+            }
 
             // Get claims content
             const claimsText = document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '';
@@ -5579,11 +5781,11 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
                 preheader,
                 subjectLine,
                 introText: convertMarkdownLinksToHTML(introText),
-                introCTAUrl: 'https://insurance.brite.co',
-                introCTAText: 'Access Your Dashboard',
-                briteSpotText: convertMarkdownLinksToHTML(briteSpotText),
-                briteSpotImage: generatedImages.britespot?.url || '',
-                briteSpotBullets: [], // Can be populated if brite spot has bullet points
+                introCTAUrl: 'https://brite.co/agents',
+                introCTAText: 'Learn More',
+                briteSpotText: convertMarkdownLinksToHTML(briteSpotTextForTemplate),
+                briteSpotImage: generatedImages.briteSpot?.url || '',
+                briteSpotBullets: briteSpotBulletsForTemplate.map(b => convertMarkdownLinksToHTML(b)),
                 claimsText: convertMarkdownLinksToHTML(claimsText),
                 claimsImage: generatedImages.claims?.url || '',
                 roundupItems: roundupItems.map(item => ({
@@ -5601,8 +5803,8 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
                     title: tip.title,
                     tip: convertMarkdownLinksToHTML(tip.tip)
                 })),
-                ctaUrl: 'https://insurance.brite.co',
-                ctaText: 'Access Your Dashboard'
+                ctaUrl: 'https://brite.co/agents',
+                ctaText: 'Partner With Us'
             };
 
             // Call template function with data object
@@ -7183,17 +7385,23 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
             // Don't auto-generate subject lines - wait for user to select tone
             // The tone selection UI will be shown by default
 
-            // Pre-populate subject line for Ontraport from selected subject
-            if (stepNum === 20) {
+            // Pre-populate subject line for Ontraport from selected subject (Step 11)
+            if (stepNum === 15) {
                 const subjectField = document.getElementById('subject');
+                const subjectDisplay = document.getElementById('ontraportSubjectDisplay');
                 const finalSubject = document.getElementById('finalSubjectLine');
-                if (subjectField && finalSubject && finalSubject.value) {
-                    subjectField.value = finalSubject.value;
-                } else if (subjectField && !subjectField.value) {
+
+                let subjectLine = '';
+                if (finalSubject && finalSubject.value) {
+                    subjectLine = finalSubject.value;
+                } else {
                     // Fallback if no subject was selected
                     const monthName = selectedMonth ? selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1) : 'Monthly';
-                    subjectField.value = `${monthName} BriteCo Brief - Agent Newsletter`;
+                    subjectLine = `${monthName} BriteCo Brief - Agent Newsletter`;
                 }
+
+                if (subjectField) subjectField.value = subjectLine;
+                if (subjectDisplay) subjectDisplay.textContent = subjectLine;
             }
         }
 

@@ -39,7 +39,8 @@ from integrations.ontraport_client import OntraportClient
 from config.brand_guidelines import (
     BRAND_VOICE, NEWSLETTER_GUIDELINES, INSURANCE_NEWS_SOURCES,
     CONTENT_FILTERS, ONTRAPORT_CONFIG, TEAM_MEMBERS,
-    get_style_guide_for_prompt, get_search_sources_prompt
+    get_style_guide_for_prompt, get_search_sources_prompt,
+    get_humanization_guidelines, get_full_style_guide_for_section
 )
 from config.model_config import get_model_for_task
 
@@ -1014,7 +1015,13 @@ Summary: {article.get('snippet', article.get('industry_data', ''))}
                 'publisher': article.get('publisher', '')
             })
 
+        # Get humanization guidelines for spotlight section
+        from config.brand_guidelines import get_humanization_guidelines
+        humanization_guide = get_humanization_guidelines('spotlight')
+
         prompt = f"""You are writing the "InsurNews Spotlight" section for BriteCo Brief, a newsletter for independent insurance agents.
+
+{humanization_guide}
 
 Analyze these {len(articles)} related articles and create a comprehensive, in-depth feature story:
 
@@ -1026,6 +1033,13 @@ Write a detailed spotlight article with:
 - Each paragraph should be 3-5 sentences with specific data and statistics from the sources
 - IMPORTANT: Include hyperlinks to the source articles using markdown link format [link text](URL) whenever you reference data, statistics, or claims from an article
 - End with "AGENT TAKEAWAY:" followed by 3-4 bullet points of actionable insights
+
+WRITING STYLE:
+- Use active voice and contractions (don't, won't, it's)
+- Be specific with numbers and sources ("According to PropertyCasualty360, premiums rose 8.7%")
+- Vary sentence length - mix short punchy sentences with longer explanatory ones
+- AVOID: "landscape", "navigate", "leverage", "robust", "comprehensive", "various factors"
+- Start some sentences with "And" or "But" for natural flow
 
 Target: 500-600 words. Be thorough and factual. Include at least 3-5 hyperlinks to source articles throughout the text.
 
@@ -1605,11 +1619,14 @@ def research_articles():
         # Research Curious Claims (~350-400 words, storytelling narrative)
         if curious_claims_topic:
             safe_print(f"  - Researching Curious Claims: {curious_claims_topic.get('title', 'Unknown')}")
+            claims_style = get_humanization_guidelines('curious_claims')
             claims_prompt = f"""You are a master storyteller writing for BriteCo Brief, an insurance newsletter for independent agents.
 
 Article: {curious_claims_topic.get('title', 'Unknown')}
 Source: {curious_claims_topic.get('url', 'N/A')}
 Initial Summary: {curious_claims_topic.get('description', '')}
+
+{claims_style}
 
 Write an engaging STORY about this claims case using this structure:
 
@@ -1632,11 +1649,18 @@ How was it resolved? What did the insurance cover or not cover?
 End with a clear lesson for insurance agents. How can they use this story with clients?
 
 STYLE REQUIREMENTS:
-- Write in a conversational, engaging tone
+- Write in a conversational, engaging tone (playful, lightest touch)
 - Use short paragraphs (2-3 sentences each)
 - Make it feel like a story, not a report
 - Include a memorable detail or quote if possible
+- Use SPECIFIC names, places, and dollar amounts (not "a driver" but "Melissa Schlarb")
 - Target: 350-400 words total
+- AVOID: "In an interesting development...", "unique situation", "diverse nature of cases"
+
+EXAMPLE OPENERS TO EMULATE:
+- "A driver in western North Carolina recently got the surprise of her life..."
+- "Earlier this month, hundreds of drivers in Colorado found themselves stalled..."
+- "What happens when a magician's assistant files a claim for a disappearing diamond ring?"
 
 Output the complete story as flowing prose, not as labeled sections."""
 
@@ -1711,6 +1735,7 @@ Output ONLY the bullet text with the embedded hyperlink, nothing else."""
             if topic:
                 safe_print(f"  - Generating Agent Advantage from: {topic.get('title', 'Unknown')[:50]}...")
 
+                tips_style = get_humanization_guidelines('agent_advantage')
                 tips_prompt = f"""Create the "Agent Advantage" section for an insurance agent newsletter based on this article.
 
 ARTICLE TO DRAW FROM:
@@ -1718,12 +1743,28 @@ Title: {topic.get('title', 'Unknown')}
 Summary: {topic.get('description', topic.get('snippet', ''))}
 Source: {topic.get('publisher', 'Industry Source')}
 
+{tips_style}
+
 FORMAT REQUIREMENTS:
 1. Start with an INTRO PARAGRAPH (2-3 sentences, ~40 words) that sets up the topic and explains why it matters to agents
 2. Then provide EXACTLY 5 numbered tips, each with:
    - A BOLD MINI-TITLE (up to 10 words, action-oriented)
    - 1-3 supporting sentences explaining the tip (~30-40 words per tip)
 3. Focus on sales, retention, or operations improvements
+
+WRITING STYLE (Coach-Like Tone):
+- Use direct "you should..." language
+- Be practical and immediately actionable
+- Use contractions naturally (don't, won't, you'll)
+- Keep tips punchy - short sentences work best
+- AVOID: "It is important to maintain...", "Leverage your relationships...", "Navigate the landscape..."
+- Each tip should be something an agent can DO TODAY
+
+DON'T WRITE LIKE THIS:
+"**Maintain Regular Communication.** It is important for agents to maintain regular communication with their clients throughout the policy period."
+
+DO WRITE LIKE THIS:
+"**Schedule Annual Reviews.** Don't wait for renewal time. Proactive mid-year check-ins show clients you're invested in their protection year-round."
 
 OUTPUT FORMAT (use this exact structure):
 [INTRO]
@@ -1744,19 +1785,6 @@ Supporting detail.
 
 5. **Fifth Tip Title**
 Final piece of advice.
-
-EXAMPLE:
-[INTRO]
-With auto rates climbing nationwide, agents have a unique opportunity to differentiate themselves. Here's how to turn rate conversations into retention wins.
-
-[TIPS]
-1. **Lead With Transparency on Rate Changes**
-Don't wait for clients to call asking about increases. Proactively reach out to explain what's happening in the market and why.
-
-2. **Bundle for Better Value**
-Combine auto with home or umbrella policies. Bundling can offset rate increases and makes clients stickier.
-
-(etc.)
 
 Output ONLY the intro and tips in this format, nothing else."""
 
@@ -1885,15 +1913,25 @@ Output ONLY the introduction text, no labels or formatting."""
         # Generate Brite Spot (max 100 words)
         if brite_spot_topic:
             print("  - Generating Brite Spot...")
+            brite_spot_style = get_humanization_guidelines('brite_spot')
             brite_spot_prompt = f"""You are the copywriter for BriteCo Brief newsletter.
 
 Write the "Brite Spot" section about: {brite_spot_topic}
 
 Requirements:
 - Maximum 100 words
-- Exciting, informative tone
+- Warm, supportive tone (celebratory but not over-the-top)
 - Focus on new BriteCo features or company news
-- Include a subtle call to action
+- Lead with the benefit to agents
+- Include a clear, direct call to action
+- Use "we" and "you" frequently
+
+{brite_spot_style}
+
+WRITING STYLE:
+- Use contractions naturally (we're, you'll, don't)
+- Be specific about benefits (exact percentages, features)
+- AVOID: "leverage", "robust", "comprehensive", "cutting-edge", "innovative"
 
 {style_guide}
 
@@ -1910,6 +1948,7 @@ Output ONLY the Brite Spot text, no title or labels."""
         # Generate Curious Claims from research
         if research.get('curious_claims'):
             print("  - Writing Curious Claims section...")
+            claims_style = get_humanization_guidelines('curious_claims')
             claims_prompt = f"""You are the copywriter for BriteCo Brief newsletter.
 
 ## RESEARCH BRIEFING
@@ -1920,8 +1959,22 @@ Write the "Curious Claims" section based on this research.
 Requirements:
 - 2-3 short paragraphs
 - Maximum 200 words
-- Engaging, storytelling tone
-- End with a takeaway for agents
+- Playful, storytelling tone (puns and wordplay welcome)
+- Use vivid, specific details (names, places, dollar amounts)
+- End with a practical takeaway for agents
+
+{claims_style}
+
+WRITING STYLE:
+- Open with an attention-grabbing hook
+- Use specific details: "Melissa Schlarb traversed Route 74..." not "A driver was traveling..."
+- Include telling details that make the story memorable
+- Can show amusement at absurd situations
+- AVOID: "interesting development", "unique situation", "diverse nature of cases"
+
+EXAMPLE OPENER (DON'T vs DO):
+DON'T: "In an interesting development in the insurance world, a unique claim has emerged..."
+DO: "A driver in western North Carolina recently got the surprise of her life when she found a surprise guest in her passenger seat."
 
 {style_guide}
 
@@ -2126,15 +2179,9 @@ def generate_images():
                     image_bytes = base64.b64decode(image_data)
                     pil_image = Image.open(BytesIO(image_bytes))
 
-                    # Determine target size based on section
-                    if section_name in ['briteSpot', 'claims']:
-                        # Larger images: 480px wide
-                        target_width = 480
-                        target_height = 260
-                    else:
-                        # Spotlight/Tips: 210px wide
-                        target_width = 210
-                        target_height = 250
+                    # All sections use 180x180 to match email template
+                    target_width = 180
+                    target_height = 180
 
                     print(f"  [{section_name.upper()}] Resizing from {pil_image.size} to {target_width}x{target_height}...")
 
@@ -3043,6 +3090,7 @@ def send_doc_email():
 # ============================================================================
 
 @app.route('/api/send-to-ontraport', methods=['POST'])
+@app.route('/api/push-to-ontraport', methods=['POST'])
 def send_to_ontraport():
     """Send newsletter to Ontraport for distribution"""
     try:
