@@ -1062,19 +1062,41 @@ Target: 500-600 words total. Be thorough, factual, and cite sources throughout."
 
         # Parse the JSON response
         import json
+        import re
         content_text = result['content'].strip()
 
-        # Remove markdown code blocks if present
-        if content_text.startswith('```'):
-            content_text = content_text.split('```')[1]
-            if content_text.startswith('json'):
-                content_text = content_text[4:]
-            content_text = content_text.strip()
+        print(f"[API] Raw spotlight response length: {len(content_text)}")
+        print(f"[API] Raw spotlight response (first 500 chars): {content_text[:500]}")
+
+        # Remove markdown code blocks if present (handle various formats)
+        if '```json' in content_text:
+            match = re.search(r'```json\s*([\s\S]*?)\s*```', content_text)
+            if match:
+                content_text = match.group(1).strip()
+        elif '```' in content_text:
+            match = re.search(r'```\s*([\s\S]*?)\s*```', content_text)
+            if match:
+                content_text = match.group(1).strip()
+
+        # Try to find JSON object if not already clean
+        if not content_text.startswith('{'):
+            json_match = re.search(r'\{[\s\S]*\}', content_text)
+            if json_match:
+                content_text = json_match.group(0)
+
+        print(f"[API] Cleaned content (first 300 chars): {content_text[:300]}")
 
         try:
             spotlight_content = json.loads(content_text)
-        except json.JSONDecodeError:
-            # Fallback: return raw text
+            print(f"[API] Successfully parsed JSON with keys: {list(spotlight_content.keys())}")
+            if 'h3s' in spotlight_content:
+                print(f"[API] h3s has {len(spotlight_content['h3s'])} items")
+                if spotlight_content['h3s']:
+                    print(f"[API] First h3 keys: {list(spotlight_content['h3s'][0].keys()) if isinstance(spotlight_content['h3s'][0], dict) else 'not a dict'}")
+        except json.JSONDecodeError as e:
+            print(f"[API] JSON parse failed: {e}")
+            print(f"[API] Failed content: {content_text[:500]}")
+            # Fallback: return raw text as body
             spotlight_content = {
                 'subheader': 'Insurance Industry Update',
                 'h3s': [{'title': 'Overview', 'body': content_text}],
@@ -1838,6 +1860,7 @@ def generate_content():
         month = data.get('month', 'january')
         research = data.get('research')
         brite_spot_topic = data.get('brite_spot_topic', '')
+        intro_content = data.get('intro_content', '')
 
         if not research:
             return jsonify({'success': False, 'error': 'Research data required'}), 400
@@ -1851,8 +1874,13 @@ def generate_content():
         style_guide = get_style_guide_for_prompt()
 
         # Generate Introduction (1-4 sentences, ~75 words)
-        print("  - Generating Introduction...")
-        intro_prompt = f"""You are the copywriter for BriteCo Brief, a newsletter for independent insurance agents.
+        # Use provided intro if available, otherwise generate
+        if intro_content:
+            print("  - Using provided intro content...")
+            sections['introduction'] = intro_content
+        else:
+            print("  - Generating Introduction...")
+            intro_prompt = f"""You are the copywriter for BriteCo Brief, a newsletter for independent insurance agents.
 
 Write a brief, welcoming introduction for the {month.capitalize()} edition.
 
@@ -1867,13 +1895,13 @@ Requirements:
 
 Output ONLY the introduction text, no labels or formatting."""
 
-        intro_result = claude_client.generate_content(
-            prompt=intro_prompt,
-            model="claude-opus-4-5-20251101",
-            temperature=0.5,
-            max_tokens=150
-        )
-        sections['introduction'] = intro_result['content'].strip()
+            intro_result = claude_client.generate_content(
+                prompt=intro_prompt,
+                model="claude-opus-4-5-20251101",
+                temperature=0.5,
+                max_tokens=150
+            )
+            sections['introduction'] = intro_result['content'].strip()
 
         # Generate Brite Spot (max 100 words)
         if brite_spot_topic:

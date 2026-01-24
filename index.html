@@ -2836,12 +2836,20 @@
 
                 console.log('[Writing] Starting Opus 4.5 writing phase...');
 
+                // Get Brite Spot content from Step 1
+                const briteSpotInputEl = document.getElementById('briteSpotInput');
+                const briteSpotText = briteSpotInputEl ? briteSpotInputEl.value.trim() : '';
+                const introInputEl = document.getElementById('introInput');
+                const introText = introInputEl ? introInputEl.value.trim() : '';
+
                 const contentResponse = await fetch(`${API_BASE}/api/generate-content`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         month: selectedMonth,
-                        research: researchData.research
+                        research: researchData.research,
+                        brite_spot_topic: briteSpotText,
+                        intro_content: introText
                     })
                 });
 
