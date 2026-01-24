@@ -2874,10 +2874,13 @@
                     generatedIntroContent = data.content.introduction;
                     generatedClaimsContent = data.content.curious_claims;
                     generatedRoundupContent = data.content.roundup;
-                    generatedSpotlightContent = data.content.spotlight;
+                    // Use Step 2B spotlight if backend didn't return it
+                    generatedSpotlightContent = data.content.spotlight || spotlightGeneratedContent;
                     generatedSpotlightSubheader = data.content.spotlight_subheader || (spotlightGeneratedContent?.subheader || 'Industry Spotlight');
                     generatedTipsContent = data.content.agent_tips;
-                    generatedBriteSpotContent = data.content.brite_spot;
+                    // DON'T use backend-generated brite_spot - use Step 1 input directly
+                    // generatedBriteSpotContent stays null so briteSpotRewritten/briteSpotContent is used
+                    generatedBriteSpotContent = null;
 
                     console.log('Generated content sections:', Object.keys(data.content));
 

@@ -2828,7 +2828,8 @@ def export_to_docs():
         # Make the document accessible via link (anyone with link can view)
         drive_service.permissions().create(
             fileId=doc_id,
-            body={'type': 'anyone', 'role': 'reader'}
+            body={'type': 'anyone', 'role': 'reader'},
+            supportsAllDrives=True
         ).execute()
         safe_print(f"[API] Document sharing enabled")
 
