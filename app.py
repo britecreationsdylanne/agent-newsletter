@@ -1016,92 +1016,51 @@ Summary: {article.get('snippet', article.get('industry_data', ''))}
 
         prompt = f"""You are writing the "InsurNews Spotlight" section for BriteCo Brief, a newsletter for independent insurance agents.
 
-Analyze these {len(articles)} related articles and create a comprehensive, in-depth feature story that synthesizes the information:
+Analyze these {len(articles)} related articles and create a comprehensive, in-depth feature story:
 
 {article_summaries}
 
-CREATE A DETAILED SPOTLIGHT STORY WITH:
+Write a detailed spotlight article with:
+- First line: A compelling headline/subheader (max 15 words)
+- Then 4-5 paragraphs covering the story (what's happening, why it matters, industry impact, implications for agents)
+- Each paragraph should be 3-5 sentences with specific data and statistics from the sources
+- End with "AGENT TAKEAWAY:" followed by 3-4 bullet points of actionable insights
 
-1. SUB-HEADER (max 15 words): A compelling headline that captures the unified theme and creates urgency or interest
+Target: 500-600 words. Be thorough and factual.
 
-2. H3 SECTIONS: Create 4-5 H3 headers that break down different aspects of the story
-   - Each H3 should have 2-3 substantial paragraphs
-   - Each paragraph should be 3-5 sentences
-   - Reference specific data points, statistics, and facts from the sources
-   - Include multiple hyperlink placeholders like [Source Name](URL) throughout
-   - Cover: What's happening, Why it matters, Industry context, Regional/market impact
-
-3. IMPLICATIONS FOR AGENTS SECTION: A dedicated section with:
-   - 2-3 paragraphs explaining how this affects independent agents
-   - Specific client conversation starters
-   - Potential business opportunities or risks
-
-4. ACTIONABLE INSIGHTS: End with 3-4 bullet points of specific actions agents can take
-
-OUTPUT FORMAT (JSON):
-{{
-    "subheader": "Your compelling sub-header here",
-    "h3s": [
-        {{"title": "H3 Title 1 - The Big Picture", "body": "Multiple paragraphs with [source links]..."}},
-        {{"title": "H3 Title 2 - By the Numbers", "body": "Paragraphs with data points and statistics..."}},
-        {{"title": "H3 Title 3 - Industry Response", "body": "What carriers and industry leaders are saying..."}},
-        {{"title": "H3 Title 4 - Regional Impact", "body": "How this affects different markets..."}},
-        {{"title": "Implications for Agents", "body": "Detailed analysis of agent impact..."}}
-    ],
-    "agent_takeaway": "• Actionable insight 1\\n• Actionable insight 2\\n• Actionable insight 3\\n• Actionable insight 4"
-}}
-
-Target: 500-600 words total. Be thorough, factual, and cite sources throughout."""
+Output as plain text - headline on first line, then paragraphs, then agent takeaway section at the end."""
 
         result = claude_client.generate_content(
             prompt=prompt,
             model="claude-opus-4-5-20251101",
             temperature=0.3,
-            max_tokens=1000
+            max_tokens=2000
         )
 
-        # Parse the JSON response
-        import json
-        import re
         content_text = result['content'].strip()
+        print(f"[API] Spotlight response length: {len(content_text)}")
 
-        print(f"[API] Raw spotlight response length: {len(content_text)}")
-        print(f"[API] Raw spotlight response (first 500 chars): {content_text[:500]}")
+        # Parse plain text response: first line is subheader, rest is body
+        lines = content_text.split('\n', 1)
+        subheader = lines[0].strip().strip('#').strip() if lines else 'Insurance Industry Update'
+        body_text = lines[1].strip() if len(lines) > 1 else content_text
 
-        # Remove markdown code blocks if present (handle various formats)
-        if '```json' in content_text:
-            match = re.search(r'```json\s*([\s\S]*?)\s*```', content_text)
-            if match:
-                content_text = match.group(1).strip()
-        elif '```' in content_text:
-            match = re.search(r'```\s*([\s\S]*?)\s*```', content_text)
-            if match:
-                content_text = match.group(1).strip()
+        # Extract agent takeaway if present
+        agent_takeaway = ''
+        takeaway_markers = ['AGENT TAKEAWAY:', 'Agent Takeaway:', 'TAKEAWAY:', 'Takeaway:']
+        for marker in takeaway_markers:
+            if marker in body_text:
+                parts = body_text.split(marker, 1)
+                body_text = parts[0].strip()
+                agent_takeaway = parts[1].strip() if len(parts) > 1 else ''
+                break
 
-        # Try to find JSON object if not already clean
-        if not content_text.startswith('{'):
-            json_match = re.search(r'\{[\s\S]*\}', content_text)
-            if json_match:
-                content_text = json_match.group(0)
-
-        print(f"[API] Cleaned content (first 300 chars): {content_text[:300]}")
-
-        try:
-            spotlight_content = json.loads(content_text)
-            print(f"[API] Successfully parsed JSON with keys: {list(spotlight_content.keys())}")
-            if 'h3s' in spotlight_content:
-                print(f"[API] h3s has {len(spotlight_content['h3s'])} items")
-                if spotlight_content['h3s']:
-                    print(f"[API] First h3 keys: {list(spotlight_content['h3s'][0].keys()) if isinstance(spotlight_content['h3s'][0], dict) else 'not a dict'}")
-        except json.JSONDecodeError as e:
-            print(f"[API] JSON parse failed: {e}")
-            print(f"[API] Failed content: {content_text[:500]}")
-            # Fallback: return raw text as body
-            spotlight_content = {
-                'subheader': 'Insurance Industry Update',
-                'h3s': [{'title': 'Overview', 'body': content_text}],
-                'agent_takeaway': 'Review these developments and consider their impact on your clients.'
-            }
+        # Build simple structure - body as single text block
+        spotlight_content = {
+            'subheader': subheader,
+            'body': body_text,
+            'agent_takeaway': agent_takeaway or 'Review these developments and consider their impact on your clients.'
+        }
 
         spotlight_content['sources'] = sources
 
