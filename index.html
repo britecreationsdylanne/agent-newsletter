@@ -1377,7 +1377,7 @@
                 <h3 style="margin: 0 0 10px 0;">🔍 Curious Claims Image</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="claimsImageTitle">For your claims story</p>
 
-                <div id="claimsImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div id="claimsImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
                     <div style="text-align: center; color: #999;">
                         <div class="spinner" style="margin: 0 auto 10px;"></div>
                         <div>Generating image...</div>
@@ -1398,7 +1398,7 @@
                 <h3 style="margin: 0 0 10px 0;">⭐ InsurNews Spotlight Image</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="spotlightImageTitle">For your spotlight story</p>
 
-                <div id="spotlightImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div id="spotlightImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
                     <div style="text-align: center; color: #999;">
                         <div class="spinner" style="margin: 0 auto 10px;"></div>
                         <div>Generating image...</div>
@@ -2517,9 +2517,12 @@
             const bodyEditable = document.getElementById('spotlightBodyEditable');
             let bodyHtml = '';
 
-            // Helper to make links blue and convert markdown links to HTML
+            // Helper to make links blue, convert markdown links and headers to HTML
             function stylizeLinks(text) {
                 if (!text) return '';
+                // Convert markdown headers ## and ### to bold with proper styling
+                text = text.replace(/^###\s*(.+)$/gm, '<strong style="display: block; font-size: 16px; color: #282D3E; margin: 16px 0 8px 0;">$1</strong>');
+                text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
                 // Convert markdown links [text](url) to HTML
                 text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #0066cc; text-decoration: underline;">$1</a>');
                 // Style any existing <a> tags with blue color
@@ -3704,10 +3707,10 @@
                     agent_tips: generatedTipsContent || ''
                 };
 
-                // Format month for title: "2026, January - Agent Newsletter"
+                // Format month for title: "2026 January - Agent Newsletter"
                 const monthCapitalized = selectedMonth ? selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1) : '';
                 const year = new Date().getFullYear();
-                const title = `${year}, ${monthCapitalized} - Agent Newsletter`;
+                const title = `${year} ${monthCapitalized} - Agent Newsletter`;
 
                 // Store for email sending later
                 lastExportedMonth = monthCapitalized;
@@ -4696,24 +4699,18 @@
                 document.getElementById('briteSpotPrompt').value = generatedImages.briteSpot.prompt || '';
             }
 
-            // Display Claims image (180px to match email template)
+            // Display Claims image
             if (generatedImages.claims) {
                 document.getElementById('claimsImagePreview').innerHTML = `
-                    <div style="text-align: center;">
-                        <img src="${generatedImages.claims.url}" alt="Curious Claims Image" style="width: 180px; height: auto; border-radius: 4px;" />
-                        <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">Preview at email size (180px)</p>
-                    </div>
+                    <img src="${generatedImages.claims.url}" alt="Curious Claims Image" style="max-width: 100%; border-radius: 8px;" />
                 `;
                 document.getElementById('claimsPrompt').value = generatedImages.claims.prompt || '';
             }
 
-            // Display Spotlight image (180px to match email template)
+            // Display Spotlight image
             if (generatedImages.spotlight) {
                 document.getElementById('spotlightImagePreview').innerHTML = `
-                    <div style="text-align: center;">
-                        <img src="${generatedImages.spotlight.url}" alt="Spotlight Image" style="width: 180px; height: auto; border-radius: 4px;" />
-                        <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">Preview at email size (180px)</p>
-                    </div>
+                    <img src="${generatedImages.spotlight.url}" alt="Spotlight Image" style="max-width: 100%; border-radius: 8px;" />
                 `;
                 document.getElementById('spotlightPrompt').value = generatedImages.spotlight.prompt || '';
             }
@@ -5607,7 +5604,7 @@ ${generateRoundupItems(roundupItems)}
 <!-- 25px Spacer -->
 <tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
 
-<!-- SECTION: INSURNEWS SPOTLIGHT - Two column intro + full width body -->
+<!-- SECTION: INSURNEWS SPOTLIGHT - Full width image layout -->
 <tr>
 <td style="border: 1px solid #282D3E;" class="section-border">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -5621,21 +5618,26 @@ ${generateRoundupItems(roundupItems)}
 <tr>
 <td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Two column intro: Text LEFT, Image RIGHT -->
+<!-- Subheader/Title -->
+${spotlightSubheader ? `
 <tr>
-<td valign="top" class="mobile-stack" style="padding-right: 25px;">
-${spotlightSubheader ? `<p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${spotlightSubheader}</p>` : ''}
-</td>
-<td width="180" valign="top" class="mobile-stack mobile-stack-padding">
-<img src="${spotlightImage || assets.blankImage}" width="180" alt="Spotlight" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px; margin-bottom: 15px;" class="mobile-img-full">
+<td>
+<h3 class="dark-text" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 700; color: #282D3E;">${spotlightSubheader}</h3>
 </td>
 </tr>
-<!-- Full width continuation -->
+` : ''}
+<!-- Full-width Image -->
 <tr>
-<td colspan="2" style="padding-top: 20px;">
+<td style="padding-bottom: 25px;">
+<img src="${spotlightImage || assets.blankImage}" width="490" alt="Spotlight" style="width: 100%; max-width: 490px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+</td>
+</tr>
+<!-- Full width story content -->
+<tr>
+<td>
 ${spotlightText ? `<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${spotlightText}</p>` : ''}
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.map(section => `
-<h3 class="dark-text" style="margin: 20px 0 12px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 20px; line-height: 28px; font-weight: 700; color: #282D3E;"><strong>${section.h3 || section.title || ''}</strong></h3>
+<h3 class="dark-text" style="margin: 20px 0 12px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 600; color: #282D3E;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
 <p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
 `).join('') : ''}
 </td>
@@ -5955,26 +5957,15 @@ ${generateTipsItems(tipsItems)}
                 console.log('[ONTRAPORT] Response:', data);
 
                 if (data.success) {
-                    // Show prominent success message with preview link
-                    const previewUrl = data.preview_url || '';
+                    // Show success message
                     let successMsg = '✅ SUCCESS!\n\n' +
                           'Your newsletter has been pushed to Ontraport!\n\n' +
                           '📧 Subject: ' + subject + '\n' +
                           '📅 Month: ' + (selectedMonth || 'Newsletter') + '\n' +
-                          '📋 Status: Draft (ready for review)\n\n';
-
-                    if (previewUrl) {
-                        successMsg += '🔗 Preview URL:\n' + previewUrl + '\n\n';
-                    }
-
-                    successMsg += 'You can now find it in your Ontraport messages and schedule it for sending.';
+                          '📋 Status: Draft (ready for review)\n\n' +
+                          'You can now find it in your Ontraport messages and schedule it for sending.';
 
                     alert(successMsg);
-
-                    // Also open preview URL in new tab if available
-                    if (previewUrl && confirm('Open Ontraport to view your campaign?')) {
-                        window.open(previewUrl, '_blank');
-                    }
 
                     console.log('✅ Ontraport campaign created:', data);
                 } else {

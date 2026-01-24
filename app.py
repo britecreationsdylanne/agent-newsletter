@@ -2191,9 +2191,15 @@ def generate_images():
                     image_bytes = base64.b64decode(image_data)
                     pil_image = Image.open(BytesIO(image_bytes))
 
-                    # All sections use 180x180 to match email template
-                    target_width = 180
-                    target_height = 180
+                    # Section-specific image sizes
+                    if section_name == 'spotlight':
+                        # Full-width banner for InsureNews Spotlight
+                        target_width = 490
+                        target_height = 200
+                    else:
+                        # Square images for other sections (180x180)
+                        target_width = 180
+                        target_height = 180
 
                     print(f"  [{section_name.upper()}] Resizing from {pil_image.size} to {target_width}x{target_height}...")
 
