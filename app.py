@@ -2061,18 +2061,19 @@ def generate_image_prompts():
             title = section_data.get('title', '')
             content = section_data.get('content', '')[:400]
 
-            prompt_request = f"""Create a text-to-image prompt for an insurance newsletter illustration.
+            prompt_request = f"""Create a text-to-image prompt for an insurance newsletter image.
 
 Section: {section_name}
 Title: "{title}"
 Content: "{content}..."
 
 Requirements:
-- Professional, clean aesthetic
-- Blue/teal color palette (BriteCo brand colors)
-- No text in the image
-- Suitable for email newsletter
-- Modern, digital style
+- Photorealistic, professional photography style (NOT cartoon, NOT illustration, NOT digital art)
+- Stock photo aesthetic - like images from Shutterstock or Getty Images
+- Blue/teal color accents where appropriate (BriteCo brand colors)
+- No text overlays in the image
+- Suitable for professional email newsletter
+- Clean, well-lit, high-quality photography look
 
 Output ONLY the image generation prompt, nothing else."""
 

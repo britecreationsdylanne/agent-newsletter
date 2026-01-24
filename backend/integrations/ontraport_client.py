@@ -15,19 +15,27 @@ class OntraportClient:
     BASE_URL = "https://api.ontraport.com/1"
 
     def __init__(self, app_id: Optional[str] = None, api_key: Optional[str] = None):
-        self.app_id = app_id or os.getenv("ONTRAPORT_APP_ID")
-        self.api_key = api_key or os.getenv("ONTRAPORT_API_KEY")
+        self.app_id = (app_id or os.getenv("ONTRAPORT_APP_ID", "")).strip()
+        self.api_key = (api_key or os.getenv("ONTRAPORT_API_KEY", "")).strip()
 
         if not self.app_id or not self.api_key:
             raise ValueError("Ontraport credentials not configured")
 
-        self.headers = {
+        # Headers for JSON requests (used for some endpoints)
+        self.headers_json = {
             "Api-Appid": self.app_id,
             "Api-Key": self.api_key,
             "Content-Type": "application/json",
         }
 
-    def _request(self, method: str, endpoint: str, data: Optional[Dict] = None) -> Dict:
+        # Headers for form-encoded requests (used for /message endpoint)
+        self.headers_form = {
+            "Api-Appid": self.app_id,
+            "Api-Key": self.api_key,
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+
+    def _request(self, method: str, endpoint: str, data: Optional[Dict] = None, use_form_encoding: bool = False) -> Dict:
         """
         Make API request to Ontraport
 
@@ -35,6 +43,7 @@ class OntraportClient:
             method: HTTP method (GET, POST, PUT, DELETE)
             endpoint: API endpoint path
             data: Request payload
+            use_form_encoding: If True, use form-encoded data instead of JSON
 
         Returns:
             API response data
@@ -42,12 +51,22 @@ class OntraportClient:
         url = f"{self.BASE_URL}{endpoint}"
         start_time = time.time()
 
-        response = requests.request(
-            method=method,
-            url=url,
-            headers=self.headers,
-            json=data,
-        )
+        if use_form_encoding:
+            response = requests.request(
+                method=method,
+                url=url,
+                headers=self.headers_form,
+                data=data,
+                timeout=30
+            )
+        else:
+            response = requests.request(
+                method=method,
+                url=url,
+                headers=self.headers_json,
+                json=data,
+                timeout=30
+            )
 
         latency_ms = int((time.time() - start_time) * 1000)
 
@@ -139,63 +158,105 @@ class OntraportClient:
         object_ids: List[str] = None,
     ) -> Dict:
         """
-        Create email in Ontraport with Message + Campaign (Venue Voice pattern)
+        Create email in Ontraport using the /message endpoint (Venue Voice pattern)
 
         Args:
             subject: Email subject line
             html_content: Complete HTML email content
-            plain_text: Plain text version (optional, not used by Ontraport)
+            plain_text: Plain text version
             from_email: Sender email address
             from_name: Sender name
-            object_ids: Not used (kept for API compatibility)
+            object_ids: List of object_type_ids to create messages for (default: ['10007', '10004'])
 
         Returns:
-            Dict with success status, message_id, campaign_id, and preview_url
+            Dict with success status, message_ids, and preview_url
         """
         try:
-            # Step 1: Create email message (objectID=5 for Messages)
-            message_id = self.create_email_message(
-                subject=subject,
-                html_body=html_content,
-                from_name=from_name,
-                from_email=from_email,
-                object_id=5,  # Standard Message object type
-            )
+            # Default object_type_ids for Agent Newsletter
+            if not object_ids:
+                object_ids = ['10007', '10004']
 
-            if not message_id:
-                return {
-                    "success": False,
-                    "error": "Failed to create message - no ID returned"
+            # Use provided values or defaults
+            sender_email = from_email or 'agent@brite.co'
+            sender_name = from_name or 'BriteCo Insurance'
+
+            print(f"\n[Ontraport] Creating newsletter messages...")
+            print(f"  - Subject: {subject}")
+            print(f"  - Object IDs: {object_ids}")
+
+            created_messages = []
+
+            # Create a message for each object_type_id
+            for object_type_id in object_ids:
+                print(f"\n[Ontraport] Creating message for object_type_id: {object_type_id}")
+
+                # Build payload matching the working Venue Voice pattern
+                payload = {
+                    'objectID': '7',
+                    'name': f'Agent Newsletter - {subject}',
+                    'subject': subject,
+                    'type': 'e-mail',
+                    'transactional_email': '0',
+                    'object_type_id': object_type_id,
+                    'from': 'custom',
+                    'send_out_name': sender_name,
+                    'reply_to_email': sender_email,
+                    'send_from': sender_email,
+                    'send_to': 'email',
+                    'message_body': html_content,
+                    'text_body': plain_text or ''
                 }
 
-            # Step 2: Create campaign (as draft)
-            campaign_name = f"BriteCo Brief - {subject}"
-            campaign_id = self.create_campaign(
-                name=campaign_name,
-                message_id=message_id,
-                send_immediately=False,  # Always create as draft for review
-            )
+                # Use /message endpoint with form-encoded data
+                result = self._request("POST", "/message", payload, use_form_encoding=True)
 
-            # Step 3: Get preview URL
-            preview_url = self.get_campaign_preview_url(message_id)
+                if result.get('status_code') == 200:
+                    response_data = result.get('data', {}).get('data', result.get('data', {}))
+                    message_id = str(response_data.get('id', ''))
+                    print(f"[Ontraport] Success! Message created with ID: {message_id}")
+                    created_messages.append({
+                        'object_type_id': object_type_id,
+                        'message_id': message_id
+                    })
+                else:
+                    print(f"[Ontraport] Warning: Unexpected response for object_type_id {object_type_id}")
 
-            print(f"[Ontraport] Newsletter campaign created successfully!")
-            print(f"  - Message ID: {message_id}")
-            print(f"  - Campaign ID: {campaign_id}")
+            if not created_messages:
+                return {
+                    "success": False,
+                    "error": "Failed to create any messages in Ontraport"
+                }
+
+            # Use first message ID for preview URL
+            primary_message_id = created_messages[0]['message_id']
+            preview_url = self.get_campaign_preview_url(primary_message_id)
+
+            print(f"\n[Ontraport] Newsletter created successfully!")
+            print(f"  - Messages created: {len(created_messages)}")
+            print(f"  - Primary Message ID: {primary_message_id}")
             print(f"  - Preview URL: {preview_url}")
 
             return {
                 "success": True,
-                "message_id": message_id,
-                "campaign_id": campaign_id,
+                "message_id": primary_message_id,
+                "message_ids": created_messages,
                 "preview_url": preview_url,
-                "email_id": message_id,  # For backwards compatibility
+                "email_id": primary_message_id,
                 "status": "draft",
             }
 
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Request failed: {str(e)}"
+            print(f"[Ontraport] Error: {error_msg}")
+            return {
+                "success": False,
+                "error": error_msg
+            }
         except Exception as e:
             error_msg = str(e)
             print(f"[Ontraport] Error creating newsletter: {error_msg}")
+            import traceback
+            traceback.print_exc()
             return {
                 "success": False,
                 "error": error_msg

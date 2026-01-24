@@ -1377,7 +1377,7 @@
                 <h3 style="margin: 0 0 10px 0;">🔍 Curious Claims Image</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="claimsImageTitle">For your claims story</p>
 
-                <div id="claimsImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div id="claimsImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
                     <div style="text-align: center; color: #999;">
                         <div class="spinner" style="margin: 0 auto 10px;"></div>
                         <div>Generating image...</div>
@@ -1398,7 +1398,7 @@
                 <h3 style="margin: 0 0 10px 0;">⭐ InsurNews Spotlight Image</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="spotlightImageTitle">For your spotlight story</p>
 
-                <div id="spotlightImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div id="spotlightImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
                     <div style="text-align: center; color: #999;">
                         <div class="spinner" style="margin: 0 auto 10px;"></div>
                         <div>Generating image...</div>
@@ -3049,6 +3049,11 @@
                 // Fix white text color
                 contentStr = contentStr.replace(/color:\s*#ffffff;?/gi, 'color: #1f2937;');
 
+                // Convert markdown headers ## to bold text
+                // Handle ### first (more specific), then ##
+                contentStr = contentStr.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
+                contentStr = contentStr.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+
                 // Convert markdown links [text](url) to HTML links first
                 contentStr = contentStr.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
 
@@ -3699,10 +3704,10 @@
                     agent_tips: generatedTipsContent || ''
                 };
 
-                // Format month for title: "Agent Newsletter (January, 2026)"
+                // Format month for title: "2026, January - Agent Newsletter"
                 const monthCapitalized = selectedMonth ? selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1) : '';
                 const year = new Date().getFullYear();
-                const title = `Agent Newsletter (${monthCapitalized}, ${year})`;
+                const title = `${year}, ${monthCapitalized} - Agent Newsletter`;
 
                 // Store for email sending later
                 lastExportedMonth = monthCapitalized;
@@ -3726,18 +3731,28 @@
                 if (data.success) {
                     // Store the doc URL for later email sending
                     lastExportedDocUrl = data.doc_url;
+                    console.log('[Export] Success! Doc URL:', data.doc_url);
 
                     resultDiv.style.display = 'block';
                     resultDiv.style.background = '#d1fae5';
                     resultDiv.style.border = '1px solid #10b981';
+
+                    // Build the link HTML only if we have a valid doc_url
+                    const docLinkHtml = data.doc_url
+                        ? `<a href="${data.doc_url}" target="_blank" style="display: inline-block; margin-top: 12px; padding: 10px 20px; background: #4285f4; color: white; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600;">
+                            Open in Google Docs
+                        </a>
+                        <p style="margin: 10px 0 0 0; font-size: 12px; color: #065f46; word-break: break-all;">
+                            <strong>Link:</strong> ${data.doc_url}
+                        </p>`
+                        : '<p style="margin: 10px 0 0 0; font-size: 14px; color: #b45309;">Link not available - check console for details.</p>';
+
                     resultDiv.innerHTML = `
-                        <p style="margin: 0 0 10px 0; font-weight: 600; color: #065f46;">✓ Export Successful!</p>
-                        <p style="margin: 0 0 10px 0; font-size: 14px; color: #047857;">
+                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #065f46; font-size: 16px;">Export Successful!</p>
+                        <p style="margin: 0; font-size: 14px; color: #047857;">
                             Your newsletter has been exported to Google Docs.
                         </p>
-                        <a href="${data.doc_url}" target="_blank" style="display: inline-block; padding: 8px 16px; background: #4285f4; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">
-                            📄 Open in Google Docs
-                        </a>
+                        ${docLinkHtml}
                     `;
 
                     // Show the email section
@@ -4681,18 +4696,24 @@
                 document.getElementById('briteSpotPrompt').value = generatedImages.briteSpot.prompt || '';
             }
 
-            // Display Claims image
+            // Display Claims image (180px to match email template)
             if (generatedImages.claims) {
                 document.getElementById('claimsImagePreview').innerHTML = `
-                    <img src="${generatedImages.claims.url}" alt="Curious Claims Image" style="max-width: 100%; border-radius: 8px;" />
+                    <div style="text-align: center;">
+                        <img src="${generatedImages.claims.url}" alt="Curious Claims Image" style="width: 180px; height: auto; border-radius: 4px;" />
+                        <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">Preview at email size (180px)</p>
+                    </div>
                 `;
                 document.getElementById('claimsPrompt').value = generatedImages.claims.prompt || '';
             }
 
-            // Display Spotlight image
+            // Display Spotlight image (180px to match email template)
             if (generatedImages.spotlight) {
                 document.getElementById('spotlightImagePreview').innerHTML = `
-                    <img src="${generatedImages.spotlight.url}" alt="Spotlight Image" style="max-width: 100%; border-radius: 8px;" />
+                    <div style="text-align: center;">
+                        <img src="${generatedImages.spotlight.url}" alt="Spotlight Image" style="width: 180px; height: auto; border-radius: 4px;" />
+                        <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">Preview at email size (180px)</p>
+                    </div>
                 `;
                 document.getElementById('spotlightPrompt').value = generatedImages.spotlight.prompt || '';
             }
@@ -5338,13 +5359,19 @@
                 `).join('');
             };
 
+            // Helper to strip markdown headers (## or ###) from text
+            const stripMarkdownHeaders = (text) => {
+                if (!text) return '';
+                return text.replace(/^#{1,3}\s*/, '').trim();
+            };
+
             // Helper to generate spotlight H2 sections (using H3 content from generated spotlight)
             const generateSpotlightH2s = (h2s) => {
                 if (!h2s || !Array.isArray(h2s) || h2s.length === 0) return '';
                 return h2s.map(section => `
                     <tr>
                         <td style="padding-top: 20px;">
-                            <h3 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 24px; font-weight: 600; color: #282D3E;">${section.h3 || section.title || ''}</h3>
+                            <h3 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 24px; font-weight: 600; color: #282D3E;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
                         </td>
                     </tr>
