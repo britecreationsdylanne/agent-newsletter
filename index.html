@@ -2517,12 +2517,14 @@
             const bodyEditable = document.getElementById('spotlightBodyEditable');
             let bodyHtml = '';
 
-            // Helper to make links blue, convert markdown links and headers to HTML
+            // Helper to make links blue, convert markdown links, headers, and bold to HTML
             function stylizeLinks(text) {
                 if (!text) return '';
                 // Convert markdown headers ## and ### to bold with proper styling
                 text = text.replace(/^###\s*(.+)$/gm, '<strong style="display: block; font-size: 16px; color: #282D3E; margin: 16px 0 8px 0;">$1</strong>');
                 text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
+                // Convert markdown bold **text** to <strong>
+                text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
                 // Convert markdown links [text](url) to HTML
                 text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #0066cc; text-decoration: underline;">$1</a>');
                 // Style any existing <a> tags with blue color
@@ -3056,6 +3058,8 @@
                 // Handle ### first (more specific), then ##
                 contentStr = contentStr.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
                 contentStr = contentStr.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+                // Convert markdown bold **text** to <strong>
+                contentStr = contentStr.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 
                 // Convert markdown links [text](url) to HTML links first
                 contentStr = contentStr.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
@@ -5767,9 +5771,14 @@ ${generateTipsItems(tipsItems)}
             return template;
         }
 
-        // Helper to convert markdown links to HTML and ensure proper link styling
+        // Helper to convert markdown to HTML (links, bold, headers)
         function convertMarkdownLinksToHTML(text) {
             if (!text) return text;
+            // Convert markdown headers ## and ### to bold
+            text = text.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
+            text = text.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+            // Convert markdown bold **text** to <strong>
+            text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
             // Convert [text](url) to <a href="url">text</a>
             return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #008181; text-decoration: underline;">$1</a>');
         }
