@@ -2495,7 +2495,6 @@
 
             (content.h3s || []).forEach((h3, index) => {
                 // NO H3 section titles - just flowing paragraphs
-                // Store the title as a hidden data attribute for saving edits later
                 let bodyText = h3.body || '';
 
                 // SAFETY CHECK: If body still looks like JSON, extract text forcefully
@@ -2516,12 +2515,26 @@
                     bodyText = extractTextFromObj(bodyText);
                 }
 
-                const bodyContent = stylizeLinks(bodyText);
-                bodyHtml += `<p class="spotlight-section-body" data-index="${index}" data-title="${(h3.title || '').replace(/"/g, '&quot;')}" contenteditable="true"
-                    style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.9; text-align: left; outline: none; cursor: text; color: #333;"
-                    onfocus="this.style.background='#fafafa'" onblur="this.style.background='transparent'">${bodyContent}</p>`;
+                // Check if body already contains HTML paragraph tags (from backend)
+                if (typeof bodyText === 'string' && bodyText.includes('<p')) {
+                    // Body is already HTML formatted - use directly
+                    // Just ensure links are blue
+                    bodyHtml += stylizeLinks(bodyText);
+                } else {
+                    // Plain text - wrap in paragraph and stylize links
+                    const bodyContent = stylizeLinks(bodyText);
+                    bodyHtml += `<p class="spotlight-section-body" data-index="${index}" contenteditable="true"
+                        style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.9; text-align: left; outline: none; cursor: text; color: #333;"
+                        onfocus="this.style.background='#fafafa'" onblur="this.style.background='transparent'">${bodyContent}</p>`;
+                }
             });
-            bodyEditable.innerHTML = bodyHtml || '<p style="color: #999;">No content sections available.</p>';
+
+            // Wrap in editable container if HTML content
+            if (bodyHtml) {
+                bodyEditable.innerHTML = `<div contenteditable="true" style="outline: none;">${bodyHtml}</div>`;
+            } else {
+                bodyEditable.innerHTML = '<p style="color: #999;">No content sections available.</p>';
+            }
 
             // Agent Takeaway - editable
             document.getElementById('spotlightTakeawayEditable').textContent = content.agent_takeaway || 'No takeaway provided.';

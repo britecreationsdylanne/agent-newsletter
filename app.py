@@ -1024,11 +1024,12 @@ Write a detailed spotlight article with:
 - First line: A compelling headline/subheader (max 15 words)
 - Then 4-5 paragraphs covering the story (what's happening, why it matters, industry impact, implications for agents)
 - Each paragraph should be 3-5 sentences with specific data and statistics from the sources
+- IMPORTANT: Include hyperlinks to the source articles using markdown link format [link text](URL) whenever you reference data, statistics, or claims from an article
 - End with "AGENT TAKEAWAY:" followed by 3-4 bullet points of actionable insights
 
-Target: 500-600 words. Be thorough and factual.
+Target: 500-600 words. Be thorough and factual. Include at least 3-5 hyperlinks to source articles throughout the text.
 
-Output as plain text - headline on first line, then paragraphs, then agent takeaway section at the end."""
+Output as plain text - headline on first line, then paragraphs separated by blank lines, then agent takeaway section at the end."""
 
         result = claude_client.generate_content(
             prompt=prompt,
@@ -1055,10 +1056,29 @@ Output as plain text - headline on first line, then paragraphs, then agent takea
                 agent_takeaway = parts[1].strip() if len(parts) > 1 else ''
                 break
 
-        # Build simple structure - body as single text block
+        # Convert plain text paragraphs to HTML with proper formatting
+        # Split by double newlines (paragraph breaks)
+        paragraphs = [p.strip() for p in body_text.split('\n\n') if p.strip()]
+
+        # Convert markdown links [text](url) to HTML links with blue styling
+        import re
+        def convert_links(text):
+            return re.sub(
+                r'\[([^\]]+)\]\(([^)]+)\)',
+                r'<a href="\2" target="_blank" style="color: #0066cc; text-decoration: underline;">\1</a>',
+                text
+            )
+
+        # Build HTML body with proper paragraph tags and spacing
+        html_body = ''
+        for p in paragraphs:
+            p_with_links = convert_links(p)
+            html_body += f'<p style="margin: 0 0 16px 0; line-height: 1.7;">{p_with_links}</p>'
+
+        # Build simple structure - body as HTML
         spotlight_content = {
             'subheader': subheader,
-            'body': body_text,
+            'body': html_body,
             'agent_takeaway': agent_takeaway or 'Review these developments and consider their impact on your clients.'
         }
 
@@ -2671,8 +2691,23 @@ def export_to_docs():
         docs_service = build('docs', 'v1', credentials=credentials)
         drive_service = build('drive', 'v3', credentials=credentials)
 
+        # First, verify access to the folder
+        safe_print(f"[API] Checking access to folder: {GOOGLE_DRIVE_FOLDER_ID}")
+        try:
+            folder_check = drive_service.files().get(
+                fileId=GOOGLE_DRIVE_FOLDER_ID,
+                fields='id, name, driveId',
+                supportsAllDrives=True
+            ).execute()
+            safe_print(f"[API] Folder access OK: {folder_check.get('name')}, driveId: {folder_check.get('driveId', 'None (regular folder)')}")
+        except Exception as folder_err:
+            safe_print(f"[API] Folder access check failed: {folder_err}")
+            return jsonify({
+                "success": False,
+                "error": f"Cannot access Google Drive folder. Ensure the service account has access. Error: {str(folder_err)}"
+            }), 500
+
         # Create a new Google Doc directly in the shared folder using Drive API
-        # This avoids the permission issue with docs.create()
         file_metadata = {
             'name': title,
             'mimeType': 'application/vnd.google-apps.document',
@@ -2681,7 +2716,8 @@ def export_to_docs():
 
         created_file = drive_service.files().create(
             body=file_metadata,
-            fields='id'
+            fields='id',
+            supportsAllDrives=True
         ).execute()
 
         doc_id = created_file.get('id')
