@@ -1106,7 +1106,6 @@
 
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep('2-research')">← Back</button>
-                <button class="btn-secondary btn" onclick="exportAllCopy()">📋 Export All Copy</button>
                 <button class="btn" onclick="checkBrandGuidelines()">Check Brand Guidelines →</button>
             </div>
         </div>
@@ -2993,11 +2992,26 @@
             let introContent = cleanContentForDisplay(generatedIntroContent);
             let claimsContent = cleanContentForDisplay(generatedClaimsContent);
             let spotlightContent = cleanContentForDisplay(generatedSpotlightContent);
-            let briteSpotContent = cleanContentForDisplay(generatedBriteSpotContent);
+
+            // Get Brite Spot content - try multiple sources
+            let briteSpotDisplayContent = generatedBriteSpotContent || briteSpotRewritten || briteSpotContent || '';
+            briteSpotDisplayContent = cleanContentForDisplay(briteSpotDisplayContent);
+
+            // Get header intro from Step 1 input
+            let headerIntroDisplay = headerIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
 
             let html = '';
 
-            // INTRODUCTION SECTION
+            // BRITECO BRIEF HEADER INTRO SECTION (if available)
+            if (headerIntroDisplay) {
+                html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
+                html += '<h3 style="margin: 0 0 5px 0; color: #008181;">BriteCo Brief Intro</h3>';
+                html += `<div id="headerIntroContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${headerIntroDisplay}</div>`;
+                html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('headerIntro')">Edit</button>`;
+                html += `</div>`;
+            }
+
+            // INTRODUCTION SECTION (AI Welcome)
             html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
             html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Welcome</h3>';
             html += `<div id="introContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${introContent}</div>`;
@@ -3005,10 +3019,10 @@
             html += `</div>`;
 
             // BRITE SPOT SECTION (if available)
-            if (briteSpotContent && briteSpotContent !== 'Content not available') {
+            if (briteSpotDisplayContent && briteSpotDisplayContent !== 'Content not available') {
                 html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
                 html += '<h3 style="margin: 0 0 5px 0; color: #008181;">The Brite Spot</h3>';
-                html += `<div id="briteSpotContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${briteSpotContent}</div>`;
+                html += `<div id="briteSpotContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${briteSpotDisplayContent}</div>`;
                 html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('briteSpot')">Edit</button>`;
                 html += `</div>`;
             }
@@ -3564,6 +3578,7 @@
             try {
                 // Gather all newsletter content
                 const content = {
+                    header_intro: document.getElementById('headerIntroContentBox')?.innerHTML || headerIntroContent || '',
                     introduction: document.getElementById('introContentBox')?.innerHTML || generatedIntroContent || '',
                     brite_spot: document.getElementById('briteSpotContentBox')?.innerHTML || briteSpotRewritten || briteSpotContent || '',
                     curious_claims: document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '',

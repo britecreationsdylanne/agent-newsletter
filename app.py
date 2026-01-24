@@ -2667,34 +2667,27 @@ def export_to_docs():
                 "error": f"Invalid Google credentials: {str(e)}"
             }), 500
 
-        # Build the Docs service
+        # Build the services
         docs_service = build('docs', 'v1', credentials=credentials)
         drive_service = build('drive', 'v3', credentials=credentials)
 
-        # Create a new document
-        document = docs_service.documents().create(body={'title': title}).execute()
-        doc_id = document.get('documentId')
+        # Create a new Google Doc directly in the shared folder using Drive API
+        # This avoids the permission issue with docs.create()
+        file_metadata = {
+            'name': title,
+            'mimeType': 'application/vnd.google-apps.document',
+            'parents': [GOOGLE_DRIVE_FOLDER_ID]
+        }
+
+        created_file = drive_service.files().create(
+            body=file_metadata,
+            fields='id'
+        ).execute()
+
+        doc_id = created_file.get('id')
         doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
 
-        safe_print(f"[API] Created Google Doc: {doc_id}")
-
-        # Move document to the specified folder
-        try:
-            # Get current parents
-            file = drive_service.files().get(fileId=doc_id, fields='parents').execute()
-            previous_parents = ",".join(file.get('parents', []))
-
-            # Move to new folder
-            drive_service.files().update(
-                fileId=doc_id,
-                addParents=GOOGLE_DRIVE_FOLDER_ID,
-                removeParents=previous_parents,
-                fields='id, parents'
-            ).execute()
-            safe_print(f"[API] Moved document to folder: {GOOGLE_DRIVE_FOLDER_ID}")
-        except Exception as folder_error:
-            safe_print(f"[API] Warning: Could not move to folder: {folder_error}")
-            # Continue anyway - document is still created
+        safe_print(f"[API] Created Google Doc in folder: {doc_id}")
 
         # Build document content from newsletter sections
         requests_list = []
@@ -2735,6 +2728,9 @@ def export_to_docs():
 
         # Add newsletter sections
         add_text(title, heading=True)
+
+        if content.get('header_intro'):
+            add_text(content['header_intro'])
 
         if content.get('introduction'):
             add_text('Introduction', bold=True)
