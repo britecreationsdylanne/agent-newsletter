@@ -2310,7 +2310,7 @@
                 sources: content.sources || []
             };
 
-            // Helper to extract body text from any h3 object
+            // Helper to extract body text from any h3 object (uses global extractTextFromObj)
             function extractH3Body(h3) {
                 if (!h3 || typeof h3 !== 'object') return typeof h3 === 'string' ? h3 : '';
                 // Check common body keys
@@ -2323,14 +2323,16 @@
                 // If no body key found, try to get any long string value
                 const stringVals = Object.values(h3).filter(v => typeof v === 'string' && v.length > 30);
                 if (stringVals.length > 0) return stringVals[0];
-                // Last resort: stringify but only if it looks like content
-                const jsonStr = JSON.stringify(h3);
-                if (jsonStr.length > 100 && !jsonStr.includes('"url"')) {
-                    // Extract text between quotes as fallback
-                    const matches = jsonStr.match(/"([^"]{30,})"/g);
-                    if (matches) return matches.map(m => m.slice(1, -1)).join(' ');
-                }
+                // Last resort: use recursive text extraction (NEVER return raw JSON)
+                const extracted = extractTextFromObj(h3);
+                if (extracted && extracted.length > 10) return extracted;
                 return '';
+            }
+
+            // Handle h3s as single object (not array) - convert to array
+            if (content.h3s && typeof content.h3s === 'object' && !Array.isArray(content.h3s)) {
+                console.log('[Spotlight] Converting h3s object to array');
+                content.h3s = [content.h3s];
             }
 
             // Handle different h3s formats
@@ -2406,6 +2408,34 @@
             return normalized;
         }
 
+        // Global helper to recursively extract all text from any object structure
+        // Used by both normalizeSpotlightContent and displaySpotlightReview
+        function extractTextFromObj(obj, depth = 0) {
+            if (depth > 5) return '';
+            if (!obj) return '';
+            if (typeof obj === 'string') return obj;
+            if (typeof obj === 'number') return '';
+            if (Array.isArray(obj)) {
+                return obj.map(item => extractTextFromObj(item, depth + 1)).filter(t => t.length > 10).join('\n\n');
+            }
+            if (typeof obj === 'object') {
+                const priorityKeys = ['body', 'content', 'text', 'paragraph', 'summary', 'description'];
+                for (const key of priorityKeys) {
+                    if (obj[key] && typeof obj[key] === 'string' && obj[key].length > 20) {
+                        return obj[key];
+                    }
+                }
+                const texts = [];
+                for (const [key, val] of Object.entries(obj)) {
+                    if (['subheader', 'title', 'heading', 'url', 'source', 'link', 'id', 'type', 'h3', 'header'].includes(key)) continue;
+                    const extracted = extractTextFromObj(val, depth + 1);
+                    if (extracted && extracted.length > 20) texts.push(extracted);
+                }
+                return texts.join('\n\n');
+            }
+            return '';
+        }
+
         // Display spotlight content in the single editable view
         // Formatted like a final readable article - no H3 titles, flowing paragraphs, blue links
         function displaySpotlightReview(rawContent) {
@@ -2432,7 +2462,27 @@
             (content.h3s || []).forEach((h3, index) => {
                 // NO H3 section titles - just flowing paragraphs
                 // Store the title as a hidden data attribute for saving edits later
-                const bodyContent = stylizeLinks(h3.body || '');
+                let bodyText = h3.body || '';
+
+                // SAFETY CHECK: If body still looks like JSON, extract text forcefully
+                if (typeof bodyText === 'string' && (bodyText.includes('{"') || bodyText.includes('"subheader"') || bodyText.includes('"h3s"') || bodyText.includes('"body":'))) {
+                    console.log('[Spotlight] Detected JSON in body, extracting text...');
+                    try {
+                        const parsed = JSON.parse(bodyText);
+                        bodyText = extractTextFromObj(parsed);
+                    } catch(e) {
+                        // Not valid JSON, try regex extraction
+                        const textMatches = bodyText.match(/"([^"]{30,})"/g);
+                        if (textMatches) {
+                            bodyText = textMatches.map(m => m.slice(1, -1)).filter(t => !t.includes('http') && !t.includes('"')).join(' ');
+                        }
+                    }
+                } else if (typeof bodyText === 'object') {
+                    // If body is still an object, extract text
+                    bodyText = extractTextFromObj(bodyText);
+                }
+
+                const bodyContent = stylizeLinks(bodyText);
                 bodyHtml += `<p class="spotlight-section-body" data-index="${index}" data-title="${(h3.title || '').replace(/"/g, '&quot;')}" contenteditable="true"
                     style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.9; text-align: left; outline: none; cursor: text; color: #333;"
                     onfocus="this.style.background='#fafafa'" onblur="this.style.background='transparent'">${bodyContent}</p>`;
