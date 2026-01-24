@@ -2310,22 +2310,39 @@
                 sources: content.sources || []
             };
 
-            // Helper to extract body text from any h3 object (uses global extractTextFromObj)
+            // Helper to extract body text from any h3 object
             function extractH3Body(h3) {
+                console.log('[Spotlight] extractH3Body input:', h3);
                 if (!h3 || typeof h3 !== 'object') return typeof h3 === 'string' ? h3 : '';
-                // Check common body keys
+
+                // Check common body keys FIRST (priority order)
                 const bodyKeys = ['body', 'content', 'text', 'paragraph', 'description', 'summary', 'details'];
                 for (const key of bodyKeys) {
                     if (h3[key] && typeof h3[key] === 'string' && h3[key].length > 10) {
+                        console.log('[Spotlight] Found body in key:', key, h3[key].substring(0, 50));
                         return h3[key];
                     }
                 }
-                // If no body key found, try to get any long string value
-                const stringVals = Object.values(h3).filter(v => typeof v === 'string' && v.length > 30);
-                if (stringVals.length > 0) return stringVals[0];
-                // Last resort: use recursive text extraction (NEVER return raw JSON)
-                const extracted = extractTextFromObj(h3);
-                if (extracted && extracted.length > 10) return extracted;
+
+                // If no body key found, try to get any long string value (but NOT the title)
+                const stringVals = Object.entries(h3)
+                    .filter(([k, v]) => typeof v === 'string' && v.length > 30 && !['title', 'h3', 'heading', 'header'].includes(k))
+                    .map(([k, v]) => v);
+                if (stringVals.length > 0) {
+                    console.log('[Spotlight] Using longest string value:', stringVals[0].substring(0, 50));
+                    return stringVals[0];
+                }
+
+                // Last resort: combine ALL string values except title-like keys
+                const allStrings = Object.entries(h3)
+                    .filter(([k, v]) => typeof v === 'string' && v.length > 5 && !['title', 'h3', 'heading', 'header', 'url', 'source'].includes(k))
+                    .map(([k, v]) => v);
+                if (allStrings.length > 0) {
+                    console.log('[Spotlight] Combining all strings:', allStrings.length);
+                    return allStrings.join(' ');
+                }
+
+                console.log('[Spotlight] No body found in h3');
                 return '';
             }
 
@@ -2415,19 +2432,37 @@
             if (!obj) return '';
             if (typeof obj === 'string') return obj;
             if (typeof obj === 'number') return '';
+
             if (Array.isArray(obj)) {
-                return obj.map(item => extractTextFromObj(item, depth + 1)).filter(t => t.length > 10).join('\n\n');
+                // For arrays, extract from each item and join
+                const results = obj.map(item => {
+                    if (typeof item === 'object' && item.body) return item.body;
+                    if (typeof item === 'object' && item.content) return item.content;
+                    if (typeof item === 'object' && item.text) return item.text;
+                    return extractTextFromObj(item, depth + 1);
+                }).filter(t => t && t.length > 10);
+                return results.join('\n\n');
             }
+
             if (typeof obj === 'object') {
+                // Priority: look for body/content/text keys first
                 const priorityKeys = ['body', 'content', 'text', 'paragraph', 'summary', 'description'];
                 for (const key of priorityKeys) {
                     if (obj[key] && typeof obj[key] === 'string' && obj[key].length > 20) {
                         return obj[key];
                     }
                 }
+
+                // If object has h3s array, extract body from each
+                if (obj.h3s && Array.isArray(obj.h3s)) {
+                    return obj.h3s.map(h3 => h3.body || h3.content || h3.text || '').filter(t => t.length > 10).join('\n\n');
+                }
+
+                // Collect all text values, skipping metadata keys
                 const texts = [];
                 for (const [key, val] of Object.entries(obj)) {
-                    if (['subheader', 'title', 'heading', 'url', 'source', 'link', 'id', 'type', 'h3', 'header'].includes(key)) continue;
+                    // Skip metadata keys
+                    if (['subheader', 'title', 'heading', 'url', 'source', 'link', 'id', 'type', 'h3', 'header', 'agent_takeaway', 'sources'].includes(key)) continue;
                     const extracted = extractTextFromObj(val, depth + 1);
                     if (extracted && extracted.length > 20) texts.push(extracted);
                 }
