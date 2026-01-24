@@ -2310,23 +2310,54 @@
                 sources: content.sources || []
             };
 
+            // Helper to extract body text from any h3 object
+            function extractH3Body(h3) {
+                if (!h3 || typeof h3 !== 'object') return typeof h3 === 'string' ? h3 : '';
+                // Check common body keys
+                const bodyKeys = ['body', 'content', 'text', 'paragraph', 'description', 'summary', 'details'];
+                for (const key of bodyKeys) {
+                    if (h3[key] && typeof h3[key] === 'string' && h3[key].length > 10) {
+                        return h3[key];
+                    }
+                }
+                // If no body key found, try to get any long string value
+                const stringVals = Object.values(h3).filter(v => typeof v === 'string' && v.length > 30);
+                if (stringVals.length > 0) return stringVals[0];
+                // Last resort: stringify but only if it looks like content
+                const jsonStr = JSON.stringify(h3);
+                if (jsonStr.length > 100 && !jsonStr.includes('"url"')) {
+                    // Extract text between quotes as fallback
+                    const matches = jsonStr.match(/"([^"]{30,})"/g);
+                    if (matches) return matches.map(m => m.slice(1, -1)).join(' ');
+                }
+                return '';
+            }
+
             // Handle different h3s formats
             if (Array.isArray(content.h3s)) {
                 normalized.h3s = content.h3s.map(h3 => ({
-                    title: h3.title || h3.h3 || h3.heading || '',
-                    body: h3.body || h3.content || h3.text || h3.paragraph || ''
-                }));
+                    title: h3.title || h3.h3 || h3.heading || h3.header || '',
+                    body: extractH3Body(h3)
+                })).filter(h3 => h3.body.length > 10);
             } else if (content.body && typeof content.body === 'string') {
                 // Single body field - split into paragraphs
                 normalized.h3s = [{ title: 'Overview', body: content.body }];
             } else if (content.content && typeof content.content === 'string') {
                 normalized.h3s = [{ title: 'Overview', body: content.content }];
+            } else if (content.text && typeof content.text === 'string') {
+                normalized.h3s = [{ title: 'Overview', body: content.text }];
             } else if (content.sections && Array.isArray(content.sections)) {
                 // Alternative "sections" key
                 normalized.h3s = content.sections.map(s => ({
-                    title: s.title || s.heading || '',
-                    body: s.body || s.content || s.text || ''
-                }));
+                    title: s.title || s.heading || s.header || '',
+                    body: extractH3Body(s)
+                })).filter(s => s.body.length > 10);
+            } else if (content.paragraphs && Array.isArray(content.paragraphs)) {
+                // Alternative "paragraphs" key
+                normalized.h3s = content.paragraphs.map((p, i) => ({
+                    title: '',
+                    body: typeof p === 'string' ? p : extractH3Body(p)
+                })).filter(p => p.body.length > 10);
             } else {
                 // Try to extract any string values as content
                 const bodyTexts = Object.values(content)
@@ -2335,15 +2366,40 @@
 
                 if (bodyTexts.length > 0) {
                     normalized.h3s = bodyTexts.map((text, i) => ({
-                        title: `Section ${i + 1}`,
+                        title: '',
                         body: text
                     }));
                 }
             }
 
-            // If still no h3s, create a placeholder
+            // If still no h3s, try deeper extraction
             if (normalized.h3s.length === 0) {
-                normalized.h3s = [{ title: 'Overview', body: 'Content could not be parsed. Please try regenerating.' }];
+                // Try to find any nested arrays or objects with text
+                const findText = (obj, depth = 0) => {
+                    if (depth > 3) return [];
+                    let texts = [];
+                    if (Array.isArray(obj)) {
+                        obj.forEach(item => texts = texts.concat(findText(item, depth + 1)));
+                    } else if (typeof obj === 'object' && obj !== null) {
+                        Object.values(obj).forEach(val => {
+                            if (typeof val === 'string' && val.length > 50 && !val.startsWith('http')) {
+                                texts.push(val);
+                            } else {
+                                texts = texts.concat(findText(val, depth + 1));
+                            }
+                        });
+                    }
+                    return texts;
+                };
+                const deepTexts = findText(content);
+                if (deepTexts.length > 0) {
+                    normalized.h3s = deepTexts.slice(0, 5).map(text => ({ title: '', body: text }));
+                }
+            }
+
+            // Final fallback
+            if (normalized.h3s.length === 0) {
+                normalized.h3s = [{ title: '', body: 'Content could not be parsed. Please try regenerating.' }];
             }
 
             console.log('[Spotlight] Normalized result:', normalized);
