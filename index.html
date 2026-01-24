@@ -3027,12 +3027,7 @@
                 html += `</div>`;
             }
 
-            // INTRODUCTION SECTION (AI Welcome)
-            html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
-            html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Welcome</h3>';
-            html += `<div id="introContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${introContent}</div>`;
-            html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('intro')">Edit</button>`;
-            html += `</div>`;
+            // INTRODUCTION SECTION removed per user request - BriteCo Brief Intro from Step 1 is used instead
 
             // BRITE SPOT SECTION (if available)
             if (briteSpotDisplayContent && briteSpotDisplayContent !== 'Content not available') {
@@ -3592,14 +3587,28 @@
             emailSection.style.display = 'none';
 
             try {
-                // Gather all newsletter content
+                // Gather all newsletter content from editable boxes (user may have edited)
+                const spotlightBox = document.getElementById('spotlightContentBox');
+                let spotlightExport = '';
+                if (spotlightBox && spotlightBox.innerHTML) {
+                    // User edited content in Step 5 - use that
+                    spotlightExport = {
+                        subheader: generatedSpotlightSubheader || (spotlightGeneratedContent?.subheader || 'Industry Spotlight'),
+                        body: spotlightBox.innerHTML
+                    };
+                } else if (generatedSpotlightContent) {
+                    spotlightExport = generatedSpotlightContent;
+                } else if (spotlightGeneratedContent) {
+                    spotlightExport = spotlightGeneratedContent;
+                }
+
                 const content = {
                     header_intro: document.getElementById('headerIntroContentBox')?.innerHTML || headerIntroContent || '',
                     introduction: document.getElementById('introContentBox')?.innerHTML || generatedIntroContent || '',
                     brite_spot: document.getElementById('briteSpotContentBox')?.innerHTML || briteSpotRewritten || briteSpotContent || '',
                     curious_claims: document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '',
                     roundup: document.getElementById('roundupContentBox')?.innerHTML || generatedRoundupContent || '',
-                    spotlight: generatedSpotlightContent || spotlightGeneratedContent || '',
+                    spotlight: spotlightExport,
                     agent_tips: generatedTipsContent || ''
                 };
 

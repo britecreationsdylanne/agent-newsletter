@@ -2728,8 +2728,41 @@ def export_to_docs():
         # Build document content from newsletter sections
         requests_list = []
 
+        # Helper to convert HTML to plain text
+        def html_to_plain_text(html_content):
+            if not html_content:
+                return ''
+            import re
+            text = str(html_content)
+            # Convert links: <a href="url">text</a> -> text (url)
+            text = re.sub(r'<a[^>]*href=["\']([^"\']*)["\'][^>]*>([^<]*)</a>', r'\2 (\1)', text)
+            # Convert <li> to bullet points
+            text = re.sub(r'<li[^>]*>', '• ', text)
+            text = re.sub(r'</li>', '\n', text)
+            # Convert <p> to paragraphs
+            text = re.sub(r'<p[^>]*>', '', text)
+            text = re.sub(r'</p>', '\n\n', text)
+            # Remove all other HTML tags
+            text = re.sub(r'<[^>]+>', '', text)
+            # Decode HTML entities
+            text = text.replace('&amp;', '&')
+            text = text.replace('&lt;', '<')
+            text = text.replace('&gt;', '>')
+            text = text.replace('&quot;', '"')
+            text = text.replace('&#39;', "'")
+            text = text.replace('&nbsp;', ' ')
+            # Remove ** markdown bold markers
+            text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+            # Clean up whitespace
+            text = re.sub(r'\n{3,}', '\n\n', text)
+            return text.strip()
+
         # Helper to add text with formatting
         def add_text(text, bold=False, heading=False, index_offset=[1]):
+            if not text:
+                return
+            # Convert HTML to plain text
+            text = html_to_plain_text(text)
             if not text:
                 return
             text = text.strip() + '\n\n'
@@ -2935,8 +2968,16 @@ def send_doc_email():
         from_email = os.environ.get('SENDGRID_FROM_EMAIL') or os.environ.get('_SENDGRID_FROM_EMAIL') or 'marketing@brite.co'
         from_name = os.environ.get('SENDGRID_FROM_NAME') or os.environ.get('_SENDGRID_FROM_NAME') or 'BriteCo Brief'
 
+        # Debug logging
+        safe_print(f"[API] SendGrid API key length: {len(sendgrid_api_key) if sendgrid_api_key else 0}")
+        safe_print(f"[API] SendGrid from: {from_email} ({from_name})")
+        safe_print(f"[API] Recipients: {recipients}")
+
         if not sendgrid_api_key:
             return jsonify({"success": False, "error": "SendGrid API key not configured"}), 500
+
+        if len(sendgrid_api_key) < 20:
+            safe_print(f"[API] WARNING: SendGrid API key appears too short ({len(sendgrid_api_key)} chars)")
 
         sg = sendgrid.SendGridAPIClient(api_key=sendgrid_api_key)
 
@@ -2961,18 +3002,21 @@ def send_doc_email():
                 </div>
                 """
 
+                # Use simpler Mail constructor for reliability
                 message = Mail(
-                    from_email=Email(from_email, from_name),
-                    to_emails=To(recipient),
+                    from_email=(from_email, from_name),
+                    to_emails=recipient,
                     subject=f"Agent Newsletter ({month} {year}) - Ready for Review",
-                    html_content=HtmlContent(email_html)
+                    html_content=email_html
                 )
 
                 response = sg.send(message)
                 safe_print(f"[API] Email sent to {recipient}, status: {response.status_code}")
                 emails_sent.append(recipient)
             except Exception as email_error:
+                import traceback
                 safe_print(f"[API] Failed to send to {recipient}: {email_error}")
+                safe_print(f"[API] Email error traceback: {traceback.format_exc()}")
                 email_errors.append(str(email_error))
 
         if emails_sent:
