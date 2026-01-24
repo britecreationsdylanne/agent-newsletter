@@ -1957,11 +1957,17 @@ Output ONLY the Brite Spot text, no title or labels."""
 Write the "Curious Claims" section based on this research.
 
 Requirements:
-- 2-3 short paragraphs
-- Maximum 200 words
+- EXACTLY 2-3 distinct paragraphs (each wrapped in <p> tags)
+- Each paragraph should be 2-4 sentences
+- Maximum 200 words total
 - Playful, storytelling tone (puns and wordplay welcome)
 - Use vivid, specific details (names, places, dollar amounts)
 - End with a practical takeaway for agents
+
+PARAGRAPH STRUCTURE:
+- Paragraph 1: The hook and main story setup (who, what, where)
+- Paragraph 2: The twist/absurdity/resolution (what happened, why it's memorable)
+- Paragraph 3 (optional): Brief agent takeaway or amusing insight
 
 {claims_style}
 
@@ -1978,7 +1984,12 @@ DO: "A driver in western North Carolina recently got the surprise of her life wh
 
 {style_guide}
 
-Output ONLY the section text, no title or labels."""
+OUTPUT FORMAT:
+<p>First paragraph content here...</p>
+<p>Second paragraph content here...</p>
+<p>Optional third paragraph...</p>
+
+Output ONLY the paragraphs in <p> tags, no title or labels."""
 
             claims_result = claude_client.generate_content(
                 prompt=claims_prompt,
@@ -3122,8 +3133,12 @@ def send_to_ontraport():
         if result.get('success'):
             return jsonify({
                 "success": True,
-                "message": "Newsletter sent to Ontraport",
-                "email_id": result.get('email_id')
+                "message": "Newsletter campaign created in Ontraport",
+                "email_id": result.get('email_id'),
+                "message_id": result.get('message_id'),
+                "campaign_id": result.get('campaign_id'),
+                "preview_url": result.get('preview_url'),
+                "status": result.get('status', 'draft')
             })
         else:
             return jsonify({

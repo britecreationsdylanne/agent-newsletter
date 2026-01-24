@@ -1299,8 +1299,8 @@
                         <div>
                             <div style="font-weight: 600; color: #1e40af; margin-bottom: 5px;">Images Auto-Sized for Newsletter</div>
                             <div style="font-size: 14px; color: #64748b; line-height: 1.5;">
-                                Generated images will be automatically resized to the correct dimensions for hosting on Ontraport:
-                                <strong>Brite Spot (480×260px)</strong>, <strong>Claims (480×260px)</strong>, <strong>Spotlight (480×260px)</strong>, <strong>Tips (480×260px)</strong>
+                                Generated images will be automatically resized to the correct dimensions for the newsletter template:
+                                <strong>All sections (180×180px square)</strong>
                             </div>
                         </div>
                     </div>
@@ -1624,7 +1624,9 @@
 
             <!-- Editing Instructions -->
             <div style="background: #e0f2fe; border: 2px solid #0284c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="margin: 0; font-size: 14px; color: #0c4a6e;"><strong>✏️ Live Editing:</strong> Click any text in the preview below to edit it directly. Changes are automatically saved!</p>
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #0c4a6e;"><strong>✏️ Live Editing:</strong> Click any text in the preview below to edit it directly.</p>
+                <button class="btn" onclick="savePreviewEdits()" style="background: #0284c7; padding: 10px 20px; font-size: 14px;">💾 Save Changes to HTML</button>
+                <span id="saveStatus" style="margin-left: 10px; font-size: 14px; color: #166534; display: none;">✓ Changes saved!</span>
             </div>
 
             <!-- Subject Line & Preheader Display -->
@@ -2602,6 +2604,20 @@
                 });
             });
 
+            // If no .spotlight-section-body elements found, get content from the main container
+            // This handles the case where body is already HTML formatted (with <p> tags)
+            if (spotlightGeneratedContent.h3s.length === 0) {
+                const bodyEditable = document.getElementById('spotlightBodyEditable');
+                if (bodyEditable) {
+                    const bodyContent = bodyEditable.innerHTML.trim();
+                    if (bodyContent && !bodyContent.includes('No content sections available')) {
+                        // Store as body field for cleanContentForDisplay to handle
+                        spotlightGeneratedContent.body = bodyContent;
+                        console.log('[Spotlight] Saved body from container:', bodyContent.substring(0, 100));
+                    }
+                }
+            }
+
             // Save agent takeaway from contenteditable
             const takeawayEl = document.getElementById('spotlightTakeawayEditable');
             if (takeawayEl) {
@@ -2972,21 +2988,28 @@
 
                 // Handle spotlight object structure: { subheader, h3s: [{ h3, body }] }
                 if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
-                    if (content.h3s && Array.isArray(content.h3s)) {
+                    if (content.h3s && Array.isArray(content.h3s) && content.h3s.length > 0) {
                         // Spotlight format - extract body paragraphs from h3s array with proper spacing
                         let paragraphs = [];
                         content.h3s.forEach(h3Item => {
-                            if (h3Item.body) {
-                                paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${h3Item.body}</p>`);
-                            } else if (h3Item.content) {
-                                paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${h3Item.content}</p>`);
-                            } else if (h3Item.text) {
-                                paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${h3Item.text}</p>`);
+                            const bodyText = h3Item.body || h3Item.content || h3Item.text || '';
+                            if (bodyText) {
+                                // Check if already HTML formatted
+                                if (typeof bodyText === 'string' && (bodyText.includes('<p') || bodyText.includes('<div'))) {
+                                    paragraphs.push(bodyText);  // Use directly
+                                } else {
+                                    paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${bodyText}</p>`);
+                                }
                             }
                         });
                         contentStr = paragraphs.join('');
                     } else if (content.body) {
-                        contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.body}</p>`;
+                        // Check if body is already HTML formatted (contains <p> or <div> tags)
+                        if (typeof content.body === 'string' && (content.body.includes('<p') || content.body.includes('<div'))) {
+                            contentStr = content.body;  // Use directly without re-wrapping
+                        } else {
+                            contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.body}</p>`;
+                        }
                     } else if (content.content) {
                         contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.content}</p>`;
                     } else if (content.text) {
@@ -5170,7 +5193,7 @@
 
         // Copy HTML code to clipboard
         function copyHTMLCode() {
-            const html = generateNewsletterHTML();
+            const html = getFinalNewsletterHTML();
             navigator.clipboard.writeText(html).then(() => {
                 const toast = document.createElement('div');
                 toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
@@ -5234,6 +5257,7 @@
                 spotlightText = '',
                 spotlightImage = '',
                 spotlightH2s = [],
+                tipsImage = '',
                 tipsIntro = '',
                 tipsItems = [],
                 ctaUrl = 'https://brite.co/agents',
@@ -5253,6 +5277,25 @@
                 ctaBg: 'https://brite.co/wp-content/uploads/2025/09/section-bg.png',
                 checkmark: 'https://brite.co/wp-content/uploads/2025/09/tickk.png',
                 blankImage: 'https://brite.co/wp-content/uploads/2025/09/blank-image.png'
+            };
+
+            // Helper to format claims text with proper paragraph spacing
+            const formatClaimsText = (text) => {
+                if (!text) return '';
+                // If text already has <p> tags, ensure they have proper margins
+                if (text.includes('<p')) {
+                    // Replace existing <p> tags with properly styled ones
+                    return text.replace(/<p([^>]*)>/gi, '<p$1 style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">');
+                }
+                // If plain text, split by double newlines and wrap in paragraphs
+                const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
+                if (paragraphs.length > 1) {
+                    return paragraphs.map(p =>
+                        `<p style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${p.trim()}</p>`
+                    ).join('');
+                }
+                // Single paragraph
+                return `<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${text}</p>`;
             };
 
             // Helper to generate bullet items with teal circles
@@ -5494,10 +5537,10 @@ ${generateBulletItems(briteSpotBullets)}
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tr>
 <td width="180" valign="top" class="mobile-stack mobile-stack-padding" style="padding-right: 25px;">
-<img src="${claimsImage || assets.blankImage}" width="180" alt="Curious Claims" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<img src="${claimsImage || assets.blankImage}" width="180" alt="Curious Claims" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px; margin-bottom: 15px;" class="mobile-img-full">
 </td>
 <td valign="top" class="mobile-stack">
-<div class="dark-text-secondary" style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${claimsText}</div>
+<div class="dark-text-secondary claims-content" style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${formatClaimsText(claimsText)}</div>
 </td>
 </tr>
 </table>
@@ -5556,8 +5599,8 @@ ${generateRoundupItems(roundupItems)}
 <td valign="top" class="mobile-stack" style="padding-right: 25px;">
 ${spotlightSubheader ? `<p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${spotlightSubheader}</p>` : ''}
 </td>
-<td width="180" valign="top" class="mobile-stack">
-<img src="${spotlightImage || assets.blankImage}" width="180" alt="Spotlight" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<td width="180" valign="top" class="mobile-stack mobile-stack-padding">
+<img src="${spotlightImage || assets.blankImage}" width="180" alt="Spotlight" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px; margin-bottom: 15px;" class="mobile-img-full">
 </td>
 </tr>
 <!-- Full width continuation -->
@@ -5565,7 +5608,7 @@ ${spotlightSubheader ? `<p class="dark-text-secondary" style="margin: 0; font-fa
 <td colspan="2" style="padding-top: 20px;">
 ${spotlightText ? `<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${spotlightText}</p>` : ''}
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.map(section => `
-<h3 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 17px; line-height: 24px; font-weight: 700; color: #282D3E;">${section.h3 || section.title || ''}</h3>
+<h3 class="dark-text" style="margin: 20px 0 12px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 20px; line-height: 28px; font-weight: 700; color: #282D3E;"><strong>${section.h3 || section.title || ''}</strong></h3>
 <p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
 `).join('') : ''}
 </td>
@@ -5599,8 +5642,8 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.map(section => `
 <td valign="top" class="mobile-stack" style="padding-right: 25px;">
 ${tipsIntro ? `<p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${tipsIntro}</p>` : ''}
 </td>
-<td width="180" valign="top" class="mobile-stack">
-<img src="${assets.blankImage}" width="180" alt="Agent Advantage" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<td width="180" valign="top" class="mobile-stack mobile-stack-padding">
+<img src="${tipsImage || assets.blankImage}" width="180" alt="Agent Advantage" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px; margin-bottom: 15px;" class="mobile-img-full">
 </td>
 </tr>
 <!-- Tips with checkmarks -->
@@ -5798,6 +5841,7 @@ ${generateTipsItems(tipsItems)}
                     ...h2,
                     body: convertMarkdownLinksToHTML(h2.body || h2.content || '')
                 })),
+                tipsImage: generatedImages.tips?.url || '',
                 tipsIntro: convertMarkdownLinksToHTML(tipsIntro),
                 tipsItems: tipsItems.map(tip => ({
                     title: tip.title,
@@ -5866,8 +5910,8 @@ ${generateTipsItems(tipsItems)}
             originalButton.disabled = true;
 
             try {
-                console.log('[ONTRAPORT] Generating newsletter HTML...');
-                const html = generateNewsletterHTML();
+                console.log('[ONTRAPORT] Getting final newsletter HTML...');
+                const html = getFinalNewsletterHTML();
 
                 console.log('[ONTRAPORT] Sending to backend...');
                 const response = await fetch(`${API_BASE}/api/push-to-ontraport`, {
@@ -5884,13 +5928,28 @@ ${generateTipsItems(tipsItems)}
                 console.log('[ONTRAPORT] Response:', data);
 
                 if (data.success) {
-                    // Show prominent success message
-                    alert('✅ SUCCESS!\n\n' +
+                    // Show prominent success message with preview link
+                    const previewUrl = data.preview_url || '';
+                    let successMsg = '✅ SUCCESS!\n\n' +
                           'Your newsletter has been pushed to Ontraport!\n\n' +
-                          '📧 Campaign: ' + subject + '\n' +
-                          '📅 Month: ' + (selectedMonth || 'Newsletter') + '\n\n' +
-                          'You can now find it in your Ontraport messages and schedule it for sending.');
-                    console.log('✅ Ontraport campaign created:', data.data);
+                          '📧 Subject: ' + subject + '\n' +
+                          '📅 Month: ' + (selectedMonth || 'Newsletter') + '\n' +
+                          '📋 Status: Draft (ready for review)\n\n';
+
+                    if (previewUrl) {
+                        successMsg += '🔗 Preview URL:\n' + previewUrl + '\n\n';
+                    }
+
+                    successMsg += 'You can now find it in your Ontraport messages and schedule it for sending.';
+
+                    alert(successMsg);
+
+                    // Also open preview URL in new tab if available
+                    if (previewUrl && confirm('Open Ontraport to view your campaign?')) {
+                        window.open(previewUrl, '_blank');
+                    }
+
+                    console.log('✅ Ontraport campaign created:', data);
                 } else {
                     alert('❌ Error pushing to Ontraport:\n\n' + (data.error || 'Unknown error'));
                     console.error('❌ Ontraport error:', data);
@@ -6016,6 +6075,9 @@ ${generateTipsItems(tipsItems)}
             console.log('[EDIT] Enabled editing on', textElements.length, 'elements');
         }
 
+        // Global variable to store edited HTML
+        let savedEditedHTML = null;
+
         // Update the stored HTML after edits
         function updateNewsletterHTML() {
             const preview = document.getElementById('newsletterPreview');
@@ -6023,8 +6085,41 @@ ${generateTipsItems(tipsItems)}
 
             const updatedHTML = preview.innerHTML;
             document.getElementById('htmlCode').textContent = updatedHTML;
+            savedEditedHTML = updatedHTML;
 
             console.log('[EDIT] HTML updated with edited content');
+        }
+
+        // Save preview edits (called by Save Changes button)
+        function savePreviewEdits() {
+            const preview = document.getElementById('newsletterPreview');
+            if (!preview) {
+                alert('No preview to save!');
+                return;
+            }
+
+            // Store the edited HTML
+            savedEditedHTML = preview.innerHTML;
+            document.getElementById('htmlCode').textContent = savedEditedHTML;
+
+            // Show success indicator
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'inline';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+
+            console.log('[SAVE] Preview edits saved to HTML, length:', savedEditedHTML.length);
+        }
+
+        // Get the final HTML (edited or generated)
+        function getFinalNewsletterHTML() {
+            if (savedEditedHTML) {
+                console.log('[HTML] Using saved edited HTML');
+                return savedEditedHTML;
+            }
+            console.log('[HTML] No edits saved, generating fresh HTML');
+            return generateNewsletterHTML();
         }
 
         async function sendTestEmail() {
