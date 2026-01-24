@@ -15,7 +15,8 @@ class GeminiClient:
     """Wrapper for Google Gemini API (Nano Banana image generation)"""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("GOOGLE_AI_API_KEY")
+        # Check both with and without underscore prefix for Secret Manager compatibility
+        self.api_key = api_key or os.getenv("GOOGLE_AI_API_KEY") or os.getenv("_GOOGLE_AI_API_KEY")
         self.client = None
         self.default_model = os.getenv("DEFAULT_IMAGE_MODEL", "gemini-2.5-flash-image")
 
@@ -25,6 +26,7 @@ class GeminiClient:
             print("[OK] Gemini initialized")
         else:
             print("[WARNING] GOOGLE_AI_API_KEY not set - Gemini image generation disabled")
+            print("[WARNING] Checked: GOOGLE_AI_API_KEY and _GOOGLE_AI_API_KEY")
 
     def is_available(self) -> bool:
         """Check if Gemini API is configured"""

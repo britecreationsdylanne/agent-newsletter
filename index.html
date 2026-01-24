@@ -744,10 +744,16 @@
             <h2>⭐ InsurNews Spotlight</h2>
             <p>Search across multiple sources and select 3-5 articles. AI will create a comprehensive feature story.</p>
 
-            <!-- Selected Articles Counter (BriteCo Orange) -->
-            <div id="spotlightSelectionCounter" style="background: #FFF4EB; border: 2px solid #F47920; border-radius: 8px; padding: 12px 20px; margin-bottom: 15px;">
-                <span style="font-weight: 600; color: #C25A10;">📑 Selected: <span id="spotlightSelectedCount">0</span> / 5 articles (min 3)</span>
+            <!-- Selected Articles Counter + Add Custom Link Button (matching Research Dashboard layout) -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div id="spotlightSelectionCounter" style="background: #FFF4EB; border: 2px solid #F47920; border-radius: 8px; padding: 12px 20px;">
+                    <span style="font-weight: 600; color: #C25A10;">📑 Selected: <span id="spotlightSelectedCount">0</span> / 5 articles (min 3)</span>
+                </div>
+                <button class="btn-secondary btn" onclick="showSpotlightUploadModal()" style="padding: 8px 16px; font-size: 13px;">📎 Add Custom Link</button>
             </div>
+
+            <!-- Custom Links Indicator for Spotlight -->
+            <div id="spotlightCustomLinksIndicatorMain" style="display: none; font-size: 12px; color: #059669; background: #d1fae5; padding: 8px 12px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #10b981;"></div>
 
             <!-- Upload Link Modal for Spotlight -->
             <div id="spotlightUploadLinkModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
@@ -845,10 +851,7 @@
 
             <div class="buttons" style="justify-content: space-between; margin-top: 20px;">
                 <button class="btn-secondary btn" onclick="showStep('2-britespot')">← Back to Brite Spot</button>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn-secondary btn" onclick="showSpotlightUploadModal()" style="padding: 8px 16px; font-size: 13px;">📎 Add Custom Link</button>
-                    <button class="btn" id="generateSpotlightBtn" disabled onclick="generateSpotlightContent()" style="padding: 8px 16px;">Generate Spotlight Story →</button>
-                </div>
+                <button class="btn" id="generateSpotlightBtn" disabled onclick="generateSpotlightContent()" style="padding: 8px 16px;">Generate Spotlight Story →</button>
             </div>
         </div>
 
@@ -918,10 +921,13 @@
                 </button>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <p id="researchSectionLabel" style="margin: 0;">Researching for: <strong>Curious Claims</strong> section. Search and select one article below.</p>
                 <button class="btn-secondary btn" onclick="showUploadLinkModal()" style="padding: 8px 16px; font-size: 13px;">📎 Add Custom Link</button>
             </div>
+
+            <!-- Custom Links Indicator for Research Dashboard -->
+            <div id="researchCustomLinksIndicator" style="display: none; font-size: 12px; color: #059669; background: #d1fae5; padding: 8px 12px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #10b981;"></div>
 
             <!-- Upload Link Modal -->
             <div id="uploadLinkModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
@@ -1123,28 +1129,25 @@
                 <!-- Results will be displayed here -->
             </div>
 
-            <!-- Export to Google Docs Section -->
+            <!-- Export to Google Docs & Email Section -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                <h3 style="margin: 0 0 15px 0; color: #008181;">📄 Export to Google Docs</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Export your newsletter content to a Google Doc for review and collaboration.</p>
+                <h3 style="margin: 0 0 10px 0; color: #008181;">📄 Export to Google Docs & Email</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Hit export and once complete, you can auto email the exported link to your team.</p>
 
                 <!-- Primary Export Button -->
-                <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4; margin-bottom: 20px;">
+                <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4;">
                     <span id="exportDocsBtnText">📄 Export to Google Docs</span>
                 </button>
 
-                <!-- Email Notification Section -->
-                <div style="border-top: 1px solid #e5e7eb; padding-top: 15px;">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="sendDocLinkEmail" style="margin-right: 10px; width: 18px; height: 18px;">
-                            <span style="font-size: 14px; font-weight: 600;">Also send email notification with Google Doc link</span>
-                        </label>
-                        <p style="font-size: 12px; color: #9ca3af; margin: 5px 0 0 28px;">When checked, an email will be sent to selected recipients after the Doc is created.</p>
-                    </div>
+                <!-- Export Result (shows after export) -->
+                <div id="exportDocsResult" style="display: none; margin-top: 20px; padding: 15px; border-radius: 6px;"></div>
 
-                    <div id="docEmailInputContainer" style="display: none; margin-bottom: 15px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Select recipients (uncheck to exclude):</label>
+                <!-- Email Section (hidden until export succeeds) -->
+                <div id="emailAfterExportSection" style="display: none; margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #374151;">✉️ Email the Google Doc Link</h4>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Select recipients:</label>
 
                         <!-- Team member checkboxes -->
                         <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
@@ -1168,11 +1171,16 @@
 
                         <!-- Additional emails input -->
                         <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Additional emails (comma-separated):</label>
-                        <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;">
+                        <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px; margin-bottom: 15px;">
+
+                        <!-- Send Email Button -->
+                        <button class="btn" onclick="sendExportEmail()" id="sendExportEmailBtn" style="background: #059669;">
+                            <span id="sendExportEmailBtnText">✉️ Send Email</span>
+                        </button>
+
+                        <div id="emailSendResult" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px;"></div>
                     </div>
                 </div>
-
-                <div id="exportDocsResult" style="display: none; margin-top: 15px; padding: 15px; border-radius: 6px;"></div>
             </div>
 
             <div class="buttons">
@@ -2730,6 +2738,36 @@
         function displayGeneratedContent() {
             const container = document.getElementById('generatedContent');
 
+            // Helper function to recursively extract all text from any object structure
+            function extractTextFromObject(obj, depth = 0) {
+                if (depth > 5) return ''; // Prevent infinite recursion
+                if (!obj) return '';
+                if (typeof obj === 'string') return obj;
+                if (typeof obj === 'number') return '';
+                if (Array.isArray(obj)) {
+                    return obj.map(item => extractTextFromObject(item, depth + 1)).filter(t => t.length > 10).join('\n\n');
+                }
+                if (typeof obj === 'object') {
+                    // Priority keys for content
+                    const priorityKeys = ['body', 'content', 'text', 'paragraph', 'summary', 'description', 'intro', 'tip'];
+                    for (const key of priorityKeys) {
+                        if (obj[key] && typeof obj[key] === 'string' && obj[key].length > 20) {
+                            return obj[key];
+                        }
+                    }
+                    // Try all string values
+                    const texts = [];
+                    for (const [key, val] of Object.entries(obj)) {
+                        // Skip keys that are metadata
+                        if (['subheader', 'h3', 'title', 'heading', 'url', 'source', 'link', 'id', 'type'].includes(key)) continue;
+                        const extracted = extractTextFromObject(val, depth + 1);
+                        if (extracted && extracted.length > 20) texts.push(extracted);
+                    }
+                    return texts.join('\n\n');
+                }
+                return '';
+            }
+
             // Helper function to clean content for display and style links blue
             function cleanContentForDisplay(content, sectionType = null) {
                 if (!content) return 'Content not available';
@@ -2743,28 +2781,50 @@
                         let paragraphs = [];
                         content.h3s.forEach(h3Item => {
                             if (h3Item.body) {
-                                // Clean the body text and wrap in paragraph with good spacing
                                 paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${h3Item.body}</p>`);
+                            } else if (h3Item.content) {
+                                paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${h3Item.content}</p>`);
+                            } else if (h3Item.text) {
+                                paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${h3Item.text}</p>`);
                             }
                         });
                         contentStr = paragraphs.join('');
-                    } else if (content.subheader && content.body) {
-                        // Alternative format with direct body
+                    } else if (content.body) {
                         contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.body}</p>`;
                     } else if (content.content) {
-                        // Handle {content: "..."} format
                         contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.content}</p>`;
+                    } else if (content.text) {
+                        contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.text}</p>`;
+                    } else if (content.sections && Array.isArray(content.sections)) {
+                        // Handle sections array format
+                        let paragraphs = [];
+                        content.sections.forEach(section => {
+                            const text = section.body || section.content || section.text || '';
+                            if (text) paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${text}</p>`);
+                        });
+                        contentStr = paragraphs.join('');
                     } else {
-                        // Unknown object structure - try to extract readable text, not JSON
-                        const values = Object.values(content).filter(v => typeof v === 'string' && v.length > 20);
-                        if (values.length > 0) {
-                            contentStr = values.map(v => `<p style="margin: 0 0 16px 0; line-height: 1.7;">${v}</p>`).join('');
+                        // Use recursive extraction - NEVER return JSON
+                        const extracted = extractTextFromObject(content);
+                        if (extracted && extracted.length > 20) {
+                            contentStr = extracted.split('\n\n').map(p =>
+                                `<p style="margin: 0 0 16px 0; line-height: 1.7;">${p}</p>`
+                            ).join('');
                         } else {
-                            contentStr = JSON.stringify(content);
+                            contentStr = '<p style="margin: 0 0 16px 0; line-height: 1.7; color: #999;">Content could not be parsed. Please try regenerating.</p>';
                         }
                     }
+                } else if (typeof content === 'string') {
+                    contentStr = content;
+                } else if (Array.isArray(content)) {
+                    // Handle array of items
+                    contentStr = content.map(item => {
+                        if (typeof item === 'string') return `<p style="margin: 0 0 16px 0; line-height: 1.7;">${item}</p>`;
+                        const text = extractTextFromObject(item);
+                        return text ? `<p style="margin: 0 0 16px 0; line-height: 1.7;">${text}</p>` : '';
+                    }).filter(p => p).join('');
                 } else {
-                    contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+                    contentStr = '<p style="margin: 0 0 16px 0; line-height: 1.7; color: #999;">Content could not be parsed.</p>';
                 }
 
                 // Fix white text color
@@ -2774,7 +2834,6 @@
                 contentStr = contentStr.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
 
                 // Style all links blue - first remove any existing color styles on links, then add blue
-                // Match <a with any attributes and ensure we add blue styling
                 contentStr = contentStr.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>'); // Remove existing styles
                 contentStr = contentStr.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
 
@@ -2813,16 +2872,29 @@
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('claims')">Edit</button>`;
             html += `</div>`;
 
+            // Helper to make links blue in any text (defined early for use in all sections)
+            function styleLinksBlueEarly(text) {
+                if (!text) return '';
+                // Convert markdown links [text](url) to HTML
+                text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+                // Remove existing styles on links
+                text = text.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
+                // Add blue styling
+                text = text.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
+                return text;
+            }
+
             // NEWS ROUNDUP SECTION (5 bullets)
             html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
             html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Insurance News Roundup</h3>';
             html += '<ul id="roundupContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6; padding-left: 20px;">';
             if (Array.isArray(generatedRoundupContent)) {
                 generatedRoundupContent.forEach(item => {
-                    html += `<li style="margin-bottom: 8px;">${item.summary || item}</li>`;
+                    const itemText = styleLinksBlueEarly(item.summary || item);
+                    html += `<li style="margin-bottom: 8px;">${itemText}</li>`;
                 });
             } else {
-                html += `<li>${generatedRoundupContent || 'News roundup content'}</li>`;
+                html += `<li>${styleLinksBlueEarly(generatedRoundupContent) || 'News roundup content'}</li>`;
             }
             html += '</ul>';
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('roundup')">Edit</button>`;
@@ -2836,17 +2908,30 @@
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('spotlight')">Edit</button>`;
             html += `</div>`;
 
+            // Helper to make links blue in any text
+            function styleLinksBlue(text) {
+                if (!text) return '';
+                // Convert markdown links [text](url) to HTML
+                text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+                // Remove existing styles on links
+                text = text.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
+                // Add blue styling
+                text = text.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
+                return text;
+            }
+
             // AGENT ADVANTAGE SECTION (intro + 5 tips from single article)
             html += '<div style="margin-bottom: 20px;">';
             html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Agent Advantage</h3>';
             html += '<div id="tipsContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">';
             // Handle new format: { intro, tips: [{ title, tip }] }
             if (generatedTipsContent && generatedTipsContent.intro) {
-                html += `<p style="margin-bottom: 15px;">${generatedTipsContent.intro}</p>`;
+                html += `<p style="margin-bottom: 15px;">${styleLinksBlue(generatedTipsContent.intro)}</p>`;
                 html += '<ol style="padding-left: 20px; margin: 0;">';
                 (generatedTipsContent.tips || []).forEach(item => {
                     const title = item.title ? `<strong>${item.title}:</strong> ` : '';
-                    html += `<li style="margin-bottom: 10px;">${title}${item.tip || item}</li>`;
+                    const tipText = styleLinksBlue(item.tip || item);
+                    html += `<li style="margin-bottom: 10px;">${title}${tipText}</li>`;
                 });
                 html += '</ol>';
             } else if (Array.isArray(generatedTipsContent)) {
@@ -2854,11 +2939,12 @@
                 html += '<ol style="padding-left: 20px; margin: 0;">';
                 generatedTipsContent.forEach(item => {
                     const title = item.title ? `<strong>${item.title}:</strong> ` : '';
-                    html += `<li style="margin-bottom: 8px;">${title}${item.tip || item}</li>`;
+                    const tipText = styleLinksBlue(item.tip || item);
+                    html += `<li style="margin-bottom: 8px;">${title}${tipText}</li>`;
                 });
                 html += '</ol>';
             } else {
-                html += `<p>${generatedTipsContent || 'Agent tips content'}</p>`;
+                html += `<p>${styleLinksBlue(generatedTipsContent) || 'Agent tips content'}</p>`;
             }
             html += '</div>';
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('tips')">Edit</button>`;
@@ -3309,35 +3395,22 @@
             }
         });
 
+        // Store last exported doc URL for email sending
+        let lastExportedDocUrl = '';
+        let lastExportedMonth = '';
+        let lastExportedYear = '';
+
         async function exportToGoogleDocs() {
             const btn = document.getElementById('exportDocsBtn');
             const btnText = document.getElementById('exportDocsBtnText');
             const resultDiv = document.getElementById('exportDocsResult');
-
-            const sendEmail = document.getElementById('sendDocLinkEmail')?.checked || false;
-
-            // Gather selected recipients from checkboxes
-            let recipients = [];
-            document.querySelectorAll('.docRecipientCheckbox:checked').forEach(cb => {
-                recipients.push(cb.value);
-            });
-
-            // Add additional emails if provided
-            const additionalEmails = document.getElementById('docAdditionalEmails')?.value.trim() || '';
-            if (additionalEmails) {
-                const extras = additionalEmails.split(',').map(e => e.trim()).filter(e => e.includes('@'));
-                recipients = recipients.concat(extras);
-            }
-
-            if (sendEmail && recipients.length === 0) {
-                alert('Please select at least one recipient or add an email address');
-                return;
-            }
+            const emailSection = document.getElementById('emailAfterExportSection');
 
             // Show loading state
             btn.disabled = true;
             btnText.textContent = 'Exporting...';
             resultDiv.style.display = 'none';
+            emailSection.style.display = 'none';
 
             try {
                 // Gather all newsletter content
@@ -3355,6 +3428,10 @@
                 const year = new Date().getFullYear();
                 const title = `Agent Newsletter (${monthCapitalized}, ${year})`;
 
+                // Store for email sending later
+                lastExportedMonth = monthCapitalized;
+                lastExportedYear = year;
+
                 const response = await fetch(`${API_BASE}/api/export-to-docs`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -3363,14 +3440,17 @@
                         title: title,
                         month: monthCapitalized,
                         year: year,
-                        send_email: sendEmail,
-                        recipients: recipients
+                        send_email: false,  // Don't send email during export
+                        recipients: []
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
+                    // Store the doc URL for later email sending
+                    lastExportedDocUrl = data.doc_url;
+
                     resultDiv.style.display = 'block';
                     resultDiv.style.background = '#d1fae5';
                     resultDiv.style.border = '1px solid #10b981';
@@ -3378,12 +3458,14 @@
                         <p style="margin: 0 0 10px 0; font-weight: 600; color: #065f46;">✓ Export Successful!</p>
                         <p style="margin: 0 0 10px 0; font-size: 14px; color: #047857;">
                             Your newsletter has been exported to Google Docs.
-                            ${data.email_sent ? '<br>Email sent to ' + recipientEmail : ''}
                         </p>
                         <a href="${data.doc_url}" target="_blank" style="display: inline-block; padding: 8px 16px; background: #4285f4; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">
                             📄 Open in Google Docs
                         </a>
                     `;
+
+                    // Show the email section
+                    emailSection.style.display = 'block';
                 } else {
                     resultDiv.style.display = 'block';
                     resultDiv.style.background = '#fee2e2';
@@ -3405,6 +3487,85 @@
             } finally {
                 btn.disabled = false;
                 btnText.textContent = '📄 Export to Google Docs';
+            }
+        }
+
+        // Send email with the exported doc link (called after successful export)
+        async function sendExportEmail() {
+            if (!lastExportedDocUrl) {
+                alert('Please export to Google Docs first');
+                return;
+            }
+
+            const btn = document.getElementById('sendExportEmailBtn');
+            const btnText = document.getElementById('sendExportEmailBtnText');
+            const resultDiv = document.getElementById('emailSendResult');
+
+            // Gather selected recipients from checkboxes
+            let recipients = [];
+            document.querySelectorAll('.docRecipientCheckbox:checked').forEach(cb => {
+                recipients.push(cb.value);
+            });
+
+            // Add additional emails if provided
+            const additionalEmails = document.getElementById('docAdditionalEmails')?.value.trim() || '';
+            if (additionalEmails) {
+                const extras = additionalEmails.split(',').map(e => e.trim()).filter(e => e.includes('@'));
+                recipients = recipients.concat(extras);
+            }
+
+            if (recipients.length === 0) {
+                alert('Please select at least one recipient or add an email address');
+                return;
+            }
+
+            // Show loading state
+            btn.disabled = true;
+            btnText.textContent = 'Sending...';
+            resultDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/send-doc-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        doc_url: lastExportedDocUrl,
+                        month: lastExportedMonth,
+                        year: lastExportedYear,
+                        recipients: recipients
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.style.background = '#d1fae5';
+                    resultDiv.style.border = '1px solid #10b981';
+                    resultDiv.innerHTML = `
+                        <p style="margin: 0; font-weight: 600; color: #065f46;">✓ Email sent to ${recipients.length} recipient${recipients.length > 1 ? 's' : ''}!</p>
+                    `;
+                } else {
+                    resultDiv.style.display = 'block';
+                    resultDiv.style.background = '#fee2e2';
+                    resultDiv.style.border = '1px solid #ef4444';
+                    resultDiv.innerHTML = `
+                        <p style="margin: 0; font-weight: 600; color: #991b1b;">Email Failed</p>
+                        <p style="margin: 5px 0 0 0; font-size: 14px; color: #b91c1c;">${data.error || 'Unknown error'}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Email error:', error);
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = '#fee2e2';
+                resultDiv.style.border = '1px solid #ef4444';
+                resultDiv.innerHTML = `
+                    <p style="margin: 0; font-weight: 600; color: #991b1b;">Email Failed</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #b91c1c;">${error.message}</p>
+                `;
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = '✉️ Send Email';
             }
         }
 
@@ -6035,6 +6196,19 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
         // Counter for unique link IDs
         let customLinkCounter = 0;
 
+        // Update the Research Dashboard custom links indicator
+        function updateResearchCustomLinksIndicator() {
+            const indicator = document.getElementById('researchCustomLinksIndicator');
+            const linksForSection = researchCustomLinks[currentResearchSection] || [];
+
+            if (linksForSection.length > 0) {
+                indicator.style.display = 'block';
+                indicator.innerHTML = `<strong>📎 ${linksForSection.length} custom link${linksForSection.length > 1 ? 's' : ''} added</strong> for this section (shown first in results)`;
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
         async function fetchCustomArticle() {
             const url = document.getElementById('customLinkInput').value.trim();
             const errorDiv = document.getElementById('uploadLinkError');
@@ -6071,6 +6245,13 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
                 if (data.success) {
                     // Add the article to the current results
                     const article = data.article;
+                    article.isCustomLink = true;  // Mark as custom link
+
+                    // Add to persistent custom links for this section
+                    if (!researchCustomLinks[currentResearchSection]) {
+                        researchCustomLinks[currentResearchSection] = [];
+                    }
+                    researchCustomLinks[currentResearchSection].push(article);
 
                     // Ensure perplexity array exists before adding
                     if (!researchResults.perplexity) {
@@ -6087,6 +6268,9 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
                     // Cache for this tab
                     tabSearchState[currentResearchSection].results.perplexity = researchResults.perplexity;
                     tabSearchState[currentResearchSection].htmlCache.perplexity = container.innerHTML;
+
+                    // Update the custom links indicator
+                    updateResearchCustomLinksIndicator();
 
                     // Update the added links list in modal (don't close - allow adding more)
                     customLinkCounter++;
@@ -6176,8 +6360,27 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
             document.getElementById('spotlightUploadLinkModal').style.display = 'flex';
             document.getElementById('spotlightCustomLinkInput').value = '';
             document.getElementById('spotlightUploadLinkError').style.display = 'none';
-            document.getElementById('spotlightAddedLinksList').style.display = 'none';
-            document.getElementById('spotlightAddedLinksContainer').innerHTML = '';
+
+            // Show existing custom links if any
+            const listDiv = document.getElementById('spotlightAddedLinksList');
+            const container = document.getElementById('spotlightAddedLinksContainer');
+            if (spotlightCustomLinks.length > 0) {
+                listDiv.style.display = 'block';
+                container.innerHTML = '';
+                spotlightCustomLinks.forEach(link => {
+                    const linkItem = document.createElement('div');
+                    linkItem.style.cssText = 'padding: 6px 8px; margin-bottom: 4px; background: white; border-radius: 4px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;';
+                    linkItem.innerHTML = `
+                        <span style="color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;" title="${link.url || ''}">${link.title || 'Article'}</span>
+                        <span style="color: #059669; font-size: 10px;">✓</span>
+                    `;
+                    container.appendChild(linkItem);
+                });
+            } else {
+                listDiv.style.display = 'none';
+                container.innerHTML = '';
+            }
+
             document.getElementById('spotlightCustomLinkInput').focus();
         }
 
@@ -6249,7 +6452,7 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
                     // Re-render with merged results (custom links first)
                     const mergedResults = [...spotlightCustomLinks, ...spotlightSearchResults.perplexity.filter(r => !r.isCustomLink)];
 
-                    // Show custom links indicator
+                    // Show custom links indicator in results
                     const resultsDiv = document.getElementById('spotlightPerplexityResults');
                     let customLinksIndicator = resultsDiv.querySelector('.custom-links-indicator');
                     if (!customLinksIndicator) {
@@ -6259,6 +6462,13 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
                         resultsDiv.insertBefore(customLinksIndicator, resultsDiv.firstChild);
                     }
                     customLinksIndicator.innerHTML = `<strong>📎 ${spotlightCustomLinks.length} custom link${spotlightCustomLinks.length > 1 ? 's' : ''} added</strong> (shown first)`;
+
+                    // Also update the main page indicator
+                    const mainIndicator = document.getElementById('spotlightCustomLinksIndicatorMain');
+                    if (mainIndicator) {
+                        mainIndicator.style.display = 'block';
+                        mainIndicator.innerHTML = `<strong>📎 ${spotlightCustomLinks.length} custom link${spotlightCustomLinks.length > 1 ? 's' : ''} added</strong> (shown first in results)`;
+                    }
 
                     displaySpotlightResults(mergedResults, 'spotlightPerplexityResults', false);
 
@@ -6375,6 +6585,9 @@ BriteCo | 350 Lincoln Road, Suite 310 | Miami Beach, FL 33139
             // Re-attach click handlers and highlight existing selections
             reattachResultClickHandlers();
             highlightExistingSelection(section);
+
+            // Update custom links indicator for this tab
+            updateResearchCustomLinksIndicator();
 
             // Update progress tracker and next button
             updateSelectionProgress();

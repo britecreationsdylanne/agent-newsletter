@@ -2888,6 +2888,92 @@ def export_to_docs():
         safe_print(f"[API] Export error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+@app.route('/api/send-doc-email', methods=['POST'])
+def send_doc_email():
+    """Send email with Google Doc link (separate from export)"""
+    try:
+        data = request.json
+        doc_url = data.get('doc_url', '')
+        month = data.get('month', '')
+        year = data.get('year', datetime.now().year)
+        recipients = data.get('recipients', [])
+
+        if not doc_url:
+            return jsonify({"success": False, "error": "No document URL provided"}), 400
+
+        if not recipients:
+            return jsonify({"success": False, "error": "No recipients provided"}), 400
+
+        safe_print(f"[API] Sending doc email to {len(recipients)} recipients")
+
+        if not SENDGRID_AVAILABLE:
+            return jsonify({"success": False, "error": "SendGrid not available"}), 500
+
+        # Check both with and without underscore prefix for Secret Manager
+        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY') or os.environ.get('_SENDGRID_API_KEY')
+        from_email = os.environ.get('SENDGRID_FROM_EMAIL') or os.environ.get('_SENDGRID_FROM_EMAIL') or 'marketing@brite.co'
+        from_name = os.environ.get('SENDGRID_FROM_NAME') or os.environ.get('_SENDGRID_FROM_NAME') or 'BriteCo Brief'
+
+        if not sendgrid_api_key:
+            return jsonify({"success": False, "error": "SendGrid API key not configured"}), 500
+
+        sg = sendgrid.SendGridAPIClient(api_key=sendgrid_api_key)
+
+        emails_sent = []
+        email_errors = []
+
+        for recipient in recipients:
+            try:
+                email_html = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #008181;">Agent Newsletter Ready for Review</h2>
+                    <p>Hello,</p>
+                    <p>The <strong>{month} {year}</strong> Agent Newsletter has been exported to Google Docs and is ready for your review.</p>
+                    <p style="margin: 20px 0;">
+                        <a href="{doc_url}" style="background: #008181; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                            Open Google Doc
+                        </a>
+                    </p>
+                    <p style="color: #666; font-size: 14px;">Or copy this link: {doc_url}</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="color: #999; font-size: 12px;">Sent by BriteCo Brief Newsletter Generator</p>
+                </div>
+                """
+
+                message = Mail(
+                    from_email=Email(from_email, from_name),
+                    to_emails=To(recipient),
+                    subject=f"Agent Newsletter ({month} {year}) - Ready for Review",
+                    html_content=HtmlContent(email_html)
+                )
+
+                response = sg.send(message)
+                safe_print(f"[API] Email sent to {recipient}, status: {response.status_code}")
+                emails_sent.append(recipient)
+            except Exception as email_error:
+                safe_print(f"[API] Failed to send to {recipient}: {email_error}")
+                email_errors.append(str(email_error))
+
+        if emails_sent:
+            return jsonify({
+                "success": True,
+                "emails_sent": emails_sent,
+                "errors": email_errors
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": email_errors[0] if email_errors else "Failed to send emails"
+            }), 500
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        safe_print(f"[API] Send doc email error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 # ============================================================================
 # ROUTES - ONTRAPORT
 # ============================================================================
