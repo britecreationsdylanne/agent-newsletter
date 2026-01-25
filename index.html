@@ -705,9 +705,17 @@
                         📋 Newsletter Header Intro <span style="color: #666; font-weight: 400;">(appears below BriteCo Brief header)</span>
                     </label>
                     <textarea id="headerIntroInput" rows="3" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="e.g., Welcome to this month's edition! Here's what's new in insurance..."></textarea>
-                    <div style="margin-top: 8px; font-size: 12px; color: #666;">
-                        This text appears at the top of the newsletter, below the main header and before The Brite Spot section.
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <span style="font-size: 12px; color: #666;">This text appears at the top of the newsletter, below the main header and before The Brite Spot section.</span>
+                        <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteHeaderIntro()">AI Rewrite</button>
                     </div>
+                </div>
+                <div id="headerIntroRewriteResult" style="display: none; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 600; color: #15803d;">AI Rewritten Version</span>
+                        <button class="btn" style="padding: 6px 12px; font-size: 13px;" onclick="useHeaderIntroRewrite()">Use This Version</button>
+                    </div>
+                    <div id="headerIntroRewriteText" style="color: #166534; line-height: 1.6;"></div>
                 </div>
 
                 <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
@@ -715,9 +723,17 @@
                         Brite Spot - Intro Paragraph
                     </label>
                     <textarea id="briteSpotInput" rows="3" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="Enter a short intro paragraph about BriteCo news or updates..."></textarea>
-                    <div style="margin-top: 8px; font-size: 12px; color: #666;">
-                        A brief introduction paragraph that appears before the bullet points.
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <span style="font-size: 12px; color: #666;">A brief introduction paragraph that appears before the bullet points.</span>
+                        <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpotIntro()">AI Rewrite</button>
                     </div>
+                </div>
+                <div id="briteSpotIntroRewriteResult" style="display: none; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 600; color: #15803d;">AI Rewritten Version</span>
+                        <button class="btn" style="padding: 6px 12px; font-size: 13px;" onclick="useBriteSpotIntroRewrite()">Use This Version</button>
+                    </div>
+                    <div id="briteSpotIntroRewriteText" style="color: #166534; line-height: 1.6;"></div>
                 </div>
 
                 <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
@@ -730,14 +746,7 @@
 • Partner integration news"></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                         <span id="briteSpotWordCount" style="font-size: 13px; color: #666;">0 / 100 words</span>
-                        <div style="display: flex; gap: 10px;">
-                            <select id="briteSpotTone" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
-                                <option value="exciting">Exciting</option>
-                                <option value="informative" selected>Informative</option>
-                                <option value="professional">Professional</option>
-                            </select>
-                            <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpot()">AI Rewrite</button>
-                        </div>
+                        <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpotBullets()">AI Rewrite</button>
                     </div>
                 </div>
 
@@ -1930,11 +1939,16 @@
             }
         }
 
-        async function rewriteBriteSpot() {
-            const input = document.getElementById('briteSpotInput').value.trim();
-            const tone = document.getElementById('briteSpotTone').value;
-            const resultDiv = document.getElementById('briteSpotRewriteResult');
-            const resultText = document.getElementById('briteSpotRewriteText');
+        // Rewrite state variables
+        let headerIntroRewritten = '';
+        let briteSpotIntroRewritten = '';
+        let briteSpotBulletsRewritten = '';
+
+        // Header Intro rewrite
+        async function rewriteHeaderIntro() {
+            const input = document.getElementById('headerIntroInput').value.trim();
+            const resultDiv = document.getElementById('headerIntroRewriteResult');
+            const resultText = document.getElementById('headerIntroRewriteText');
 
             if (!input) {
                 alert('Please enter some content first');
@@ -1945,16 +1959,101 @@
             resultText.innerHTML = '<div class="spinner" style="margin: 10px auto;"></div> Rewriting with AI...';
 
             try {
-                const response = await fetch(`${API_BASE}/api/rewrite-britespot`, {
+                const response = await fetch(`${API_BASE}/api/rewrite-section`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: input, tone: tone })
+                    body: JSON.stringify({ content: input, section: 'header_intro', month: selectedMonth })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    briteSpotRewritten = data.rewritten;
+                    headerIntroRewritten = data.rewritten;
+                    resultText.textContent = data.rewritten;
+                } else {
+                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${data.error}</span>`;
+                }
+            } catch (error) {
+                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+            }
+        }
+
+        function useHeaderIntroRewrite() {
+            if (headerIntroRewritten) {
+                document.getElementById('headerIntroInput').value = headerIntroRewritten;
+                headerIntroContent = headerIntroRewritten;
+                document.getElementById('headerIntroRewriteResult').style.display = 'none';
+            }
+        }
+
+        // Brite Spot Intro Paragraph rewrite
+        async function rewriteBriteSpotIntro() {
+            const input = document.getElementById('briteSpotInput').value.trim();
+            const resultDiv = document.getElementById('briteSpotIntroRewriteResult');
+            const resultText = document.getElementById('briteSpotIntroRewriteText');
+
+            if (!input) {
+                alert('Please enter some content first');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultText.innerHTML = '<div class="spinner" style="margin: 10px auto;"></div> Rewriting with AI...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/rewrite-section`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: input, section: 'brite_spot_intro' })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    briteSpotIntroRewritten = data.rewritten;
+                    resultText.textContent = data.rewritten;
+                } else {
+                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${data.error}</span>`;
+                }
+            } catch (error) {
+                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+            }
+        }
+
+        function useBriteSpotIntroRewrite() {
+            if (briteSpotIntroRewritten) {
+                document.getElementById('briteSpotInput').value = briteSpotIntroRewritten;
+                briteSpotContent = briteSpotIntroRewritten;
+                updateBriteSpotWordCount();
+                document.getElementById('briteSpotIntroRewriteResult').style.display = 'none';
+            }
+        }
+
+        // Brite Spot Bullets rewrite
+        async function rewriteBriteSpotBullets() {
+            const input = document.getElementById('briteSpotBulletsInput').value.trim();
+            const resultDiv = document.getElementById('briteSpotRewriteResult');
+            const resultText = document.getElementById('briteSpotRewriteText');
+
+            if (!input) {
+                alert('Please enter some bullet points first');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultText.innerHTML = '<div class="spinner" style="margin: 10px auto;"></div> Rewriting with AI...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/rewrite-section`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: input, section: 'brite_spot_bullets' })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    briteSpotBulletsRewritten = data.rewritten;
                     resultText.textContent = data.rewritten;
                 } else {
                     resultText.innerHTML = `<span style="color: #dc2626;">Error: ${data.error}</span>`;
@@ -1965,9 +2064,8 @@
         }
 
         function useBriteSpotRewrite() {
-            if (briteSpotRewritten) {
-                document.getElementById('briteSpotInput').value = briteSpotRewritten;
-                briteSpotContent = briteSpotRewritten;
+            if (briteSpotBulletsRewritten) {
+                document.getElementById('briteSpotBulletsInput').value = briteSpotBulletsRewritten;
                 updateBriteSpotWordCount();
                 document.getElementById('briteSpotRewriteResult').style.display = 'none';
             }

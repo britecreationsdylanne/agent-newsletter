@@ -865,6 +865,123 @@ Output ONLY the rewritten content, no labels or explanations."""
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/rewrite-section', methods=['POST'])
+def rewrite_section():
+    """Rewrite newsletter section content using Claude with style guide"""
+    try:
+        data = request.json
+        content = data.get('content', '')
+        section = data.get('section', '')
+        month = data.get('month', 'january')
+
+        if not content:
+            return jsonify({'success': False, 'error': 'Content required'}), 400
+
+        if not section:
+            return jsonify({'success': False, 'error': 'Section type required'}), 400
+
+        print(f"\n[API] Rewriting {section} content...")
+
+        if not claude_client:
+            return jsonify({'success': False, 'error': 'Claude client not available'}), 500
+
+        # Section-specific prompts based on BriteCo Brief Style Guide
+        section_prompts = {
+            'header_intro': f"""Rewrite this newsletter header intro for "The BriteCo Brief" monthly newsletter.
+
+ORIGINAL CONTENT:
+{content}
+
+STYLE GUIDE REQUIREMENTS:
+- Length: 2-4 sentences (50-80 words)
+- Tone: Warm but professional greeting
+- Reference the current month: {month.capitalize()}
+- Tease 2-3 key topics that would be in the issue
+- Can include a call-to-action if there's a priority item
+
+EXAMPLES FROM PAST ISSUES:
+- "Thank you to everyone who completed our annual independent agent survey. We have now picked our winners. Keep reading to find out if you are a recipient and get the latest on the homeowners insurance crisis."
+- "It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history. We look at how the industry is better prepared today, provide tips on retaining small business customers, and examine the curious world of alien abduction insurance."
+
+VOICE:
+- Use contractions naturally (it's, we're, you'll)
+- Be warm and collegial, not stiff
+- Avoid AI-sounding phrases like "In today's ever-evolving landscape"
+- Start with something specific, not generic
+
+Output ONLY the rewritten content, no labels or explanations.""",
+
+            'brite_spot_intro': f"""Rewrite this intro paragraph for "The Brite Spot" section of our agent newsletter.
+
+ORIGINAL CONTENT:
+{content}
+
+STYLE GUIDE REQUIREMENTS:
+- Length: 2-4 sentences
+- Purpose: BriteCo company news, product updates, or promotions
+- Tone: Warm, supportive, promotional (but not pushy)
+- Highlight agent benefits (commissions, ease of use, client value)
+- This appears before bullet points listing specific features/updates
+
+KEY MESSAGING TO EMPHASIZE (if relevant):
+- No claims reporting to CLUE or A-Plus (doesn't impact HO premium)
+- Premium savings of 20-40% over HO riders/floaters
+- AM Best A+ rated carrier
+- 12% recurring commissions
+- 4,500+ agents already appointed
+
+VOICE:
+- Use contractions naturally
+- Sound enthusiastic but genuine
+- "We're excited to announce..." is OK
+- Avoid corporate-speak like "leverage," "solution," "optimize"
+
+Output ONLY the rewritten content, no labels or explanations.""",
+
+            'brite_spot_bullets': f"""Rewrite these bullet points for "The Brite Spot" section.
+
+ORIGINAL CONTENT:
+{content}
+
+STYLE GUIDE REQUIREMENTS:
+- Keep as bullet points (one per line, starting with •)
+- Each bullet: 1-2 concise sentences
+- Focus on value to independent insurance agents
+- Action-oriented when possible
+- Total: 3-5 bullets
+
+VOICE:
+- Clear and direct
+- Highlight benefits, not just features
+- Use active verbs
+- Avoid jargon
+
+Output ONLY the rewritten bullets (one per line starting with •), no labels or explanations."""
+        }
+
+        prompt = section_prompts.get(section)
+        if not prompt:
+            return jsonify({'success': False, 'error': f'Unknown section type: {section}'}), 400
+
+        result = claude_client.generate_content(
+            prompt=prompt,
+            model="claude-opus-4-5-20251101",
+            temperature=0.4,
+            max_tokens=400
+        )
+
+        return jsonify({
+            'success': True,
+            'rewritten': result['content'].strip(),
+            'original': content,
+            'section': section
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] Section rewrite: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ============================================================================
 # ROUTES - INSURNEWS SPOTLIGHT (Multi-Source)
 # ============================================================================
