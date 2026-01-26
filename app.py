@@ -17,6 +17,7 @@ from flask import Flask, request, jsonify, send_from_directory, Response, redire
 from flask_cors import CORS
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 from bs4 import BeautifulSoup
 
 # SendGrid for email
@@ -49,6 +50,9 @@ from config.model_config import get_model_for_task
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
+
+# Fix for running behind Cloud Run's proxy - ensures correct HTTPS URLs
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Session configuration
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
