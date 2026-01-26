@@ -693,8 +693,8 @@
                 auth = firebase.auth();
                 googleProvider = new firebase.auth.GoogleAuthProvider();
 
-                // Restrict to BriteCo domain
-                googleProvider.setCustomParameters({ hd: 'brite.co' });
+                // Restrict to BriteCo domain (optional - uncomment if needed)
+                // googleProvider.setCustomParameters({ hd: 'brite.co' });
 
                 // Auth state listener
                 auth.onAuthStateChanged((user) => {
