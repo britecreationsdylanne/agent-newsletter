@@ -9,10 +9,13 @@ import json
 import re
 import requests
 import base64
+import secrets
 from io import BytesIO
 from datetime import datetime
-from flask import Flask, request, jsonify, send_from_directory, Response
+from functools import wraps
+from flask import Flask, request, jsonify, send_from_directory, Response, redirect, session, url_for
 from flask_cors import CORS
+from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 
@@ -46,6 +49,35 @@ from config.model_config import get_model_for_task
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
+
+# Session configuration
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
+
+# OAuth configuration
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
+# Allowed email domain
+ALLOWED_DOMAIN = 'brite.co'
+
+def login_required(f):
+    """Decorator to require authentication"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect('/auth/login')
+        return f(*args, **kwargs)
+    return decorated_function
+
+def get_current_user():
+    """Get current user from session"""
+    return session.get('user')
 
 # Helper function to safely print Unicode content on Windows
 def safe_print(text):
@@ -107,45 +139,81 @@ except Exception as e:
 
 @app.route('/')
 def serve_demo():
-    """Serve the main app with Firebase config injected"""
-    # Read the HTML file
+    """Serve the main app - redirect to login if not authenticated"""
+    user = get_current_user()
+    if not user:
+        return redirect('/auth/login')
+
     with open('index.html', 'r', encoding='utf-8') as f:
         html = f.read()
 
-    # Build Firebase config from environment variables
-    firebase_config = {
-        'apiKey': os.environ.get('FIREBASE_API_KEY', ''),
-        'authDomain': os.environ.get('FIREBASE_AUTH_DOMAIN', ''),
-        'projectId': os.environ.get('FIREBASE_PROJECT_ID', ''),
-        'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', ''),
-        'messagingSenderId': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', ''),
-        'appId': os.environ.get('FIREBASE_APP_ID', '')
-    }
-
-    # Inject config script before </head>
-    config_script = f'''<script>
-    window.FIREBASE_CONFIG = {json.dumps(firebase_config)};
+    # Inject user info for the frontend
+    user_script = f'''<script>
+    window.AUTH_USER = {json.dumps(user)};
     </script>
 </head>'''
-    html = html.replace('</head>', config_script)
+    html = html.replace('</head>', user_script)
 
     return Response(html, mimetype='text/html')
+
+@app.route('/auth/login')
+def auth_login():
+    """Initiate Google OAuth login"""
+    if get_current_user():
+        return redirect('/')
+    redirect_uri = url_for('auth_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/auth/callback')
+def auth_callback():
+    """Handle Google OAuth callback"""
+    try:
+        token = google.authorize_access_token()
+        user_info = token.get('userinfo')
+        if not user_info:
+            return 'Failed to get user info', 400
+        email = user_info.get('email', '')
+        if not email.endswith(f'@{ALLOWED_DOMAIN}'):
+            return f'''
+            <html>
+            <head><title>Access Denied</title></head>
+            <body style="font-family: system-ui; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: white;">
+                <div style="text-align: center; padding: 40px;">
+                    <h1>Access Denied</h1>
+                    <p>Only @{ALLOWED_DOMAIN} email addresses are allowed.</p>
+                    <p style="color: #718096;">You signed in with: {email}</p>
+                    <a href="/auth/logout" style="color: #31D7CA;">Try a different account</a>
+                </div>
+            </body>
+            </html>
+            ''', 403
+        session['user'] = {
+            'email': email,
+            'name': user_info.get('name', ''),
+            'picture': user_info.get('picture', '')
+        }
+        return redirect('/')
+    except Exception as e:
+        print(f"Auth callback error: {e}")
+        return f'Authentication failed: {str(e)}', 400
+
+@app.route('/auth/logout')
+def auth_logout():
+    """Log out the user"""
+    session.pop('user', None)
+    return redirect('/auth/login')
+
+@app.route('/api/user')
+def get_user():
+    """Get current user info"""
+    user = get_current_user()
+    if user:
+        return jsonify(user)
+    return jsonify(None), 401
 
 @app.route('/health')
 def health_check():
     return jsonify({"status": "healthy", "service": "briteco-brief"})
-
-@app.route('/api/firebase-config')
-def get_firebase_config():
-    """Return Firebase configuration for client-side auth"""
-    return jsonify({
-        'apiKey': os.environ.get('FIREBASE_API_KEY', 'AIzaSyBn9o5b-Pf7bPTRPMmzTYh6kKmKbxB79jA'),
-        'authDomain': os.environ.get('FIREBASE_AUTH_DOMAIN', 'brite-stack.firebaseapp.com'),
-        'projectId': os.environ.get('FIREBASE_PROJECT_ID', 'brite-stack'),
-        'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', 'brite-stack.firebasestorage.app'),
-        'messagingSenderId': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', '29820647719'),
-        'appId': os.environ.get('FIREBASE_APP_ID', '1:29820647719:web:f3a4c8b2e1d5a6c7890123')
-    })
 
 # ============================================================================
 # ROUTES - TEAM MANAGEMENT
