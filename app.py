@@ -156,7 +156,7 @@ def serve_demo():
     window.AUTH_USER = {json.dumps(user)};
     </script>
 </head>'''
-    html = html.replace('</head>', user_script)
+    html = html.replace('</head>', user_script, 1)  # Only replace first occurrence
 
     return Response(html, mimetype='text/html')
 
