@@ -118,12 +118,12 @@ def health_check():
 def get_firebase_config():
     """Return Firebase configuration for client-side auth"""
     return jsonify({
-        'apiKey': os.environ.get('FIREBASE_API_KEY', ''),
+        'apiKey': os.environ.get('FIREBASE_API_KEY', 'AIzaSyBn9o5b-Pf7bPTRPMmzTYh6kKmKbxB79jA'),
         'authDomain': os.environ.get('FIREBASE_AUTH_DOMAIN', 'brite-stack.firebaseapp.com'),
         'projectId': os.environ.get('FIREBASE_PROJECT_ID', 'brite-stack'),
         'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', 'brite-stack.firebasestorage.app'),
-        'messagingSenderId': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', ''),
-        'appId': os.environ.get('FIREBASE_APP_ID', '')
+        'messagingSenderId': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', '29820647719'),
+        'appId': os.environ.get('FIREBASE_APP_ID', '1:29820647719:web:f3a4c8b2e1d5a6c7890123')
     })
 
 # ============================================================================
