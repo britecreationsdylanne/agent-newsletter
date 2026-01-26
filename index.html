@@ -677,24 +677,24 @@
 
     <!-- Firebase Auth Script -->
     <script>
-        // Firebase auth objects (initialized after config loads)
+        // Firebase auth objects
         let auth = null;
         let googleProvider = null;
         let currentUser = null;
 
-        // Initialize Firebase with config from server
-        async function initFirebase() {
+        // Initialize Firebase with injected config (like brite-stack)
+        function initFirebase() {
             try {
-                const response = await fetch('/api/firebase-config');
-                const firebaseConfig = await response.json();
+                const firebaseConfig = window.FIREBASE_CONFIG;
+                if (!firebaseConfig || !firebaseConfig.apiKey) {
+                    console.error('Firebase config not found');
+                    return;
+                }
 
                 // Initialize Firebase
                 firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 googleProvider = new firebase.auth.GoogleAuthProvider();
-
-                // Restrict to BriteCo domain (optional - uncomment if needed)
-                // googleProvider.setCustomParameters({ hd: 'brite.co' });
 
                 // Auth state listener
                 auth.onAuthStateChanged((user) => {
@@ -707,7 +707,7 @@
                     }
                 });
             } catch (error) {
-                console.error('Failed to load Firebase config:', error);
+                console.error('Failed to initialize Firebase:', error);
             }
         }
 

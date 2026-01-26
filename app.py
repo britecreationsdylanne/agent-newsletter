@@ -11,7 +11,7 @@ import requests
 import base64
 from io import BytesIO
 from datetime import datetime
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
@@ -107,8 +107,29 @@ except Exception as e:
 
 @app.route('/')
 def serve_demo():
-    """Serve the main app"""
-    return send_from_directory('.', 'index.html')
+    """Serve the main app with Firebase config injected"""
+    # Read the HTML file
+    with open('index.html', 'r', encoding='utf-8') as f:
+        html = f.read()
+
+    # Build Firebase config from environment variables
+    firebase_config = {
+        'apiKey': os.environ.get('FIREBASE_API_KEY', ''),
+        'authDomain': os.environ.get('FIREBASE_AUTH_DOMAIN', ''),
+        'projectId': os.environ.get('FIREBASE_PROJECT_ID', ''),
+        'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', ''),
+        'messagingSenderId': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', ''),
+        'appId': os.environ.get('FIREBASE_APP_ID', '')
+    }
+
+    # Inject config script before </head>
+    config_script = f'''<script>
+    window.FIREBASE_CONFIG = {json.dumps(firebase_config)};
+    </script>
+</head>'''
+    html = html.replace('</head>', config_script)
+
+    return Response(html, mimetype='text/html')
 
 @app.route('/health')
 def health_check():
