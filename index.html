@@ -677,39 +677,42 @@
 
     <!-- Firebase Auth Script -->
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBn9o5b-Pf7bPTRPMmzTYh6kKmKbxB79jA",
-            authDomain: "brite-stack.firebaseapp.com",
-            projectId: "brite-stack",
-            storageBucket: "brite-stack.firebasestorage.app",
-            messagingSenderId: "29820647719",
-            appId: "1:29820647719:web:f3a4c8b2e1d5a6c7890123"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const googleProvider = new firebase.auth.GoogleAuthProvider();
-
-        // Restrict to BriteCo domain
-        googleProvider.setCustomParameters({ hd: 'brite.co' });
-
-        // Current user
+        // Firebase auth objects (initialized after config loads)
+        let auth = null;
+        let googleProvider = null;
         let currentUser = null;
 
-        // Auth state listener
-        auth.onAuthStateChanged((user) => {
-            currentUser = user;
-            if (user) {
-                // User is signed in
-                document.getElementById('loginOverlay').style.display = 'none';
-                updateUserDisplay(user);
-            } else {
-                // User is signed out
-                document.getElementById('loginOverlay').style.display = 'flex';
+        // Initialize Firebase with config from server
+        async function initFirebase() {
+            try {
+                const response = await fetch('/api/firebase-config');
+                const firebaseConfig = await response.json();
+
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                googleProvider = new firebase.auth.GoogleAuthProvider();
+
+                // Restrict to BriteCo domain
+                googleProvider.setCustomParameters({ hd: 'brite.co' });
+
+                // Auth state listener
+                auth.onAuthStateChanged((user) => {
+                    currentUser = user;
+                    if (user) {
+                        document.getElementById('loginOverlay').style.display = 'none';
+                        updateUserDisplay(user);
+                    } else {
+                        document.getElementById('loginOverlay').style.display = 'flex';
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to load Firebase config:', error);
             }
-        });
+        }
+
+        // Initialize on page load
+        initFirebase();
 
         // Sign in with Google
         async function signInWithGoogle() {
