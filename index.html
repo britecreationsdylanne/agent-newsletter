@@ -732,7 +732,7 @@
                     </svg>
                     Sign in with Google
                 `;
-                alert('Sign in failed. Please use a BriteCo Google account.');
+                alert('Sign in failed: ' + (error.code || error.message || 'Unknown error'));
             }
         }
 
