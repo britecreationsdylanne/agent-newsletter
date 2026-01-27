@@ -41,7 +41,7 @@ class PerplexityClient:
 
         Args:
             query: Search query
-            time_window: Time filter (7d, 30d, 90d)
+            time_window: Time filter (7d, 15d, 30d, 90d)
             geography: Optional geographic focus
             max_results: Number of results to return
 
@@ -56,6 +56,7 @@ class PerplexityClient:
             # Build the search prompt
             time_context = {
                 '7d': 'from the past week',
+                '15d': 'from the past 15 days',
                 '30d': 'from the past month',
                 '90d': 'from the past 3 months'
             }.get(time_window, 'recent')

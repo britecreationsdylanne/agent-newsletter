@@ -636,10 +636,123 @@
             opacity: 0.8;
             font-size: 14px;
         }
+
+        /* Link Toolbar */
+        .link-toolbar {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            background: #272d3f;
+            border-radius: 8px;
+            padding: 6px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            gap: 4px;
+            align-items: center;
+        }
+        .link-toolbar.visible { display: flex; }
+        .link-toolbar button {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .link-toolbar button:hover { background: rgba(255,255,255,0.15); }
+        .link-toolbar .separator {
+            width: 1px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Link Popover */
+        .link-popover {
+            display: none;
+            position: fixed;
+            z-index: 10001;
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            width: 340px;
+        }
+        .link-popover.visible { display: block; }
+        .link-popover label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 4px;
+        }
+        .link-popover input[type="text"] {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 10px;
+            outline: none;
+        }
+        .link-popover input[type="text"]:focus { border-color: #018181; }
+        .link-popover .link-popover-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .link-popover .link-popover-actions button {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+        }
+        .link-popover .btn-link-apply {
+            background: #018181;
+            color: white;
+        }
+        .link-popover .btn-link-cancel {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .link-popover .btn-link-remove {
+            background: #fee2e2;
+            color: #dc2626;
+        }
     </style>
 
 </head>
 <body>
+    <!-- Link Toolbar (floating, appears on text selection in contenteditable) -->
+    <div class="link-toolbar" id="linkToolbar">
+        <button onclick="linkToolbarBold()" title="Bold"><b>B</b></button>
+        <button onclick="linkToolbarItalic()" title="Italic"><i>I</i></button>
+        <div class="separator"></div>
+        <button onclick="openLinkPopover()" title="Insert Link">🔗 Link</button>
+        <button onclick="linkToolbarUnlink()" title="Remove Link" id="unlinkBtn" style="display:none;">🚫 Unlink</button>
+    </div>
+
+    <!-- Link Popover (URL input form) -->
+    <div class="link-popover" id="linkPopover">
+        <label for="linkUrlInput">URL</label>
+        <input type="text" id="linkUrlInput" placeholder="https://example.com">
+        <label for="linkTextInput">Link Text</label>
+        <input type="text" id="linkTextInput" placeholder="Display text">
+        <div style="margin-bottom: 10px;">
+            <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 12px;">
+                <input type="checkbox" id="linkNewTab" checked style="margin-right: 6px;"> Open in new tab
+            </label>
+        </div>
+        <div class="link-popover-actions">
+            <button class="btn-link-remove" id="linkRemoveBtn" onclick="removeLinkFromPopover()" style="display:none;">Remove</button>
+            <button class="btn-link-cancel" onclick="closeLinkPopover()">Cancel</button>
+            <button class="btn-link-apply" onclick="applyLink()">Apply</button>
+        </div>
+    </div>
+
     <!-- Server-side Auth Script -->
     <script>
         // Current user from server (injected via window.AUTH_USER)
@@ -844,6 +957,7 @@
                         <input type="text" id="spotlightPerplexityQuery" placeholder="e.g., insurance market trends..." value="P&C insurance industry trends 2026">
                         <select id="spotlightPerplexityTimeWindow">
                             <option value="7d">Last 7 days</option>
+                            <option value="15d">Last 15 days</option>
                             <option value="30d" selected>Last 30 days</option>
                             <option value="90d">Last 90 days</option>
                         </select>
@@ -865,6 +979,7 @@
                         <span style="color: #666; font-size: 0.8em;">Auto, Home, Commercial, Claims, Regulations, Technology, Market Trends</span>
                         <select id="spotlightSignalsTimeWindow">
                             <option value="7d">Last 7 days</option>
+                            <option value="15d">Last 15 days</option>
                             <option value="30d" selected>Last 30 days</option>
                             <option value="90d">Last 90 days</option>
                         </select>
@@ -895,6 +1010,7 @@
                         <input type="text" id="spotlightCuratedQuery" placeholder="e.g., market news, industry updates..." value="P&C insurance industry news">
                         <select id="spotlightCuratedTimeWindow">
                             <option value="7d">Last 7 days</option>
+                            <option value="15d">Last 15 days</option>
                             <option value="30d" selected>Last 30 days</option>
                             <option value="90d">Last 90 days</option>
                         </select>
@@ -961,6 +1077,17 @@
         <div class="step" id="step2-research">
             <h2>🔍 Research Dashboard</h2>
             <p>Search and select articles for the remaining newsletter sections.</p>
+
+            <!-- Saved Articles Toggle -->
+            <div style="margin-bottom: 15px;">
+                <button onclick="toggleSavedArticlesPanel()" style="background: #fefce8; border: 1px solid #facc15; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #854d0e;">
+                    🔖 Saved Articles (<span id="savedArticlesCount">0</span>)
+                </button>
+                <div id="savedArticlesPanel" style="display: none; margin-top: 10px; background: #fffef5; border: 1px solid #fde68a; border-radius: 8px; padding: 16px; max-height: 300px; overflow-y: auto;">
+                    <h4 style="margin: 0 0 10px 0; color: #854d0e; font-size: 14px;">🔖 Saved Articles Bank</h4>
+                    <div id="savedArticlesList"></div>
+                </div>
+            </div>
 
             <!-- Section Tabs -->
             <div class="research-tabs">
@@ -1030,6 +1157,7 @@
                         <input type="text" id="perplexityQuery" placeholder="e.g., insurance fraud, strange claim, lawsuit verdict..." value="unusual bizarre insurance claim lawsuit settlement story">
                         <select id="perplexityTimeWindow">
                             <option value="7d">Last 7 days</option>
+                            <option value="15d">Last 15 days</option>
                             <option value="30d" selected>Last 30 days</option>
                             <option value="90d">Last 90 days</option>
                         </select>
@@ -1051,6 +1179,7 @@
                         <span style="color: #666; font-size: 0.8em;">Auto, Home, Commercial, Claims, Regulations, Technology, Market Trends</span>
                         <select id="insightTimeWindow">
                             <option value="7d">Last 7 days</option>
+                            <option value="15d">Last 15 days</option>
                             <option value="30d" selected>Last 30 days</option>
                             <option value="90d">Last 90 days</option>
                         </select>
@@ -1081,6 +1210,7 @@
                         <div style="margin-bottom: 10px;">
                             <select id="explorerTimeFrame" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 120px;">
                                 <option value="7d">Last 7 days</option>
+                                <option value="15d">Last 15 days</option>
                                 <option value="30d" selected>Last 30 days</option>
                                 <option value="90d">Last 90 days</option>
                             </select>
@@ -1223,6 +1353,10 @@
                                 <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
                                 <span>Dylanne Crugnale (dylanne.crugnale@brite.co)</span>
                             </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="ben.glispie@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Ben Glispie (ben.glispie@brite.co)</span>
+                            </label>
                         </div>
 
                         <!-- Additional emails input -->
@@ -1257,34 +1391,8 @@
             <h2>📝 Final Copy</h2>
             <p class="step-description">Review and edit all content before generating images. This is the source of truth.</p>
 
-            <div class="content-section">
-                <h3>Introduction</h3>
-                <div class="editable" contenteditable="true" id="fc-intro"></div>
-            </div>
-
-            <div class="content-section">
-                <h3>Brite Spot</h3>
-                <div class="editable" contenteditable="true" id="fc-britespot"></div>
-            </div>
-
-            <div class="content-section">
-                <h3>Curious Claims</h3>
-                <div class="editable" contenteditable="true" id="fc-claims"></div>
-            </div>
-
-            <div class="content-section">
-                <h3>News Roundup</h3>
-                <div class="editable" contenteditable="true" id="fc-roundup"></div>
-            </div>
-
-            <div class="content-section">
-                <h3>InsurNews Spotlight</h3>
-                <div class="editable" contenteditable="true" id="fc-spotlight"></div>
-            </div>
-
-            <div class="content-section">
-                <h3>Agent Advantage Tips</h3>
-                <div class="editable" contenteditable="true" id="fc-tips"></div>
+            <div id="finalCopyContent" class="content-section" contenteditable="true" style="border: 2px dashed #e5e7eb; padding: 20px; border-radius: 8px; min-height: 400px;">
+                <!-- Populated by populateFinalCopy() with same styling as step 5 -->
             </div>
 
             <div class="buttons">
@@ -1862,6 +1970,110 @@
         let shownSpotlightArticles = [];
         let shownTipsArticles = [];
 
+        // Saved Articles (Article Banking) State
+        let savedArticles = [];
+        let savedArticleUrls = new Set();
+
+        // Load saved articles on init
+        async function loadSavedArticles() {
+            try {
+                const resp = await fetch(`${API_BASE}/api/saved-articles`);
+                const data = await resp.json();
+                if (data.success && data.articles) {
+                    savedArticles = data.articles;
+                    savedArticleUrls = new Set(savedArticles.map(a => a.url).filter(Boolean));
+                }
+            } catch (e) { console.log('[SavedArticles] Load error:', e); }
+        }
+
+        async function toggleSaveArticle(index, cardType) {
+            const result = researchResults[cardType]?.[index];
+            if (!result) return;
+            await toggleSaveArticleFromResult(result);
+        }
+
+        async function toggleSaveArticleFromResult(result) {
+            if (!result || !result.url) return;
+            if (savedArticleUrls.has(result.url)) {
+                // Remove
+                const article = savedArticles.find(a => a.url === result.url);
+                if (article?.id) {
+                    await fetch(`${API_BASE}/api/saved-articles/${article.id}`, { method: 'DELETE' });
+                }
+                savedArticles = savedArticles.filter(a => a.url !== result.url);
+                savedArticleUrls.delete(result.url);
+            } else {
+                // Save
+                const article = {
+                    title: result.title || result.headline || '',
+                    url: result.url,
+                    publisher: result.publisher || '',
+                    snippet: result.snippet || result.industry_data || '',
+                    impact: result.impact || 'MEDIUM',
+                    so_what: result.so_what || result.agent_implications || ''
+                };
+                const resp = await fetch(`${API_BASE}/api/saved-articles`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(article)
+                });
+                const data = await resp.json();
+                if (data.success && data.article) {
+                    savedArticles.unshift(data.article);
+                    savedArticleUrls.add(result.url);
+                }
+            }
+            // Update all bookmark icons
+            document.querySelectorAll('.save-article-btn').forEach(btn => {
+                const url = btn.dataset.url;
+                if (url) btn.textContent = savedArticleUrls.has(url) ? '🔖' : '🏷️';
+            });
+            updateSavedArticlesPanel();
+        }
+
+        function updateSavedArticlesPanel() {
+            const panel = document.getElementById('savedArticlesPanel');
+            if (!panel) return;
+            const count = document.getElementById('savedArticlesCount');
+            if (count) count.textContent = savedArticles.length;
+            const list = document.getElementById('savedArticlesList');
+            if (!list) return;
+            if (savedArticles.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#999; padding:20px; font-size:13px;">No saved articles yet. Click 🏷️ on any research result to save it.</p>';
+                return;
+            }
+            list.innerHTML = savedArticles.map(a => `
+                <div style="padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; background: #fefce8;">
+                    <div style="font-weight: 600; font-size: 12px; color: #272d3f; margin-bottom: 3px;">${a.title}</div>
+                    <div style="font-size: 11px; color: #666; margin-bottom: 4px;">${(a.snippet || '').substring(0, 80)}${a.snippet?.length > 80 ? '...' : ''}</div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:10px; color:#018181;">${a.publisher || ''}</span>
+                        ${a.url ? `<a href="${a.url}" target="_blank" style="font-size:10px; color:#3b82f6;" onclick="event.stopPropagation()">Open →</a>` : ''}
+                        <button onclick="removeSavedArticle('${a.id}')" style="margin-left:auto; background:none; border:none; cursor:pointer; font-size:12px; color:#dc2626;" title="Remove">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function removeSavedArticle(id) {
+            await fetch(`${API_BASE}/api/saved-articles/${id}`, { method: 'DELETE' });
+            const article = savedArticles.find(a => a.id === id);
+            if (article?.url) savedArticleUrls.delete(article.url);
+            savedArticles = savedArticles.filter(a => a.id !== id);
+            document.querySelectorAll('.save-article-btn').forEach(btn => {
+                const url = btn.dataset.url;
+                if (url) btn.textContent = savedArticleUrls.has(url) ? '🔖' : '🏷️';
+            });
+            updateSavedArticlesPanel();
+        }
+
+        function toggleSavedArticlesPanel() {
+            const panel = document.getElementById('savedArticlesPanel');
+            if (!panel) return;
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            if (panel.style.display !== 'none') updateSavedArticlesPanel();
+        }
+
         // 3-Card Research Dashboard State
         let researchResults = {
             insight: [],
@@ -2378,7 +2590,10 @@
                         <div style="flex: 1;">
                             <div style="font-weight: 600; color: #272d3f; margin-bottom: 4px; font-size: 13px;">${result.title || result.headline}</div>
                             <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${(result.snippet || result.industry_data || '').substring(0, 100)}...</div>
-                            <div style="font-size: 11px; color: #018181;">${result.publisher || 'Unknown source'}</div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 11px; color: #018181;">${result.publisher || 'Unknown source'}</span>
+                                <button class="save-article-btn" data-url="${result.url || ''}" onclick="event.stopPropagation(); toggleSaveArticleFromResult(${JSON.stringify(result).replace(/"/g, '&quot;')})" style="background: none; border: none; cursor: pointer; font-size: 13px; padding: 1px 3px;" title="Save for later">${savedArticleUrls.has(result.url) ? '🔖' : '🏷️'}</button>
+                            </div>
                         </div>
                         <div style="width: 20px; height: 20px; border: 2px solid ${isSelected ? '#22c55e' : '#ccc'}; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ${isSelected ? '#22c55e' : 'white'};">
                             ${isSelected ? '<span style="color: white; font-size: 12px;">✓</span>' : ''}
@@ -5735,7 +5950,7 @@ html, body { margin: 0 auto !important; padding: 0 !important; height: 100% !imp
 * { -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
 div[style*="margin: 16px 0"] { margin: 0 !important; }
 table, td { mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; }
-table { border-spacing: 0 !important; border-collapse: collapse !important; table-layout: fixed !important; margin: 0 auto !important; }
+table { border-spacing: 0 !important; border-collapse: collapse !important; margin: 0 auto !important; }
 img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
 a { text-decoration: none; color: #008181; }
 a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
@@ -5840,7 +6055,7 @@ ${introText ? `<p style="margin: 0 0 28px 0; font-family: Montserrat, Helvetica,
 <td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tr>
-<td valign="top" class="mobile-stack" style="padding-right: 25px;">
+<td valign="top" class="mobile-stack mobile-stack-padding" style="padding-right: 25px;">
 ${briteSpotText ? `<p class="dark-text-secondary" style="margin: 0 0 18px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${briteSpotText}</p>` : ''}
 ${generateBulletItems(briteSpotBullets)}
 </td>
@@ -5981,10 +6196,10 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.map(section => `
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <!-- Two column intro: Text LEFT, Image RIGHT -->
 <tr>
-<td valign="top" class="mobile-stack" style="padding-right: 25px;">
+<td valign="top" class="mobile-stack mobile-stack-padding" style="padding-right: 25px;">
 ${tipsIntro ? `<p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${tipsIntro}</p>` : ''}
 </td>
-<td width="180" valign="top" class="mobile-stack mobile-stack-padding">
+<td width="180" valign="top" class="mobile-stack">
 <img src="${tipsImage || assets.blankImage}" width="180" alt="Agent Advantage" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px; margin-bottom: 15px;" class="mobile-img-full">
 </td>
 </tr>
@@ -6915,12 +7130,13 @@ ${generateTipsItems(tipsItems)}
                         </svg>
                     </div>
 
-                    <!-- Header: Impact badge, signal tags, publisher, link -->
+                    <!-- Header: Impact badge, signal tags, publisher, link, save button -->
                     <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; padding-right: 28px;">
                         <span style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text}; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">${impact}</span>
                         ${signalTags}
                         <span style="margin-left: auto; font-size: 10px; color: #64748b;">${result.publisher || ''}</span>
                         ${result.url ? `<a href="${result.url}" target="_blank" style="font-size: 10px; color: #3b82f6; text-decoration: none; margin-left: 6px;" onclick="event.stopPropagation()">Source →</a>` : ''}
+                        <button class="save-article-btn" data-url="${result.url || ''}" onclick="event.stopPropagation(); toggleSaveArticle(${index}, '${cardType}')" style="background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px 4px; margin-left: 4px;" title="Save for later">${savedArticleUrls.has(result.url) ? '🔖' : '🏷️'}</button>
                     </div>
 
                     <!-- Section 1: Headline -->
@@ -8132,64 +8348,51 @@ ${generateTipsItems(tipsItems)}
         // ============================================================
 
         function populateFinalCopy() {
-            const fcIntro = document.getElementById('fc-intro');
-            if (fcIntro) fcIntro.innerHTML = headerIntroContent || generatedIntroContent || '';
+            // Reuse the same rendering logic as displayGeneratedContent (Step 5)
+            // so the Final Copy page matches the pre-brand-check page appearance
+            const container = document.getElementById('finalCopyContent');
+            if (!container) return;
 
-            const fcBs = document.getElementById('fc-britespot');
-            if (fcBs) fcBs.innerHTML = briteSpotContent || generatedBriteSpotContent || '';
-
-            const fcClaims = document.getElementById('fc-claims');
-            if (fcClaims) fcClaims.innerHTML = generatedClaimsContent || '';
-
-            const fcRoundup = document.getElementById('fc-roundup');
-            if (fcRoundup) {
-                if (Array.isArray(generatedRoundupContent)) {
-                    fcRoundup.innerHTML = generatedRoundupContent.map(item => {
-                        const text = typeof item === 'string' ? item : (item.summary || item.headline || item.text || '');
-                        return `• ${text}`;
-                    }).join('<br><br>');
-                } else {
-                    fcRoundup.innerHTML = generatedRoundupContent || '';
-                }
-            }
-
-            const fcSpotlight = document.getElementById('fc-spotlight');
-            if (fcSpotlight) {
-                if (generatedSpotlightContent && typeof generatedSpotlightContent === 'object') {
-                    let html = `<strong>${generatedSpotlightSubheader || ''}</strong><br><br>`;
-                    if (generatedSpotlightContent.h3s) {
-                        generatedSpotlightContent.h3s.forEach(h3 => {
-                            html += `<strong>${h3.title || ''}</strong><br>${h3.body || h3.content || ''}<br><br>`;
-                        });
-                    } else if (generatedSpotlightContent.body) {
-                        html += generatedSpotlightContent.body;
-                    }
-                    fcSpotlight.innerHTML = html;
-                } else {
-                    fcSpotlight.innerHTML = generatedSpotlightContent || '';
-                }
-            }
-
-            const fcTips = document.getElementById('fc-tips');
-            if (fcTips) {
-                if (generatedTipsContent && generatedTipsContent.tips) {
-                    let html = generatedTipsContent.intro ? `${generatedTipsContent.intro}<br><br>` : '';
-                    generatedTipsContent.tips.forEach((tip, i) => {
-                        html += `<strong>${tip.title || 'Tip ' + (i+1)}</strong><br>${tip.tip || tip.description || ''}<br><br>`;
-                    });
-                    fcTips.innerHTML = html;
-                } else {
-                    fcTips.innerHTML = generatedTipsContent || '';
-                }
+            // Re-call displayGeneratedContent's logic into the final copy container
+            // We temporarily swap the target, render, then swap back
+            const step5Container = document.getElementById('generatedContent');
+            if (step5Container && step5Container.innerHTML.trim()) {
+                // Copy the rendered HTML from step 5 directly
+                container.innerHTML = step5Container.innerHTML;
+            } else {
+                // Fallback: call displayGeneratedContent which renders into generatedContent,
+                // then copy the result
+                displayGeneratedContent();
+                const step5 = document.getElementById('generatedContent');
+                if (step5) container.innerHTML = step5.innerHTML;
             }
         }
 
         function saveFinalCopyToState() {
             try {
-                const getHtml = id => (document.getElementById(id)?.innerHTML || '').trim();
-                headerIntroContent = getHtml('fc-intro');
-                // Keep other content as-is since it's contenteditable and the source of truth
-                // is the JS variables which were populated on step 5
+                // Final copy now uses the same rendered IDs as step 5 (inside finalCopyContent)
+                const container = document.getElementById('finalCopyContent');
+                if (!container) return;
+                const getBox = id => container.querySelector('#' + id);
+                const getHtml = id => { const el = getBox(id); return el ? el.innerHTML.trim() : ''; };
+
+                const introHtml = getHtml('headerIntroContentBox');
+                if (introHtml) headerIntroContent = introHtml;
+
+                const bsHtml = getHtml('briteSpotContentBox');
+                if (bsHtml) briteSpotContent = bsHtml;
+
+                const claimsHtml = getHtml('claimsContentBox');
+                if (claimsHtml) generatedClaimsContent = claimsHtml;
+
+                const roundupHtml = getHtml('roundupContentBox');
+                if (roundupHtml) generatedRoundupContent = roundupHtml;
+
+                const spotlightHtml = getHtml('spotlightContentBox');
+                if (spotlightHtml) generatedSpotlightContent = spotlightHtml;
+
+                const tipsHtml = getHtml('tipsContentBox');
+                if (tipsHtml) generatedTipsContent = tipsHtml;
             } catch (e) { console.error('[FinalCopy] Save error:', e); }
         }
 
@@ -8212,10 +8415,178 @@ ${generateTipsItems(tipsItems)}
             if (count === 0) alert('No generated images found to download.');
         }
 
-        // Load drafts on page load
+        // Load drafts and saved articles on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadDrafts();
+            loadSavedArticles().then(() => updateSavedArticlesPanel());
         });
+
+    // ===== Link Toolbar & Popover Logic =====
+    (function() {
+        const toolbar = document.getElementById('linkToolbar');
+        const popover = document.getElementById('linkPopover');
+        const unlinkBtn = document.getElementById('unlinkBtn');
+        const linkRemoveBtn = document.getElementById('linkRemoveBtn');
+        let savedRange = null;
+        let editingLink = null;
+
+        function isContentEditable(el) {
+            while (el) {
+                if (el.contentEditable === 'true') return true;
+                el = el.parentElement;
+            }
+            return false;
+        }
+
+        function getSelectedLink() {
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return null;
+            let node = sel.anchorNode;
+            while (node && node.nodeType !== 1) node = node.parentNode;
+            while (node) {
+                if (node.tagName === 'A') return node;
+                node = node.parentElement;
+            }
+            return null;
+        }
+
+        document.addEventListener('selectionchange', function() {
+            const sel = window.getSelection();
+            if (!sel.rangeCount || sel.isCollapsed) {
+                // Small delay so clicks on toolbar don't close it
+                setTimeout(() => {
+                    const active = document.activeElement;
+                    if (!toolbar.contains(active) && !popover.contains(active)) {
+                        toolbar.classList.remove('visible');
+                    }
+                }, 200);
+                return;
+            }
+            const range = sel.getRangeAt(0);
+            if (!isContentEditable(range.commonAncestorContainer)) {
+                toolbar.classList.remove('visible');
+                return;
+            }
+            // Position toolbar above selection
+            const rect = range.getBoundingClientRect();
+            toolbar.style.left = Math.max(8, rect.left + rect.width / 2 - 100) + 'px';
+            toolbar.style.top = (rect.top - 44 + window.scrollY) + 'px';
+            toolbar.classList.add('visible');
+
+            const link = getSelectedLink();
+            unlinkBtn.style.display = link ? 'flex' : 'none';
+        });
+
+        // Hide toolbar when clicking outside
+        document.addEventListener('mousedown', function(e) {
+            if (!toolbar.contains(e.target) && !popover.contains(e.target)) {
+                // delay to allow button clicks to register
+                setTimeout(() => {
+                    if (!popover.classList.contains('visible')) {
+                        toolbar.classList.remove('visible');
+                    }
+                }, 150);
+            }
+        });
+
+        window.linkToolbarBold = function() {
+            document.execCommand('bold', false, null);
+        };
+        window.linkToolbarItalic = function() {
+            document.execCommand('italic', false, null);
+        };
+        window.linkToolbarUnlink = function() {
+            document.execCommand('unlink', false, null);
+            unlinkBtn.style.display = 'none';
+        };
+
+        window.openLinkPopover = function() {
+            const sel = window.getSelection();
+            if (sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+
+            const urlInput = document.getElementById('linkUrlInput');
+            const textInput = document.getElementById('linkTextInput');
+            const newTabCheck = document.getElementById('linkNewTab');
+
+            editingLink = getSelectedLink();
+            if (editingLink) {
+                urlInput.value = editingLink.href;
+                textInput.value = editingLink.textContent;
+                newTabCheck.checked = editingLink.target === '_blank';
+                linkRemoveBtn.style.display = 'inline-block';
+            } else {
+                urlInput.value = '';
+                textInput.value = sel.toString();
+                newTabCheck.checked = true;
+                linkRemoveBtn.style.display = 'none';
+            }
+
+            // Position popover near toolbar
+            const tRect = toolbar.getBoundingClientRect();
+            popover.style.left = Math.max(8, tRect.left - 50) + 'px';
+            popover.style.top = (tRect.bottom + 8) + 'px';
+            popover.classList.add('visible');
+            toolbar.classList.remove('visible');
+            urlInput.focus();
+        };
+
+        window.closeLinkPopover = function() {
+            popover.classList.remove('visible');
+            editingLink = null;
+            savedRange = null;
+        };
+
+        window.removeLinkFromPopover = function() {
+            if (editingLink) {
+                const text = editingLink.textContent;
+                editingLink.replaceWith(document.createTextNode(text));
+            }
+            closeLinkPopover();
+        };
+
+        window.applyLink = function() {
+            const url = document.getElementById('linkUrlInput').value.trim();
+            const text = document.getElementById('linkTextInput').value.trim();
+            const newTab = document.getElementById('linkNewTab').checked;
+
+            if (!url) { closeLinkPopover(); return; }
+
+            const fullUrl = url.match(/^https?:\/\//) ? url : 'https://' + url;
+
+            if (editingLink) {
+                editingLink.href = fullUrl;
+                if (text) editingLink.textContent = text;
+                editingLink.target = newTab ? '_blank' : '';
+            } else if (savedRange) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(savedRange);
+
+                const a = document.createElement('a');
+                a.href = fullUrl;
+                a.textContent = text || url;
+                if (newTab) a.target = '_blank';
+                a.style.color = '#018181';
+
+                savedRange.deleteContents();
+                savedRange.insertNode(a);
+                // Move cursor after link
+                const newRange = document.createRange();
+                newRange.setStartAfter(a);
+                newRange.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+            }
+            closeLinkPopover();
+        };
+
+        // Close popover on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && popover.classList.contains('visible')) {
+                closeLinkPopover();
+            }
+        });
+    })();
     </script>
 
     <!-- Briteco Newsletter Template -->

@@ -709,7 +709,7 @@ def v2_search_perplexity():
     try:
         data = request.json
         query = data.get('query', 'P&C insurance industry news trends')
-        time_window = data.get('time_window', '30d')  # 7d, 30d, 90d
+        time_window = data.get('time_window', '30d')  # 7d, 15d, 30d, 90d
         exclude_urls = data.get('exclude_urls', [])
 
         safe_print(f"\n[API v2] Perplexity Research: query='{query}', time_window={time_window}")
@@ -744,6 +744,7 @@ def v2_search_perplexity():
         # Build query description for UI
         time_desc = {
             '7d': 'past week',
+            '15d': 'past 15 days',
             '30d': 'past month',
             '90d': 'past 3 months'
         }.get(time_window, 'recent')
@@ -828,6 +829,7 @@ def v2_search_sources():
         # Convert time window to human-readable for query
         time_desc = {
             '7d': 'past week',
+            '15d': 'past 15 days',
             '30d': 'past month',
             '90d': 'past 3 months'
         }.get(time_window, 'recent')
@@ -3493,6 +3495,81 @@ def delete_draft():
         return jsonify({'success': True})
     except Exception as e:
         safe_print(f"[DRAFT DELETE ERROR] {str(e)}")
+        return jsonify({'success': True})
+
+
+# ============================================================================
+# SAVED ARTICLES (Article Banking / Save for Later)
+# ============================================================================
+
+SAVED_ARTICLES_BLOB = 'saved-articles/saved-articles.json'
+
+@app.route('/api/saved-articles', methods=['GET'])
+def list_saved_articles():
+    """List all saved articles from GCS"""
+    if not gcs_client:
+        return jsonify({'success': True, 'articles': []})
+    try:
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(SAVED_ARTICLES_BLOB)
+        if not blob.exists():
+            return jsonify({'success': True, 'articles': []})
+        articles = json.loads(blob.download_as_text())
+        return jsonify({'success': True, 'articles': articles})
+    except Exception as e:
+        safe_print(f"[SAVED ARTICLES LIST ERROR] {str(e)}")
+        return jsonify({'success': True, 'articles': []})
+
+
+@app.route('/api/saved-articles', methods=['POST'])
+def save_article():
+    """Save an article to the shared bank"""
+    if not gcs_client:
+        return jsonify({'success': False, 'error': 'GCS not available'}), 503
+    try:
+        article = request.json
+        if not article or not article.get('title'):
+            return jsonify({'success': False, 'error': 'Article title required'}), 400
+
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(SAVED_ARTICLES_BLOB)
+
+        articles = []
+        if blob.exists():
+            articles = json.loads(blob.download_as_text())
+
+        # Add metadata
+        article['savedAt'] = datetime.now().isoformat()
+        article['id'] = article.get('id') or f"art-{int(datetime.now().timestamp() * 1000)}"
+
+        # Prevent duplicates by URL
+        if article.get('url'):
+            articles = [a for a in articles if a.get('url') != article['url']]
+
+        articles.insert(0, article)
+        blob.upload_from_string(json.dumps(articles), content_type='application/json')
+        return jsonify({'success': True, 'article': article})
+    except Exception as e:
+        safe_print(f"[SAVED ARTICLE ADD ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/saved-articles/<article_id>', methods=['DELETE'])
+def delete_saved_article(article_id):
+    """Remove an article from the saved bank"""
+    if not gcs_client:
+        return jsonify({'success': True})
+    try:
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(SAVED_ARTICLES_BLOB)
+        if not blob.exists():
+            return jsonify({'success': True})
+        articles = json.loads(blob.download_as_text())
+        articles = [a for a in articles if a.get('id') != article_id]
+        blob.upload_from_string(json.dumps(articles), content_type='application/json')
+        return jsonify({'success': True})
+    except Exception as e:
+        safe_print(f"[SAVED ARTICLE DELETE ERROR] {str(e)}")
         return jsonify({'success': True})
 
 

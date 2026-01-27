@@ -71,15 +71,23 @@ TEAM_MEMBERS = [
 
 # Brand voice for AI content generation
 BRAND_VOICE = {
-    "tone": "Professional but approachable, knowledgeable, supportive",
-    "style": "Clear, concise, actionable",
+    "tone": "Professional but approachable, knowledgeable, supportive, with a dash of wit",
+    "style": "Clear, concise, actionable — with clever phrasing and the occasional wry observation",
     "perspective": "We help independent insurance agents succeed",
+    "wit_guidelines": [
+        "Use light wordplay or clever turns of phrase when it fits naturally",
+        "A well-placed quip or dry observation keeps readers engaged",
+        "Wit should enhance, never distract from, the information",
+        "Think 'smart friend at a conference' not 'stand-up comedian'",
+        "One witty line per section is plenty — don't force it"
+    ],
     "avoid": [
         "Overly salesy language",
         "Jargon without explanation",
         "Health or life insurance content",
         "Political content",
-        "Competitor bashing"
+        "Competitor bashing",
+        "Over-the-top puns or forced humor that undermines credibility"
     ]
 }
 
@@ -305,7 +313,12 @@ def get_style_guide_for_prompt(section_type=None):
     guide += f"- Tone: {BRAND_VOICE['tone']}\n"
     guide += f"- Style: {BRAND_VOICE['style']}\n"
     guide += f"- Perspective: {BRAND_VOICE['perspective']}\n"
-    guide += "- AVOID: " + ", ".join(BRAND_VOICE['avoid']) + "\n\n"
+    guide += "- AVOID: " + ", ".join(BRAND_VOICE['avoid']) + "\n"
+    if 'wit_guidelines' in BRAND_VOICE:
+        guide += "\n### WIT & PERSONALITY\n"
+        for wg in BRAND_VOICE['wit_guidelines']:
+            guide += f"- {wg}\n"
+    guide += "\n"
 
     # General Writing Rules
     guide += "### WRITING RULES\n"
@@ -489,7 +502,12 @@ HUMAN_WRITING_PATTERNS = {
         "The reality is...",
         "Bottom line:",
         "For one thing...",
-        "But will it be covered by insurance?"
+        "But will it be covered by insurance?",
+        "Spoiler alert:",
+        "Plot twist:",
+        "You can't make this stuff up.",
+        "File this one under...",
+        "Let's just say..."
     ],
     "sentence_variety": [
         "Vary sentence length - mix short punchy sentences with longer ones",
@@ -509,48 +527,61 @@ HUMAN_WRITING_PATTERNS = {
 
 SECTION_TONE_CALIBRATION = {
     "news_roundup": {
-        "tone": "Straight, factual",
+        "tone": "Straight, factual — with a sharp headline edge",
         "rules": [
-            "No editorializing",
+            "No editorializing in the body, but headlines can be cleverly phrased",
             "Let statistics speak",
-            "Neutral presentation",
-            "Start each bullet with bold topic phrase"
+            "Neutral presentation with crisp language",
+            "Start each bullet with bold topic phrase — make it memorable"
         ]
     },
     "curious_claims": {
-        "tone": "Lightest touch, playful",
+        "tone": "Lightest touch, playful, witty",
         "rules": [
-            "Puns and wordplay welcome in headlines",
-            "Storytelling mode",
+            "Puns and wordplay welcome in headlines — lean into it here",
+            "Storytelling mode with dry humor",
             "Can show amusement at absurd situations",
-            "Use vivid, specific details"
+            "Use vivid, specific details",
+            "This is the section where wit shines most — have fun with it"
         ]
     },
     "brite_spot": {
-        "tone": "Warm, supportive",
+        "tone": "Warm, supportive, lightly clever",
         "rules": [
             "Celebratory without being over-the-top",
             "Clear and direct CTAs",
             "Lead with agent benefit",
-            "Use 'we' and 'you' frequently"
+            "Use 'we' and 'you' frequently",
+            "A witty opening line can hook readers before the CTA"
         ]
     },
     "spotlight": {
-        "tone": "Authoritative but accessible",
+        "tone": "Authoritative but accessible, with smart observations",
         "rules": [
             "Show your work with source citations",
-            "Can express concern about trends",
+            "Can express concern about trends — a wry take is welcome",
             "Always end with practical implications for agents",
-            "Use subheadings to break up content"
+            "Use subheadings to break up content",
+            "A sharp observation about the data makes it more quotable"
         ]
     },
     "agent_advantage": {
-        "tone": "Coach-like, practical",
+        "tone": "Coach-like, practical, with personality",
         "rules": [
             "Direct advice using 'you should...'",
             "Encouraging without being preachy",
             "Practical, implementable tips",
-            "Each tip is actionable immediately"
+            "Each tip is actionable immediately",
+            "A conversational, slightly irreverent tone keeps agents reading"
+        ]
+    },
+    "introduction": {
+        "tone": "Warm, inviting, with a hook",
+        "rules": [
+            "Open with something unexpected or clever to pull readers in",
+            "Use 'we' to create partnership feel",
+            "Keep it brief (2-3 sentences)",
+            "A light quip about the season or news cycle sets a friendly tone"
         ]
     }
 }
