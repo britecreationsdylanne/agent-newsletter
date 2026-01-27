@@ -1239,14 +1239,60 @@
                 </div>
             </div>
 
+            <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 8px; text-align: center;">
+                <button class="btn" onclick="saveDraft(); this.textContent='✓ Draft Saved!'; setTimeout(() => { this.textContent='💾 Save Draft'; }, 2000);" style="background: #22c55e; padding: 10px 30px;">💾 Save Draft</button>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #666;">Save your progress to resume later</p>
+            </div>
+
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep(5)">← Back to Edit</button>
                 <button class="btn-secondary btn" onclick="exportBrandCheckResults()">📋 Export Brand Check</button>
-                <button class="btn" onclick="generateImages()">Continue to Image Prompts →</button>
+                <button class="btn" onclick="populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
             </div>
         </div>
 
         <!-- Step 8: Edit Image Prompts -->
+        <!-- Step 7b: Final Copy -->
+        <div class="step" id="step7b">
+            <h2>📝 Final Copy</h2>
+            <p class="step-description">Review and edit all content before generating images. This is the source of truth.</p>
+
+            <div class="content-section">
+                <h3>Introduction</h3>
+                <div class="editable" contenteditable="true" id="fc-intro"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Brite Spot</h3>
+                <div class="editable" contenteditable="true" id="fc-britespot"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Curious Claims</h3>
+                <div class="editable" contenteditable="true" id="fc-claims"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>News Roundup</h3>
+                <div class="editable" contenteditable="true" id="fc-roundup"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>InsurNews Spotlight</h3>
+                <div class="editable" contenteditable="true" id="fc-spotlight"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Agent Advantage Tips</h3>
+                <div class="editable" contenteditable="true" id="fc-tips"></div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-secondary" onclick="showStep(7)">← Back to Brand Check</button>
+                <button class="btn" onclick="saveFinalCopyToState(); generateImages();">Continue to Image Prompts →</button>
+            </div>
+        </div>
+
         <div class="step" id="step8">
             <h2>🎨 Image Generation</h2>
             <p>Review prompts and select styles, then generate images</p>
@@ -1719,11 +1765,33 @@
                 <button class="btn" onclick="pushToOntraport(event)" style="width: 100%; padding: 15px; font-size: 16px;">🚀 Push to Ontraport</button>
             </div>
 
+            <!-- Download Images for WordPress Hosting -->
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #3b82f6;">
+                <h3 style="margin: 0 0 10px 0; color: #1e40af;">🖼️ Download Generated Images</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Download all generated images to host in WordPress/Ontraport. After uploading, paste the hosted URLs into the email HTML.</p>
+                <button class="btn" onclick="downloadAllImages()" style="background: #3b82f6; width: 100%; padding: 12px; font-size: 15px;">📥 Download Generated Images to Host in Ontraport</button>
+            </div>
+
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep(13)">← Back to Preview</button>
             </div>
         </div>
 
+    </div>
+
+    <!-- Saved Drafts Section -->
+    <div id="draftsSection" style="padding: 80px 20px; margin-top: 60px; background: #3B5A6E;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <div style="margin-bottom: 40px; text-align: center;">
+                <h2 style="font-size: 36px; color: white; margin-bottom: 12px; font-weight: 700;">Saved Drafts</h2>
+                <p style="color: rgba(255,255,255,0.8); font-size: 16px;">Resume an in-progress newsletter</p>
+            </div>
+            <div id="draftsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px;"></div>
+            <div id="draftsEmpty" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
+                <p style="font-size: 18px;">📝 No Drafts In Progress</p>
+                <p>Any newsletters in progress will appear here automatically</p>
+            </div>
+        </div>
     </div>
 
     <!-- Newsletter Archive Section -->
@@ -5448,7 +5516,15 @@
 
         // Copy HTML code to clipboard
         function copyHTMLCode() {
-            const html = getFinalNewsletterHTML();
+            let html = getFinalNewsletterHTML();
+            // Strip base64 images for hosted placeholder URLs
+            let ci = 0;
+            const ciLabels = ['image-1', 'image-2', 'image-3', 'image-4', 'image-5'];
+            html = html.replace(/data:image\/[a-z]+;base64,[A-Za-z0-9+\/=]+/g, () => {
+                const label = ciLabels[ci] || 'image-' + (ci + 1);
+                ci++;
+                return 'https://REPLACE-WITH-HOSTED-URL/' + label + '.png';
+            });
             navigator.clipboard.writeText(html).then(() => {
                 const toast = document.createElement('div');
                 toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
@@ -6192,7 +6268,15 @@ ${generateTipsItems(tipsItems)}
 
             try {
                 console.log('[ONTRAPORT] Getting final newsletter HTML...');
-                const html = getFinalNewsletterHTML();
+                let html = getFinalNewsletterHTML();
+                // Replace base64 data URIs with placeholder URLs for email clients
+                let imgIdx = 0;
+                const imgNames = ['image-1', 'image-2', 'image-3', 'image-4', 'image-5'];
+                html = html.replace(/data:image\/[a-z]+;base64,[A-Za-z0-9+\/=]+/g, () => {
+                    const name = imgNames[imgIdx] || 'image-' + (imgIdx + 1);
+                    imgIdx++;
+                    return 'https://REPLACE-WITH-HOSTED-URL/' + name + '.png';
+                });
 
                 console.log('[ONTRAPORT] Sending to backend...');
                 const response = await fetch(`${API_BASE}/api/push-to-ontraport`, {
@@ -6209,7 +6293,7 @@ ${generateTipsItems(tipsItems)}
                 console.log('[ONTRAPORT] Response:', data);
 
                 if (data.success) {
-                    // Simple success message
+                    deleteDraft();
                     alert('✅ Successfully pushed to Ontraport!');
                     console.log('✅ Ontraport campaign created:', data);
                 } else {
@@ -7732,6 +7816,11 @@ ${generateTipsItems(tipsItems)}
         // =============================================================================
 
         function showStep(stepNum) {
+            // Auto-save draft at key transitions
+            if ([5, 7, '7b', 10, 12, 13].includes(stepNum)) {
+                saveDraft();
+            }
+
             document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
             document.getElementById(`step${stepNum}`).classList.add('active');
             updateProgress(stepNum);
@@ -7793,6 +7882,7 @@ ${generateTipsItems(tipsItems)}
                 5: 'Review Content',
                 6: 'Brand Check',
                 7: 'Check Results',
+                '7b': 'Final Copy',
                 8: 'Edit Prompts',
                 9: 'Generating Images',
                 10: 'Review Images',
@@ -7907,6 +7997,224 @@ ${generateTipsItems(tipsItems)}
             if (e.target.id === 'newsletterModal') {
                 closeNewsletterModal();
             }
+        });
+
+        // ============================================================
+        // DRAFTS - Auto-save & Load
+        // ============================================================
+
+        async function saveDraft() {
+            if (!selectedMonth) return;
+            try {
+                const userEmail = (window.AUTH_USER && window.AUTH_USER.email) || 'unknown';
+                const resp = await fetch(`${API_BASE}/api/save-draft`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        month: selectedMonth,
+                        year: new Date().getFullYear(),
+                        currentStep: document.querySelector('.step.active')?.id || '',
+                        generatedContent: {
+                            headerIntro: headerIntroContent,
+                            briteSpot: briteSpotContent,
+                            briteSpotBullets: briteSpotBullets,
+                            claims: generatedClaimsContent,
+                            roundup: generatedRoundupContent,
+                            spotlight: generatedSpotlightContent,
+                            spotlightSubheader: generatedSpotlightSubheader,
+                            tips: generatedTipsContent,
+                            intro: generatedIntroContent
+                        },
+                        generatedImages: generatedImages,
+                        subjectLine: document.getElementById('finalSubjectLine')?.value || '',
+                        preheader: document.getElementById('finalPreheader')?.value || '',
+                        savedBy: userEmail
+                    })
+                });
+                console.log('[Draft] Saved');
+                loadDrafts();
+            } catch (e) {
+                console.error('[Draft] Save failed:', e);
+            }
+        }
+
+        async function loadDrafts() {
+            try {
+                const response = await fetch(`${API_BASE}/api/list-drafts`);
+                const data = await response.json();
+                const grid = document.getElementById('draftsGrid');
+                const empty = document.getElementById('draftsEmpty');
+                if (data.success && data.drafts && data.drafts.length > 0) {
+                    if (empty) empty.style.display = 'none';
+                    grid.style.display = 'grid';
+                    grid.innerHTML = '';
+                    data.drafts.forEach(d => {
+                        const monthCap = d.month ? d.month.charAt(0).toUpperCase() + d.month.slice(1) : '?';
+                        const savedBy = d.lastSavedBy || 'unknown';
+                        const savedAt = d.lastSavedAt ? new Date(d.lastSavedAt).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background: white; border-radius: 12px; padding: 24px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+                        card.onmouseenter = () => card.style.transform = 'translateY(-4px)';
+                        card.onmouseleave = () => card.style.transform = '';
+                        card.innerHTML = `
+                            <h4 style="margin:0 0 8px 0;color:#272d3f;">${monthCap} ${d.year}</h4>
+                            <p style="margin:4px 0;font-size:13px;color:#666;">Created by: ${savedBy}</p>
+                            <p style="margin:4px 0;font-size:12px;color:#999;">${savedAt} CT</p>
+                        `;
+                        card.onclick = () => loadDraft(d.filename);
+                        grid.appendChild(card);
+                    });
+                } else {
+                    if (empty) empty.style.display = 'block';
+                    grid.style.display = 'none';
+                }
+            } catch (e) {
+                console.error('[Drafts] Load list failed:', e);
+            }
+        }
+
+        async function loadDraft(filename) {
+            try {
+                const response = await fetch(`${API_BASE}/api/load-draft?file=${encodeURIComponent(filename)}`);
+                const data = await response.json();
+                if (!data.success || !data.draft) { alert('Failed to load draft'); return; }
+                const d = data.draft;
+
+                selectedMonth = d.month || '';
+                const gc = d.generatedContent || {};
+                headerIntroContent = gc.headerIntro || '';
+                briteSpotContent = gc.briteSpot || '';
+                briteSpotBullets = gc.briteSpotBullets || [];
+                generatedClaimsContent = gc.claims || '';
+                generatedRoundupContent = gc.roundup || '';
+                generatedSpotlightContent = gc.spotlight || '';
+                generatedSpotlightSubheader = gc.spotlightSubheader || '';
+                generatedTipsContent = gc.tips || '';
+                generatedIntroContent = gc.intro || '';
+                generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null };
+
+                const subjectEl = document.getElementById('finalSubjectLine');
+                if (subjectEl && d.subjectLine) subjectEl.value = d.subjectLine;
+                const preheaderEl = document.getElementById('finalPreheader');
+                if (preheaderEl && d.preheader) preheaderEl.value = d.preheader;
+
+                // Navigate to the saved step
+                const savedStep = d.currentStep || 'step1';
+                const stepId = savedStep.replace('step', '');
+                showStep(stepId || 1);
+                alert('Draft loaded! You can continue where you left off.');
+            } catch (e) {
+                console.error('[Draft] Load failed:', e);
+                alert('Failed to load draft: ' + e.message);
+            }
+        }
+
+        async function deleteDraft() {
+            if (!selectedMonth) return;
+            try {
+                const userEmail = (window.AUTH_USER && window.AUTH_USER.email) || 'unknown';
+                const savedBy = userEmail.split('@')[0].replace(/\./g, '-');
+                const filename = `drafts/${selectedMonth.toLowerCase()}-${new Date().getFullYear()}-${savedBy}.json`;
+                await fetch(`${API_BASE}/api/delete-draft`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file: filename })
+                });
+                console.log('[Draft] Deleted');
+                loadDrafts();
+            } catch (e) {
+                console.error('[Draft] Delete failed:', e);
+            }
+        }
+
+        // ============================================================
+        // FINAL COPY - Populate & Save
+        // ============================================================
+
+        function populateFinalCopy() {
+            const fcIntro = document.getElementById('fc-intro');
+            if (fcIntro) fcIntro.innerHTML = headerIntroContent || generatedIntroContent || '';
+
+            const fcBs = document.getElementById('fc-britespot');
+            if (fcBs) fcBs.innerHTML = briteSpotContent || generatedBriteSpotContent || '';
+
+            const fcClaims = document.getElementById('fc-claims');
+            if (fcClaims) fcClaims.innerHTML = generatedClaimsContent || '';
+
+            const fcRoundup = document.getElementById('fc-roundup');
+            if (fcRoundup) {
+                if (Array.isArray(generatedRoundupContent)) {
+                    fcRoundup.innerHTML = generatedRoundupContent.map(item => {
+                        const text = typeof item === 'string' ? item : (item.summary || item.headline || item.text || '');
+                        return `• ${text}`;
+                    }).join('<br><br>');
+                } else {
+                    fcRoundup.innerHTML = generatedRoundupContent || '';
+                }
+            }
+
+            const fcSpotlight = document.getElementById('fc-spotlight');
+            if (fcSpotlight) {
+                if (generatedSpotlightContent && typeof generatedSpotlightContent === 'object') {
+                    let html = `<strong>${generatedSpotlightSubheader || ''}</strong><br><br>`;
+                    if (generatedSpotlightContent.h3s) {
+                        generatedSpotlightContent.h3s.forEach(h3 => {
+                            html += `<strong>${h3.title || ''}</strong><br>${h3.body || h3.content || ''}<br><br>`;
+                        });
+                    } else if (generatedSpotlightContent.body) {
+                        html += generatedSpotlightContent.body;
+                    }
+                    fcSpotlight.innerHTML = html;
+                } else {
+                    fcSpotlight.innerHTML = generatedSpotlightContent || '';
+                }
+            }
+
+            const fcTips = document.getElementById('fc-tips');
+            if (fcTips) {
+                if (generatedTipsContent && generatedTipsContent.tips) {
+                    let html = generatedTipsContent.intro ? `${generatedTipsContent.intro}<br><br>` : '';
+                    generatedTipsContent.tips.forEach((tip, i) => {
+                        html += `<strong>${tip.title || 'Tip ' + (i+1)}</strong><br>${tip.tip || tip.description || ''}<br><br>`;
+                    });
+                    fcTips.innerHTML = html;
+                } else {
+                    fcTips.innerHTML = generatedTipsContent || '';
+                }
+            }
+        }
+
+        function saveFinalCopyToState() {
+            try {
+                const getHtml = id => (document.getElementById(id)?.innerHTML || '').trim();
+                headerIntroContent = getHtml('fc-intro');
+                // Keep other content as-is since it's contenteditable and the source of truth
+                // is the JS variables which were populated on step 5
+            } catch (e) { console.error('[FinalCopy] Save error:', e); }
+        }
+
+        function downloadAllImages() {
+            const sections = ['briteSpot', 'claims', 'spotlight', 'tips'];
+            let count = 0;
+            for (const section of sections) {
+                const img = generatedImages[section];
+                if (!img) continue;
+                const dataUrl = (typeof img === 'string') ? img : (img.url || null);
+                if (!dataUrl) continue;
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = `${selectedMonth}-${section}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                count++;
+            }
+            if (count === 0) alert('No generated images found to download.');
+        }
+
+        // Load drafts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDrafts();
         });
     </script>
 

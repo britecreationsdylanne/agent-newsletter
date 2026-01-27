@@ -137,6 +137,16 @@ except Exception as e:
     ontraport_client = None
     print(f"[WARNING] Ontraport not available: {e}")
 
+# Initialize GCS for drafts
+GCS_BUCKET_NAME = 'briteco-brief-drafts'
+gcs_client = None
+try:
+    from google.cloud import storage as gcs_storage
+    gcs_client = gcs_storage.Client()
+    print("[OK] GCS initialized")
+except Exception as e:
+    print(f"[WARNING] GCS not available: {e}")
+
 # ============================================================================
 # ROUTES - STATIC FILES
 # ============================================================================
@@ -3378,6 +3388,113 @@ def send_to_ontraport():
     except Exception as e:
         safe_print(f"[API] Ontraport error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+# ============================================================================
+# DRAFTS - GCS Auto-save
+# ============================================================================
+
+@app.route('/api/save-draft', methods=['POST'])
+def save_draft():
+    """Auto-save newsletter draft to GCS"""
+    if not gcs_client:
+        return jsonify({'success': False, 'error': 'GCS not available'}), 503
+    try:
+        data = request.json
+        month = data.get('month', 'unknown').lower()
+        year = data.get('year', datetime.now().year)
+        saved_by = data.get('savedBy', 'unknown').split('@')[0].replace('.', '-')
+        blob_name = f"drafts/{month}-{year}-{saved_by}.json"
+
+        draft = {
+            'month': month,
+            'year': year,
+            'currentStep': data.get('currentStep'),
+            'generatedContent': data.get('generatedContent'),
+            'generatedImages': data.get('generatedImages'),
+            'generatedPrompts': data.get('generatedPrompts'),
+            'headerIntroContent': data.get('headerIntroContent'),
+            'briteSpotContent': data.get('briteSpotContent'),
+            'subjectLine': data.get('subjectLine'),
+            'preheader': data.get('preheader'),
+            'lastSavedBy': data.get('savedBy', 'unknown'),
+            'lastSavedAt': datetime.now().isoformat()
+        }
+
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(blob_name)
+        blob.upload_from_string(json.dumps(draft), content_type='application/json')
+        return jsonify({'success': True, 'file': blob_name})
+
+    except Exception as e:
+        safe_print(f"[DRAFT SAVE ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/list-drafts', methods=['GET'])
+def list_drafts():
+    """List all drafts from GCS"""
+    if not gcs_client:
+        return jsonify({'success': True, 'drafts': []})
+    try:
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blobs = list(bucket.list_blobs(prefix='drafts/'))
+        drafts = []
+        for blob in blobs:
+            if blob.name.endswith('.json'):
+                data = json.loads(blob.download_as_text())
+                drafts.append({
+                    'filename': blob.name,
+                    'month': data.get('month'),
+                    'year': data.get('year'),
+                    'currentStep': data.get('currentStep'),
+                    'lastSavedBy': data.get('lastSavedBy'),
+                    'lastSavedAt': data.get('lastSavedAt'),
+                })
+        drafts.sort(key=lambda d: d.get('lastSavedAt', ''), reverse=True)
+        return jsonify({'success': True, 'drafts': drafts})
+    except Exception as e:
+        safe_print(f"[DRAFT LIST ERROR] {str(e)}")
+        return jsonify({'success': True, 'drafts': []})
+
+
+@app.route('/api/load-draft', methods=['GET'])
+def load_draft():
+    """Load a specific draft from GCS"""
+    if not gcs_client:
+        return jsonify({'success': False, 'error': 'GCS not available'}), 503
+    try:
+        filename = request.args.get('file')
+        if not filename:
+            return jsonify({'success': False, 'error': 'No file specified'}), 400
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(filename)
+        if not blob.exists():
+            return jsonify({'success': False, 'error': 'Draft not found'}), 404
+        data = json.loads(blob.download_as_text())
+        return jsonify({'success': True, 'draft': data})
+    except Exception as e:
+        safe_print(f"[DRAFT LOAD ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/delete-draft', methods=['DELETE'])
+def delete_draft():
+    """Delete a draft from GCS"""
+    if not gcs_client:
+        return jsonify({'success': True})
+    try:
+        filename = request.json.get('file')
+        if not filename:
+            return jsonify({'success': False, 'error': 'No file specified'}), 400
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(filename)
+        if blob.exists():
+            blob.delete()
+        return jsonify({'success': True})
+    except Exception as e:
+        safe_print(f"[DRAFT DELETE ERROR] {str(e)}")
+        return jsonify({'success': True})
+
 
 # ============================================================================
 # MAIN
