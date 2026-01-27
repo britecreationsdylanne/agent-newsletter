@@ -3479,6 +3479,81 @@ def load_draft():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/publish-draft', methods=['POST'])
+def publish_draft():
+    """Move a draft from drafts/ to published/ in GCS"""
+    if not gcs_client:
+        return jsonify({'success': False, 'error': 'GCS not available'}), 503
+    try:
+        filename = request.json.get('file')
+        if not filename:
+            return jsonify({'success': False, 'error': 'No file specified'}), 400
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        source_blob = bucket.blob(filename)
+        if not source_blob.exists():
+            return jsonify({'success': False, 'error': 'Draft not found'}), 404
+        published_name = filename.replace('drafts/', 'published/', 1)
+        bucket.copy_blob(source_blob, bucket, published_name)
+        source_blob.delete()
+        safe_print(f"[DRAFT] Published {filename} -> {published_name}")
+        return jsonify({'success': True, 'file': published_name})
+    except Exception as e:
+        safe_print(f"[DRAFT PUBLISH ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/list-published', methods=['GET'])
+def list_published():
+    """List all published newsletters from GCS"""
+    if not gcs_client:
+        return jsonify({'success': True, 'newsletters': []})
+    try:
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blobs = list(bucket.list_blobs(prefix='published/'))
+        newsletters = []
+        for blob in blobs:
+            if blob.name.endswith('.json'):
+                data = json.loads(blob.download_as_text())
+                gc = data.get('generatedContent', {})
+                newsletters.append({
+                    'filename': blob.name,
+                    'month': data.get('month'),
+                    'year': data.get('year'),
+                    'lastSavedBy': data.get('lastSavedBy'),
+                    'lastSavedAt': data.get('lastSavedAt'),
+                    'sections': {
+                        'news': {'title': gc.get('headerIntro', 'Newsletter')[:80] if gc.get('headerIntro') else 'Newsletter'},
+                        'tip': {'title': gc.get('briteSpot', 'Brite Spot')[:80] if gc.get('briteSpot') else 'Brite Spot'},
+                        'trend': {'title': gc.get('spotlight', 'Spotlight')[:80] if gc.get('spotlight') else 'Spotlight'},
+                    }
+                })
+        newsletters.sort(key=lambda d: d.get('lastSavedAt', ''), reverse=True)
+        return jsonify({'success': True, 'newsletters': newsletters[:12]})
+    except Exception as e:
+        safe_print(f"[PUBLISHED LIST ERROR] {str(e)}")
+        return jsonify({'success': True, 'newsletters': []})
+
+
+@app.route('/api/load-published', methods=['GET'])
+def load_published():
+    """Load a specific published newsletter from GCS"""
+    if not gcs_client:
+        return jsonify({'success': False, 'error': 'GCS not available'}), 503
+    try:
+        filename = request.args.get('file')
+        if not filename:
+            return jsonify({'success': False, 'error': 'No file specified'}), 400
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(filename)
+        if not blob.exists():
+            return jsonify({'success': False, 'error': 'Not found'}), 404
+        data = json.loads(blob.download_as_text())
+        return jsonify({'success': True, 'draft': data})
+    except Exception as e:
+        safe_print(f"[PUBLISHED LOAD ERROR] {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/delete-draft', methods=['DELETE'])
 def delete_draft():
     """Delete a draft from GCS"""
