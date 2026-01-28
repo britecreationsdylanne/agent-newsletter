@@ -1113,6 +1113,8 @@
             <h2>⭐ InsurNews Spotlight</h2>
             <p>Search across multiple sources and select 3-5 articles. AI will create a comprehensive feature story.</p>
 
+            <button class="btn-add-link" onclick="showSavedArticlesModal('spotlight')">📌 Saved Articles</button>
+
             <!-- Selected Articles Counter + Add Custom Link Button (matching Research Dashboard layout) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <div id="spotlightSelectionCounter" style="background: #FFF4EB; border: 2px solid #F47920; border-radius: 8px; padding: 12px 20px;">
@@ -1801,14 +1803,6 @@
                 <button class="btn-secondary btn" onclick="resizeImage('tips')">🔍 Resize</button>
             </div>
 
-            <!-- Tip at bottom of page -->
-            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 6px; margin-top: 20px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 16px;">✓</span>
-                    <span style="font-size: 13px; color: #065f46;"><strong>Ready for Ontraport:</strong> Exported images are already sized correctly — no resizing needed!</span>
-                </div>
-            </div>
-
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="goBackToPrompts()">← Back to Prompts</button>
                 <button class="btn-secondary btn" onclick="generateImagesFromPrompts(true)" style="background: #f59e0b; color: white; border-color: #f59e0b;">🔄 Regenerate All Images</button>
@@ -1865,19 +1859,6 @@
         <div class="step" id="step11">
             <h2>😄 Monthly Meme</h2>
             <p>Generate or upload a fun meme for your newsletter header</p>
-
-            <!-- Info callout about meme sizing -->
-            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: start; gap: 10px;">
-                    <div style="font-size: 20px;">✓</div>
-                    <div>
-                        <div style="font-weight: 600; color: #047857; margin-bottom: 5px;">Ready for Ontraport</div>
-                        <div style="font-size: 14px; color: #065f46; line-height: 1.5;">
-                            Your meme will be automatically sized to <strong>480×480px</strong> — perfect for hosting on Ontraport!
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
                 <h3 style="margin: 0 0 10px 0;">📱 Monthly Meme</h3>
@@ -2066,13 +2047,6 @@
                 <input type="hidden" id="subject">
 
                 <button class="btn" onclick="pushToOntraport(event)" style="width: 100%; padding: 15px; font-size: 16px;">🚀 Push to Ontraport</button>
-            </div>
-
-            <!-- Download Images for WordPress Hosting -->
-            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #3b82f6;">
-                <h3 style="margin: 0 0 10px 0; color: #1e40af;">🖼️ Download Generated Images</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Download all generated images to host in WordPress/Ontraport. After uploading, paste the hosted URLs into the email HTML.</p>
-                <button class="btn" onclick="downloadAllImages()" style="background: #3b82f6; width: 100%; padding: 12px; font-size: 15px;">📥 Download Generated Images to Host in Ontraport</button>
             </div>
 
             <div class="buttons">
@@ -6421,8 +6395,8 @@ ${introText ? `<p style="margin: 0 0 28px 0; font-family: Montserrat, Helvetica,
 ${briteSpotText ? `<p class="dark-text-secondary" style="margin: 0 0 18px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 26px; font-weight: 400; color: #3B3B3B;">${briteSpotText}</p>` : ''}
 ${generateBulletItems(briteSpotBullets)}
 </td>
-<td width="180" valign="top" class="mobile-stack">
-<img src="${briteSpotImage || assets.blankImage}" width="180" alt="Brite Spot" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<td width="254" valign="top" class="mobile-stack">
+<img src="${briteSpotImage || assets.blankImage}" width="254" alt="Brite Spot" style="width: 254px; max-width: 254px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
 </td>
 </tr>
 </table>
