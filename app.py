@@ -143,6 +143,7 @@ except Exception as e:
 
 # Initialize GCS for drafts
 GCS_BUCKET_NAME = 'briteco-brief-drafts'
+GCS_IMAGES_BUCKET = 'briteco-brief-images'
 gcs_client = None
 try:
     from google.cloud import storage as gcs_storage
@@ -3396,6 +3397,64 @@ def send_to_ontraport():
         return jsonify({"success": False, "error": str(e)}), 500
 
 # ============================================================================
+# IMAGE HOSTING - GCS Upload
+# ============================================================================
+
+@app.route('/api/upload-images-to-gcs', methods=['POST'])
+def upload_images_to_gcs():
+    """Upload newsletter images to GCS and return public URLs"""
+    if not gcs_client:
+        return jsonify({'success': False, 'error': 'GCS not configured'}), 500
+
+    try:
+        data = request.json
+        images = data.get('images', {})
+        month = data.get('month', 'unknown')
+        year = data.get('year', datetime.now().year)
+
+        if not images:
+            return jsonify({'success': False, 'error': 'No images provided'}), 400
+
+        bucket = gcs_client.bucket(GCS_IMAGES_BUCKET)
+        uploaded_urls = {}
+        timestamp = datetime.now(CHICAGO_TZ).strftime('%Y%m%d-%H%M%S')
+
+        for section, data_url in images.items():
+            if not data_url or not data_url.startswith('data:image'):
+                continue
+
+            try:
+                header, b64_data = data_url.split(',', 1)
+                img_format = 'png'
+                if 'jpeg' in header or 'jpg' in header:
+                    img_format = 'jpg'
+                elif 'webp' in header:
+                    img_format = 'webp'
+
+                image_bytes = base64.b64decode(b64_data)
+                safe_section = section.replace('_', '-')
+                filename = f"newsletters/{year}/{month.lower()}/{timestamp}-{safe_section}.{img_format}"
+
+                blob = bucket.blob(filename)
+                blob.upload_from_string(image_bytes, content_type=f'image/{img_format}')
+                blob.make_public()
+                uploaded_urls[section] = blob.public_url
+                safe_print(f"[GCS] Uploaded {section} -> {blob.public_url}")
+
+            except Exception as img_error:
+                safe_print(f"[GCS] Error uploading {section}: {str(img_error)}")
+                continue
+
+        return jsonify({'success': True, 'urls': uploaded_urls, 'count': len(uploaded_urls)})
+
+    except Exception as e:
+        safe_print(f"[GCS UPLOAD] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
 # DRAFTS - GCS Auto-save
 # ============================================================================
 
@@ -3668,6 +3727,53 @@ def delete_saved_article():
     except Exception as e:
         safe_print(f"[SAVED ARTICLES] Error deleting: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/track-selection', methods=['POST'])
+def track_selection():
+    """Track article selection for learning/analysis"""
+    if not gcs_client:
+        return jsonify({'success': False, 'error': 'GCS not configured'}), 500
+
+    try:
+        data = request.json
+        selection = {
+            'timestamp': datetime.now(CHICAGO_TZ).isoformat(),
+            'app': 'agent',
+            'section': data.get('section'),
+            'article': {
+                'url': data.get('url'),
+                'title': data.get('title'),
+                'headline': data.get('headline'),
+                'publisher': data.get('publisher'),
+                'snippet': data.get('snippet'),
+                'impact': data.get('impact')
+            },
+            'searchQuery': data.get('searchQuery'),
+            'searchSource': data.get('searchSource'),
+            'timeFilter': data.get('timeFilter'),
+            'user': data.get('user', 'unknown'),
+            'month': data.get('month'),
+            'deselected': data.get('deselected', False)
+        }
+
+        year_month = datetime.now(CHICAGO_TZ).strftime('%Y-%m')
+        blob_name = f'selection-history/agent/{year_month}.jsonl'
+
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(blob_name)
+
+        existing = ''
+        if blob.exists():
+            existing = blob.download_as_text()
+
+        new_content = existing + json.dumps(selection) + '\n'
+        blob.upload_from_string(new_content, content_type='application/jsonl')
+
+        return jsonify({'success': True})
+    except Exception as e:
+        safe_print(f"[TRACK] Error: {str(e)}")
+        return jsonify({'success': True})
 
 
 # ============================================================================

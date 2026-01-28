@@ -840,6 +840,70 @@
         }
         .saved-article-card .sa-actions .sa-use-btn { background: #018181; color: white; border-color: #018181; }
         .saved-article-card .sa-actions .sa-delete-btn { color: #dc2626; border-color: #dc2626; }
+
+        /* Previous Newsletters Section */
+        .previous-newsletters-section {
+            background: #466F88;
+            padding: 80px 20px;
+            margin-top: 60px;
+        }
+
+        .previous-newsletters-section h2 {
+            font-size: 36px;
+            color: white;
+            margin-bottom: 12px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .previous-newsletters-section .subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 16px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .newsletter-placeholder {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .newsletter-placeholder .icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .newsletter-placeholder .title {
+            color: #666;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .newsletter-placeholder .message {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .archive-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: left;
+        }
+
+        .archive-card h4 {
+            color: #272d3f;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .archive-card p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
     </style>
 
 </head>
@@ -2033,22 +2097,22 @@
         </div>
     </div>
 
-    <!-- Newsletter Archive Section -->
-    <div style="padding: 80px 20px; margin-top: 60px; background: #466F88;">
+    <!-- Previous Newsletters Section -->
+    <div class="previous-newsletters-section">
         <div style="max-width: 1200px; margin: 0 auto;">
             <div style="margin-bottom: 40px; text-align: center;">
-                <h2 style="font-size: 36px; color: white; margin-bottom: 12px; font-weight: 700;">Previous Newsletters</h2>
-                <p style="color: rgba(255,255,255,0.8); font-size: 16px;">View past newsletters sent to your subscribers</p>
+                <h2>Previous Newsletters</h2>
+                <p class="subtitle">View past newsletters sent to your subscribers</p>
             </div>
 
-            <div id="newsletterArchiveGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px;">
+            <div id="archiveGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px;">
                 <!-- Archive cards will be loaded here -->
             </div>
 
-            <div id="newsletterArchiveEmpty" style="text-align: center; padding: 60px 20px; color: #999; display: none;">
-                <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">📭</div>
-                <h3 style="color: #666;">No Previous Newsletters</h3>
-                <p>Newsletters you publish will appear here</p>
+            <div id="archiveContent" class="newsletter-placeholder">
+                <div class="icon">📭</div>
+                <h3 class="title">No Previous Newsletters</h3>
+                <p class="message">Newsletters you publish will appear here</p>
             </div>
         </div>
     </div>
@@ -2100,6 +2164,34 @@
         let shownRoundupArticles = [];
         let shownSpotlightArticles = [];
         let shownTipsArticles = [];
+
+        // Selection tracking state
+        let lastSearchQuery = '';
+        let lastSearchSource = '';
+
+        async function trackSelection(section, article, deselected = false) {
+            try {
+                fetch(`${API_BASE}/api/track-selection`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        section: section,
+                        url: article.url || article.source_url,
+                        title: article.title,
+                        headline: article.headline,
+                        publisher: article.publisher,
+                        snippet: article.snippet || article.description || article.industry_data,
+                        impact: article.impact,
+                        searchQuery: lastSearchQuery || '',
+                        searchSource: lastSearchSource || '',
+                        timeFilter: document.querySelector('[id$="-time-select"]')?.value || document.querySelector('[id$="TimeWindow"]')?.value || '',
+                        user: (window.AUTH_USER && window.AUTH_USER.email) || 'unknown',
+                        month: selectedMonth,
+                        deselected: deselected
+                    })
+                });
+            } catch (e) { /* silent */ }
+        }
 
         // ========== SAVED ARTICLES FEATURE ==========
         let savedArticlesCache = [];
@@ -2652,6 +2744,10 @@
             const timeWindow = document.getElementById('spotlightPerplexityTimeWindow').value;
             const resultsDiv = document.getElementById('spotlightPerplexityResults');
 
+            // Track search query for selection tracking
+            lastSearchQuery = query;
+            lastSearchSource = 'spotlight-perplexity';
+
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Searching with Perplexity AI & analyzing with GPT-5.2...</p></div>';
 
             try {
@@ -2713,6 +2809,10 @@
             const timeWindow = document.getElementById('spotlightSignalsTimeWindow').value;
             const resultsDiv = document.getElementById('spotlightSignalsResults');
 
+            // Track search query for selection tracking
+            lastSearchQuery = 'spotlight signals';
+            lastSearchSource = 'spotlight-signals';
+
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Scanning all 8 market signals...</p></div>';
 
             try {
@@ -2765,6 +2865,10 @@
                 alert('Please select at least one source pack');
                 return;
             }
+
+            // Track search query for selection tracking
+            lastSearchQuery = query;
+            lastSearchSource = 'spotlight-curated';
 
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Searching curated sources...</p></div>';
 
@@ -2863,10 +2967,12 @@
             if (existingIndex >= 0) {
                 // Deselect
                 spotlightSelectedArticles.splice(existingIndex, 1);
+                trackSelection('spotlight-story', article, true);
             } else if (spotlightSelectedArticles.length < 5) {
                 // Select (max 5)
                 spotlightSelectedArticles.push(article);
                 shownSpotlightArticles.push(article.url);
+                trackSelection('spotlight-story', article, false);
             } else {
                 alert('Maximum 5 articles. Deselect one to add another.');
                 return;
@@ -3300,6 +3406,10 @@
 
         async function searchTopics() {
             showStep(2);
+
+            // Track search query for selection tracking
+            lastSearchQuery = selectedMonth;
+            lastSearchSource = 'topics';
 
             try {
                 const response = await fetch(`${API_BASE}/api/search-news`, {
@@ -6718,6 +6828,60 @@ ${generateTipsItems(tipsItems)}
             }
         }
 
+        // Upload images to GCS and return public URLs
+        async function uploadImagesToGCS() {
+            // Collect all images that have base64 data URLs
+            const images = {};
+
+            if (generatedImages.meme?.url?.startsWith('data:image')) {
+                images.meme = generatedImages.meme.url;
+            }
+            if (generatedImages.briteSpot?.url?.startsWith('data:image')) {
+                images.briteSpot = generatedImages.briteSpot.url;
+            }
+            if (generatedImages.claims?.url?.startsWith('data:image')) {
+                images.claims = generatedImages.claims.url;
+            }
+            if (generatedImages.spotlight?.url?.startsWith('data:image')) {
+                images.spotlight = generatedImages.spotlight.url;
+            }
+            if (generatedImages.tips?.url?.startsWith('data:image')) {
+                images.tips = generatedImages.tips.url;
+            }
+
+            if (Object.keys(images).length === 0) {
+                console.log('[GCS] No base64 images to upload');
+                return {};
+            }
+
+            console.log(`[GCS] Uploading ${Object.keys(images).length} images to GCS...`);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/upload-images-to-gcs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        images: images,
+                        month: selectedMonth,
+                        year: new Date().getFullYear()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log(`[GCS] Successfully uploaded ${data.count} images`);
+                    return data.urls;
+                } else {
+                    console.error('[GCS] Upload failed:', data.error);
+                    return {};
+                }
+            } catch (error) {
+                console.error('[GCS] Upload error:', error);
+                return {};
+            }
+        }
+
         // Push to Ontraport
         async function pushToOntraport(event) {
             const subject = document.getElementById('subject').value.trim();
@@ -6730,13 +6894,33 @@ ${generateTipsItems(tipsItems)}
             // Show loading state
             const originalButton = event.target;
             const originalText = originalButton.innerHTML;
-            originalButton.innerHTML = '⏳ Pushing to Ontraport...';
+            originalButton.innerHTML = '⏳ Uploading images...';
             originalButton.disabled = true;
 
             try {
+                // First, upload images to GCS
+                console.log('[ONTRAPORT] Uploading images to GCS...');
+                const gcsUrls = await uploadImagesToGCS();
+                console.log('[ONTRAPORT] GCS URLs:', gcsUrls);
+
+                originalButton.innerHTML = '⏳ Pushing to Ontraport...';
+
                 console.log('[ONTRAPORT] Getting final newsletter HTML...');
                 let html = getFinalNewsletterHTML();
-                // Replace base64 data URIs with placeholder URLs for email clients
+
+                // Replace base64 data URIs with GCS URLs
+                if (Object.keys(gcsUrls).length > 0) {
+                    // Replace each known image section with its GCS URL
+                    for (const [section, gcsUrl] of Object.entries(gcsUrls)) {
+                        const originalUrl = generatedImages[section]?.url;
+                        if (originalUrl && originalUrl.startsWith('data:image')) {
+                            html = html.split(originalUrl).join(gcsUrl);
+                            console.log(`[ONTRAPORT] Replaced ${section} image with GCS URL`);
+                        }
+                    }
+                }
+
+                // Replace any remaining base64 data URIs with placeholder URLs (fallback)
                 let imgIdx = 0;
                 const imgNames = ['image-1', 'image-2', 'image-3', 'image-4', 'image-5'];
                 html = html.replace(/data:image\/[a-z]+;base64,[A-Za-z0-9+\/=]+/g, () => {
@@ -7185,6 +7369,10 @@ ${generateTipsItems(tipsItems)}
             const resultsDiv = document.getElementById('perplexityResults');
             const currentTab = currentResearchSection;
 
+            // Track search query for selection tracking
+            lastSearchQuery = query;
+            lastSearchSource = 'perplexity';
+
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Searching with Perplexity AI & analyzing with GPT-5.2...</p></div>';
 
             try {
@@ -7235,6 +7423,10 @@ ${generateTipsItems(tipsItems)}
             const resultsDiv = document.getElementById('insightResults');
             const currentTab = currentResearchSection;
 
+            // Track search query for selection tracking
+            lastSearchQuery = 'market signals';
+            lastSearchSource = 'insights';
+
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Analyzing all 8 market signals...</p></div>';
 
             try {
@@ -7281,6 +7473,10 @@ ${generateTipsItems(tipsItems)}
                 resultsDiv.innerHTML = '<p style="color: #c00; padding: 20px;">Please select at least one source pack.</p>';
                 return;
             }
+
+            // Track search query for selection tracking
+            lastSearchQuery = query;
+            lastSearchSource = 'explorer';
 
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Searching sources & analyzing story angles...</p></div>';
 
@@ -8041,6 +8237,7 @@ ${generateTipsItems(tipsItems)}
                         indicator.querySelector('.check-icon').style.display = 'none';
                     }
                     console.log('[Research] Deselected from ROUNDUP:', selectedObj.title, `(${selectedRoundup.length}/5)`);
+                    trackSelection('roundup', result, true);
                 } else if (selectedRoundup.length < 5) {
                     // Select - add to array
                     selectedRoundup.push(selectedObj);
@@ -8054,6 +8251,7 @@ ${generateTipsItems(tipsItems)}
                         indicator.querySelector('.check-icon').style.display = 'block';
                     }
                     console.log('[Research] Selected for ROUNDUP:', selectedObj.title, `(${selectedRoundup.length}/5)`);
+                    trackSelection('roundup', result, false);
                 } else {
                     // Already have 5, show message
                     alert('You have already selected 5 articles for News Roundup. Deselect one to choose a different article.');
@@ -8098,15 +8296,18 @@ ${generateTipsItems(tipsItems)}
                 selectedClaims = selectedObj;
                 document.getElementById('claimsTabCheck').style.display = 'inline';
                 console.log('[Research] Selected for CLAIMS:', selectedClaims.title);
+                trackSelection('claims', result, false);
             } else if (currentResearchSection === 'spotlight') {
                 selectedSpotlight = selectedObj;
                 document.getElementById('spotlightTabCheck').style.display = 'inline';
                 console.log('[Research] Selected for SPOTLIGHT:', selectedSpotlight.title);
+                trackSelection('spotlight', result, false);
             } else if (currentResearchSection === 'tips') {
                 // For tips, only allow 1 selection (single article generates 5 tips)
                 selectedTips = selectedObj;
                 document.getElementById('tipsTabCheck').style.display = 'inline';
                 console.log('[Research] Selected for TIPS:', selectedTips.title);
+                trackSelection('tips', result, false);
             }
 
             // Update the Next button
@@ -8719,10 +8920,38 @@ ${generateTipsItems(tipsItems)}
             if (count === 0) alert('No generated images found to download.');
         }
 
+        // Load archive
+        async function loadArchive() {
+            try {
+                const response = await fetch(`${API_BASE}/api/get-newsletter-archive`);
+                const data = await response.json();
+
+                if (data.success && data.newsletters && data.newsletters.length > 0) {
+                    document.getElementById('archiveContent').style.display = 'none';
+                    const grid = document.getElementById('archiveGrid');
+                    grid.style.display = 'grid';
+                    grid.innerHTML = '';
+
+                    data.newsletters.forEach(n => {
+                        const card = document.createElement('div');
+                        card.className = 'archive-card';
+                        card.innerHTML = `
+                            <h4>${n.month.charAt(0).toUpperCase() + n.month.slice(1)} ${n.year}</h4>
+                            <p>Published: ${n.date_published}</p>
+                        `;
+                        grid.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load archive:', error);
+            }
+        }
+
         // Load drafts and saved articles on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadDrafts();
             loadSavedArticles();
+            loadArchive();
         });
 
         window.scrollTo(0, 0);
