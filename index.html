@@ -8909,30 +8909,59 @@ ${generateTipsItems(tipsItems)}
             if (count === 0) alert('No generated images found to download.');
         }
 
-        // Load archive
+        // Load published newsletters
         async function loadArchive() {
             try {
-                const response = await fetch(`${API_BASE}/api/get-newsletter-archive`);
+                const response = await fetch(`${API_BASE}/api/list-published`);
                 const data = await response.json();
-
+                const grid = document.getElementById('archiveGrid');
+                const empty = document.getElementById('archiveContent');
                 if (data.success && data.newsletters && data.newsletters.length > 0) {
-                    document.getElementById('archiveContent').style.display = 'none';
-                    const grid = document.getElementById('archiveGrid');
+                    if (empty) empty.style.display = 'none';
                     grid.style.display = 'grid';
                     grid.innerHTML = '';
-
                     data.newsletters.forEach(n => {
+                        const monthCap = n.month ? n.month.charAt(0).toUpperCase() + n.month.slice(1) : '?';
+                        const savedBy = n.lastSavedBy || 'unknown';
+                        const savedAt = n.lastSavedAt ? new Date(n.lastSavedAt).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '';
                         const card = document.createElement('div');
-                        card.className = 'archive-card';
+                        card.style.cssText = 'background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;';
+                        card.onmouseenter = () => { card.style.transform = 'translateY(-4px)'; card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'; };
+                        card.onmouseleave = () => { card.style.transform = ''; card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; };
                         card.innerHTML = `
-                            <h4>${n.month.charAt(0).toUpperCase() + n.month.slice(1)} ${n.year}</h4>
-                            <p>Published: ${n.date_published}</p>
+                            <div style="width: 100%; height: 140px; background: #272D3F; display: flex; align-items: center; justify-content: center;">
+                                <div style="font-size: 48px; color: #008181; opacity: 0.4;">📰</div>
+                            </div>
+                            <div style="padding: 20px;">
+                                <span style="display: inline-block; background: #272D3F; color: white; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 12px;">${monthCap} ${n.year}</span>
+                                <div style="margin: 12px 0;">
+                                    <div style="margin-bottom: 10px; padding-left: 12px; border-left: 3px solid #008181;">
+                                        <div style="font-size: 11px; text-transform: uppercase; color: #008181; font-weight: 700; letter-spacing: 0.5px;">BRITE SPOT</div>
+                                        <div style="font-size: 13px; color: #272D3F; font-weight: 600;">${n.sections?.briteSpot?.title || 'Featured Story'}</div>
+                                    </div>
+                                    <div style="margin-bottom: 10px; padding-left: 12px; border-left: 3px solid #008181;">
+                                        <div style="font-size: 11px; text-transform: uppercase; color: #008181; font-weight: 700; letter-spacing: 0.5px;">CLAIMS</div>
+                                        <div style="font-size: 13px; color: #272D3F; font-weight: 600;">${n.sections?.claims?.title || 'Curious Claims'}</div>
+                                    </div>
+                                    <div style="margin-bottom: 10px; padding-left: 12px; border-left: 3px solid #008181;">
+                                        <div style="font-size: 11px; text-transform: uppercase; color: #008181; font-weight: 700; letter-spacing: 0.5px;">SPOTLIGHT</div>
+                                        <div style="font-size: 13px; color: #272D3F; font-weight: 600;">${n.sections?.spotlight?.title || 'Industry Spotlight'}</div>
+                                    </div>
+                                </div>
+                                <p style="margin: 8px 0 0; font-size: 12px; color: #999;">${savedBy} · ${savedAt} CT</p>
+                                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee;">
+                                    <button onclick="viewNewsletter('${n.filename}')" style="width: 100%; padding: 12px 16px; background: #008181; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">View Newsletter</button>
+                                </div>
+                            </div>
                         `;
                         grid.appendChild(card);
                     });
+                } else {
+                    if (empty) empty.style.display = 'block';
+                    grid.style.display = 'none';
                 }
-            } catch (error) {
-                console.error('Failed to load archive:', error);
+            } catch (e) {
+                console.error('[Published] Load list failed:', e);
             }
         }
 
