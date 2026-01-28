@@ -3878,11 +3878,14 @@
                 html += `</div>`;
             }
 
+            // Helper for source links
+            const makeSourceLink = (url) => url ? `<br><a href="${url}" target="_blank" style="color: #018181; text-decoration: underline; font-size: 13px;">Read more →</a>` : '';
+
             // CURIOUS CLAIMS SECTION
             html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
             html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Curious Claims</h3>';
             html += `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${selectedClaims?.title || 'Curious Claims'}</h4>`;
-            html += `<div id="claimsContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${claimsContent}</div>`;
+            html += `<div id="claimsContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${claimsContent}${makeSourceLink(selectedClaims?.url || selectedClaims?.source_url)}</div>`;
             html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('claims')">Edit</button>`;
             html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('claims')">💾 Save</button>`;
             html += `</div>`;
@@ -8729,14 +8732,23 @@ ${generateTipsItems(tipsItems)}
                         const savedBy = d.lastSavedBy || 'unknown';
                         const savedAt = d.lastSavedAt ? new Date(d.lastSavedAt).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '';
                         const card = document.createElement('div');
-                        card.style.cssText = 'background: white; border-radius: 12px; padding: 24px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+                        card.style.cssText = 'background: white; border-radius: 12px; padding: 24px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative;';
                         card.onmouseenter = () => card.style.transform = 'translateY(-4px)';
                         card.onmouseleave = () => card.style.transform = '';
                         card.innerHTML = `
+                            <button class="draft-delete-btn" title="Delete draft" style="position: absolute; top: 8px; right: 8px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;">&times;</button>
                             <h4 style="margin:0 0 8px 0;color:#272d3f;">${monthCap} ${d.year}</h4>
                             <p style="margin:4px 0;font-size:13px;color:#666;">Created by: ${savedBy}</p>
                             <p style="margin:4px 0;font-size:12px;color:#999;">${savedAt} CT</p>
                         `;
+                        card.querySelector('.draft-delete-btn').onclick = (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete draft for ${monthCap} ${d.year}?`)) {
+                                deleteDraft(d.filename);
+                            }
+                        };
+                        card.querySelector('.draft-delete-btn').onmouseenter = (e) => e.target.style.opacity = '1';
+                        card.querySelector('.draft-delete-btn').onmouseleave = (e) => e.target.style.opacity = '0.7';
                         card.onclick = () => loadDraft(d.filename);
                         grid.appendChild(card);
                     });
@@ -8785,18 +8797,21 @@ ${generateTipsItems(tipsItems)}
             }
         }
 
-        async function deleteDraft() {
-            if (!selectedMonth) return;
-            try {
+        async function deleteDraft(filename) {
+            // If no filename provided, use current draft
+            if (!filename) {
+                if (!selectedMonth) return;
                 const userEmail = (window.AUTH_USER && window.AUTH_USER.email) || 'unknown';
                 const savedBy = userEmail.split('@')[0].replace(/\./g, '-');
-                const filename = `drafts/${selectedMonth.toLowerCase()}-${new Date().getFullYear()}-${savedBy}.json`;
+                filename = `drafts/${selectedMonth.toLowerCase()}-${new Date().getFullYear()}-${savedBy}.json`;
+            }
+            try {
                 await fetch(`${API_BASE}/api/delete-draft`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ file: filename })
                 });
-                console.log('[Draft] Deleted');
+                console.log('[Draft] Deleted:', filename);
                 loadDrafts();
             } catch (e) {
                 console.error('[Draft] Delete failed:', e);
