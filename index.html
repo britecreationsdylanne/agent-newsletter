@@ -2169,6 +2169,16 @@
             hideSavedArticlesModal();
         }
 
+        function handleCheckboxClick(checkbox, e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const item = checkbox.closest('.research-result-item');
+            if (item && item.onclick) {
+                item.onclick();
+            }
+        }
+
         function addSavedArticleToResults(article) {
             const container = document.querySelector('.research-section.active .research-card-results')
                 || document.getElementById('perplexityResults');
@@ -2183,7 +2193,7 @@
                     <div class="research-result-meta">
                         <span>${article.publisher}</span>
                         <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source &rarr;</a>
-                        <input type="checkbox" class="research-result-checkbox" onclick="event.stopPropagation(); event.stopImmediatePropagation();">
+                        <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                     </div>
                 </div>
                 <div class="research-result-title">${article.headline}</div>

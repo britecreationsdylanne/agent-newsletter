@@ -19,6 +19,7 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from werkzeug.middleware.proxy_fix import ProxyFix
 from bs4 import BeautifulSoup
+import pytz
 
 # SendGrid for email
 try:
@@ -47,6 +48,9 @@ from config.brand_guidelines import (
     get_humanization_guidelines, get_full_style_guide_for_section
 )
 from config.model_config import get_model_for_task
+
+# Chicago timezone for timestamps
+CHICAGO_TZ = pytz.timezone('America/Chicago')
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
@@ -3419,7 +3423,7 @@ def save_draft():
             'subjectLine': data.get('subjectLine'),
             'preheader': data.get('preheader'),
             'lastSavedBy': data.get('savedBy', 'unknown'),
-            'lastSavedAt': datetime.now().isoformat()
+            'lastSavedAt': datetime.now(CHICAGO_TZ).isoformat()
         }
 
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
@@ -3625,7 +3629,7 @@ def add_saved_article():
             return jsonify({'success': True, 'message': 'Already saved', 'articles': articles})
 
         # Add with timestamp
-        article['dateSaved'] = datetime.now().isoformat()
+        article['dateSaved'] = datetime.now(CHICAGO_TZ).isoformat()
         articles.insert(0, article)
 
         blob.upload_from_string(json.dumps({'articles': articles}), content_type='application/json')
