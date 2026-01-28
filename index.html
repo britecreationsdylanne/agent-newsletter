@@ -722,6 +722,124 @@
             background: #fee2e2;
             color: #dc2626;
         }
+
+        .btn-green {
+            background: #018181;
+            color: white;
+            border-color: #018181;
+        }
+        .btn-green:hover {
+            background: #016868;
+        }
+
+        .btn-add-link {
+            background: #272d3f; color: white; border: none;
+            padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+        .btn-add-link:hover { background: #1f2937; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #1f2937;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0 4px;
+        }
+        .modal-close:hover { color: #1f2937; }
+        .modal-description {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0 0 16px 0;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .modal-error {
+            color: #dc2626;
+            font-size: 13px;
+            margin: 0 0 8px 0;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .save-article-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 2px 4px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .save-article-btn:hover { opacity: 1; }
+        .save-article-btn.is-saved { opacity: 1; }
+
+        .saved-article-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #7c3aed;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            background: #faf5ff;
+        }
+        .saved-article-card .sa-info { flex: 1; min-width: 0; }
+        .saved-article-card .sa-title {
+            font-weight: 600; font-size: 14px; color: #1f2937;
+            margin: 0 0 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .saved-article-card .sa-meta { font-size: 12px; color: #6b7280; }
+        .saved-article-card .sa-actions { display: flex; gap: 6px; margin-left: 10px; flex-shrink: 0; }
+        .saved-article-card .sa-actions button {
+            padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;
+            border: 1px solid #d1d5db; background: white;
+        }
+        .saved-article-card .sa-actions .sa-use-btn { background: #018181; color: white; border-color: #018181; }
+        .saved-article-card .sa-actions .sa-delete-btn { color: #dc2626; border-color: #dc2626; }
     </style>
 
 </head>
@@ -792,6 +910,28 @@
             header.appendChild(userInfo);
         }
     </script>
+
+    <div class="modal-overlay" id="savedArticlesModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Saved Articles</h3>
+                <button class="modal-close" onclick="hideSavedArticlesModal()">&times;</button>
+            </div>
+            <p class="modal-description">Articles saved for future newsletters. Click "Use" to add one to your current research.</p>
+            <div id="savedArticlesList" style="max-height: 350px; overflow-y: auto; margin-bottom: 15px;">
+                <p style="color: #999; text-align: center; padding: 20px;">Loading saved articles...</p>
+            </div>
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 12px;">
+                <p style="font-size: 13px; color: #666; margin: 0 0 8px 0;">Save a new article by URL:</p>
+                <input type="text" class="modal-input" id="savedArticleUrlInput" placeholder="https://example.com/article...">
+                <p class="modal-error" id="savedArticleError" style="display: none;"></p>
+                <div class="modal-actions">
+                    <button class="btn btn-green" onclick="saveArticleByUrl()">+ Save Article</button>
+                    <button class="btn btn-secondary" onclick="hideSavedArticlesModal()">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container">
         <div class="header">
@@ -1078,16 +1218,7 @@
             <h2>🔍 Research Dashboard</h2>
             <p>Search and select articles for the remaining newsletter sections.</p>
 
-            <!-- Saved Articles Toggle -->
-            <div style="margin-bottom: 15px;">
-                <button onclick="toggleSavedArticlesPanel()" style="background: #fefce8; border: 1px solid #facc15; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #854d0e;">
-                    🔖 Saved Articles (<span id="savedArticlesCount">0</span>)
-                </button>
-                <div id="savedArticlesPanel" style="display: none; margin-top: 10px; background: #fffef5; border: 1px solid #fde68a; border-radius: 8px; padding: 16px; max-height: 300px; overflow-y: auto;">
-                    <h4 style="margin: 0 0 10px 0; color: #854d0e; font-size: 14px;">🔖 Saved Articles Bank</h4>
-                    <div id="savedArticlesList"></div>
-                </div>
-            </div>
+            <button class="btn-add-link" onclick="showSavedArticlesModal(currentResearchSection)">📌 Saved Articles</button>
 
             <!-- Section Tabs -->
             <div class="research-tabs">
@@ -1970,108 +2101,214 @@
         let shownSpotlightArticles = [];
         let shownTipsArticles = [];
 
-        // Saved Articles (Article Banking) State
-        let savedArticles = [];
-        let savedArticleUrls = new Set();
+        // ========== SAVED ARTICLES FEATURE ==========
+        let savedArticlesCache = [];
+        let savedArticlesModalSection = null;
 
-        // Load saved articles on init
         async function loadSavedArticles() {
             try {
-                const resp = await fetch(`${API_BASE}/api/saved-articles`);
-                const data = await resp.json();
-                if (data.success && data.articles) {
-                    savedArticles = data.articles;
-                    savedArticleUrls = new Set(savedArticles.map(a => a.url).filter(Boolean));
-                }
-            } catch (e) { console.log('[SavedArticles] Load error:', e); }
-        }
-
-        async function toggleSaveArticle(index, cardType) {
-            const result = researchResults[cardType]?.[index];
-            if (!result) return;
-            await toggleSaveArticleFromResult(result);
-        }
-
-        async function toggleSaveArticleFromResult(result) {
-            if (!result || !result.url) return;
-            if (savedArticleUrls.has(result.url)) {
-                // Remove
-                const article = savedArticles.find(a => a.url === result.url);
-                if (article?.id) {
-                    await fetch(`${API_BASE}/api/saved-articles/${article.id}`, { method: 'DELETE' });
-                }
-                savedArticles = savedArticles.filter(a => a.url !== result.url);
-                savedArticleUrls.delete(result.url);
-            } else {
-                // Save
-                const article = {
-                    title: result.title || result.headline || '',
-                    url: result.url,
-                    publisher: result.publisher || '',
-                    snippet: result.snippet || result.industry_data || '',
-                    impact: result.impact || 'MEDIUM',
-                    so_what: result.so_what || result.agent_implications || ''
-                };
-                const resp = await fetch(`${API_BASE}/api/saved-articles`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(article)
-                });
-                const data = await resp.json();
-                if (data.success && data.article) {
-                    savedArticles.unshift(data.article);
-                    savedArticleUrls.add(result.url);
-                }
+                const res = await fetch(`${API_BASE}/api/saved-articles`);
+                const data = await res.json();
+                if (data.success) savedArticlesCache = data.articles || [];
+            } catch (e) {
+                console.log('[SavedArticles] Load error:', e);
+                savedArticlesCache = [];
             }
-            // Update all bookmark icons
-            document.querySelectorAll('.save-article-btn').forEach(btn => {
-                const url = btn.dataset.url;
-                if (url) btn.textContent = savedArticleUrls.has(url) ? '🔖' : '🏷️';
-            });
-            updateSavedArticlesPanel();
         }
 
-        function updateSavedArticlesPanel() {
-            const panel = document.getElementById('savedArticlesPanel');
-            if (!panel) return;
-            const count = document.getElementById('savedArticlesCount');
-            if (count) count.textContent = savedArticles.length;
-            const list = document.getElementById('savedArticlesList');
-            if (!list) return;
-            if (savedArticles.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:#999; padding:20px; font-size:13px;">No saved articles yet. Click 🏷️ on any research result to save it.</p>';
+        loadSavedArticles();
+
+        function showSavedArticlesModal(section) {
+            savedArticlesModalSection = section;
+            document.getElementById('savedArticlesModal').classList.add('show');
+            document.getElementById('savedArticleUrlInput').value = '';
+            document.getElementById('savedArticleError').style.display = 'none';
+            renderSavedArticlesList();
+        }
+
+        function hideSavedArticlesModal() {
+            document.getElementById('savedArticlesModal').classList.remove('show');
+            savedArticlesModalSection = null;
+        }
+
+        function renderSavedArticlesList() {
+            const container = document.getElementById('savedArticlesList');
+            if (savedArticlesCache.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No saved articles yet. Save articles from search results or add a URL below.</p>';
                 return;
             }
-            list.innerHTML = savedArticles.map(a => `
-                <div style="padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; background: #fefce8;">
-                    <div style="font-weight: 600; font-size: 12px; color: #272d3f; margin-bottom: 3px;">${a.title}</div>
-                    <div style="font-size: 11px; color: #666; margin-bottom: 4px;">${(a.snippet || '').substring(0, 80)}${a.snippet?.length > 80 ? '...' : ''}</div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <span style="font-size:10px; color:#018181;">${a.publisher || ''}</span>
-                        ${a.url ? `<a href="${a.url}" target="_blank" style="font-size:10px; color:#3b82f6;" onclick="event.stopPropagation()">Open →</a>` : ''}
-                        <button onclick="removeSavedArticle('${a.id}')" style="margin-left:auto; background:none; border:none; cursor:pointer; font-size:12px; color:#dc2626;" title="Remove">✕</button>
+            container.innerHTML = savedArticlesCache.map((article, i) => `
+                <div class="saved-article-card">
+                    <div class="sa-info">
+                        <div class="sa-title">${article.title || article.url}</div>
+                        <div class="sa-meta">${article.publisher || ''} ${article.dateSaved ? '· Saved ' + new Date(article.dateSaved).toLocaleDateString() : ''}</div>
+                    </div>
+                    <div class="sa-actions">
+                        <button class="sa-use-btn" onclick="useSavedArticle(${i})">Use</button>
+                        <button class="sa-delete-btn" onclick="deleteSavedArticle('${(article.url || '').replace(/'/g, "\\'")}')">&times;</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        async function removeSavedArticle(id) {
-            await fetch(`${API_BASE}/api/saved-articles/${id}`, { method: 'DELETE' });
-            const article = savedArticles.find(a => a.id === id);
-            if (article?.url) savedArticleUrls.delete(article.url);
-            savedArticles = savedArticles.filter(a => a.id !== id);
-            document.querySelectorAll('.save-article-btn').forEach(btn => {
-                const url = btn.dataset.url;
-                if (url) btn.textContent = savedArticleUrls.has(url) ? '🔖' : '🏷️';
-            });
-            updateSavedArticlesPanel();
+        function useSavedArticle(index) {
+            const article = savedArticlesCache[index];
+            if (!article) return;
+
+            const articleObj = {
+                url: article.url,
+                title: article.title || article.url,
+                headline: article.title || article.url,
+                snippet: article.snippet || '',
+                publisher: article.publisher || '',
+                impact: 'SAVED',
+                isSavedArticle: true
+            };
+
+            addSavedArticleToResults(articleObj);
+            hideSavedArticlesModal();
         }
 
-        function toggleSavedArticlesPanel() {
-            const panel = document.getElementById('savedArticlesPanel');
-            if (!panel) return;
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-            if (panel.style.display !== 'none') updateSavedArticlesPanel();
+        function addSavedArticleToResults(article) {
+            const container = document.querySelector('.research-section.active .research-card-results')
+                || document.getElementById('perplexityResults');
+            if (!container) return;
+
+            const item = document.createElement('div');
+            item.className = 'research-result-item';
+            item.style.borderLeft = '4px solid #7c3aed';
+            item.innerHTML = `
+                <div class="research-result-header">
+                    <span class="research-result-badge" style="background: #7c3aed; color: white;">SAVED</span>
+                    <div class="research-result-meta">
+                        <span>${article.publisher}</span>
+                        <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source &rarr;</a>
+                        <input type="checkbox" class="research-result-checkbox" onclick="event.stopPropagation(); event.stopImmediatePropagation();">
+                    </div>
+                </div>
+                <div class="research-result-title">${article.headline}</div>
+                ${article.snippet ? `
+                    <div class="research-result-keydata">
+                        <div class="research-result-keydata-label">SUMMARY</div>
+                        <p>${article.snippet.substring(0, 250)}${article.snippet.length > 250 ? '...' : ''}</p>
+                    </div>
+                ` : ''}
+            `;
+
+            if (typeof researchResults !== 'undefined') {
+                if (!researchResults.perplexity) researchResults.perplexity = [];
+                researchResults.perplexity.unshift(article);
+            }
+
+            item.onclick = () => {
+                const checkbox = item.querySelector('.research-result-checkbox');
+                if (checkbox) checkbox.checked = !checkbox.checked;
+                item.classList.toggle('selected');
+                if (typeof selectArticle === 'function') {
+                    selectArticle(article, item);
+                }
+            };
+
+            if (container.firstChild) {
+                container.insertBefore(item, container.firstChild);
+            } else {
+                container.appendChild(item);
+            }
+        }
+
+        async function toggleSaveArticle(btn, article) {
+            if (!article || !article.url) return;
+            const alreadySaved = savedArticlesCache.some(sa => sa.url === article.url);
+            if (alreadySaved) {
+                await deleteSavedArticle(article.url);
+                btn.classList.remove('is-saved');
+                btn.title = 'Save for later';
+            } else {
+                await saveArticleToBank(article);
+                btn.classList.add('is-saved');
+                btn.title = 'Saved';
+            }
+        }
+
+        async function saveArticleToBank(article) {
+            try {
+                const res = await fetch(`${API_BASE}/api/saved-articles`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ article: {
+                        url: article.url,
+                        title: article.title || article.headline || article.url,
+                        snippet: article.snippet || article.industry_data || '',
+                        publisher: article.publisher || ''
+                    }})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    savedArticlesCache = data.articles || [];
+                }
+            } catch (e) {
+                console.error('[SavedArticles] Save error:', e);
+            }
+        }
+
+        async function deleteSavedArticle(url) {
+            try {
+                const res = await fetch(`${API_BASE}/api/saved-articles`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    savedArticlesCache = data.articles || [];
+                    renderSavedArticlesList();
+                }
+            } catch (e) {
+                console.error('[SavedArticles] Delete error:', e);
+            }
+        }
+
+        async function saveArticleByUrl() {
+            const urlInput = document.getElementById('savedArticleUrlInput');
+            const errorDiv = document.getElementById('savedArticleError');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                errorDiv.textContent = 'Please enter a URL';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                errorDiv.textContent = 'Please enter a valid URL starting with http:// or https://';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            errorDiv.style.display = 'none';
+
+            try {
+                const metaRes = await fetch(`${API_BASE}/api/fetch-article-metadata`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const meta = await metaRes.json();
+                await saveArticleToBank({
+                    url: url,
+                    title: meta.title || url,
+                    snippet: meta.description || '',
+                    publisher: meta.publisher || new URL(url).hostname
+                });
+            } catch (e) {
+                await saveArticleToBank({
+                    url: url,
+                    title: url,
+                    snippet: '',
+                    publisher: new URL(url).hostname
+                });
+            }
+
+            urlInput.value = '';
+            renderSavedArticlesList();
         }
 
         // 3-Card Research Dashboard State
@@ -2573,6 +2810,11 @@
 
             results.forEach((result, index) => {
                 const isSelected = spotlightSelectedArticles.some(a => a.url === result.url);
+                const isSaved = savedArticlesCache.some(sa => sa.url === result.url);
+                const articleIdx = window._displayedArticles ? window._displayedArticles.length : 0;
+                if (!window._displayedArticles) window._displayedArticles = [];
+                window._displayedArticles.push(result);
+
                 const card = document.createElement('div');
                 card.className = 'research-result-card';
                 card.style.cssText = `
@@ -2592,7 +2834,7 @@
                             <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${(result.snippet || result.industry_data || '').substring(0, 100)}...</div>
                             <div style="display: flex; align-items: center; gap: 6px;">
                                 <span style="font-size: 11px; color: #018181;">${result.publisher || 'Unknown source'}</span>
-                                <button class="save-article-btn" data-url="${result.url || ''}" onclick="event.stopPropagation(); toggleSaveArticleFromResult(${JSON.stringify(result).replace(/"/g, '&quot;')})" style="background: none; border: none; cursor: pointer; font-size: 13px; padding: 1px 3px;" title="Save for later">${savedArticleUrls.has(result.url) ? '🔖' : '🏷️'}</button>
+                                <button class="save-article-btn ${isSaved ? 'is-saved' : ''}" onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); toggleSaveArticle(this, window._displayedArticles[${articleIdx}])" title="${isSaved ? 'Saved' : 'Save for later'}">📌</button>
                             </div>
                         </div>
                         <div style="width: 20px; height: 20px; border: 2px solid ${isSelected ? '#22c55e' : '#ccc'}; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ${isSelected ? '#22c55e' : 'white'};">
@@ -7116,6 +7358,11 @@ ${generateTipsItems(tipsItems)}
                 const industryData = result.industry_data || result.snippet || result.description || '';
                 const soWhat = result.so_what || result.agent_implications || '';
 
+                const isSaved = savedArticlesCache.some(sa => sa.url === result.url);
+                const articleIdx = window._displayedArticles ? window._displayedArticles.length : 0;
+                if (!window._displayedArticles) window._displayedArticles = [];
+                window._displayedArticles.push(result);
+
                 const item = document.createElement('div');
                 item.className = 'research-result-item';
                 item.dataset.cardType = cardType;
@@ -7136,7 +7383,7 @@ ${generateTipsItems(tipsItems)}
                         ${signalTags}
                         <span style="margin-left: auto; font-size: 10px; color: #64748b;">${result.publisher || ''}</span>
                         ${result.url ? `<a href="${result.url}" target="_blank" style="font-size: 10px; color: #3b82f6; text-decoration: none; margin-left: 6px;" onclick="event.stopPropagation()">Source →</a>` : ''}
-                        <button class="save-article-btn" data-url="${result.url || ''}" onclick="event.stopPropagation(); toggleSaveArticle(${index}, '${cardType}')" style="background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px 4px; margin-left: 4px;" title="Save for later">${savedArticleUrls.has(result.url) ? '🔖' : '🏷️'}</button>
+                        <button class="save-article-btn ${isSaved ? 'is-saved' : ''}" onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); toggleSaveArticle(this, window._displayedArticles[${articleIdx}])" title="${isSaved ? 'Saved' : 'Save for later'}">📌</button>
                     </div>
 
                     <!-- Section 1: Headline -->
@@ -8465,7 +8712,7 @@ ${generateTipsItems(tipsItems)}
         // Load drafts and saved articles on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadDrafts();
-            loadSavedArticles().then(() => updateSavedArticlesPanel());
+            loadSavedArticles();
         });
 
         window.scrollTo(0, 0);

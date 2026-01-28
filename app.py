@@ -3577,75 +3577,93 @@ def delete_draft():
 # SAVED ARTICLES (Article Banking / Save for Later)
 # ============================================================================
 
-SAVED_ARTICLES_BLOB = 'saved-articles/saved-articles.json'
+SAVED_ARTICLES_BLOB = 'saved-articles/global.json'
 
 @app.route('/api/saved-articles', methods=['GET'])
-def list_saved_articles():
-    """List all saved articles from GCS"""
+def get_saved_articles():
+    """Get all saved articles from GCS"""
     if not gcs_client:
         return jsonify({'success': True, 'articles': []})
     try:
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blob = bucket.blob(SAVED_ARTICLES_BLOB)
-        if not blob.exists():
-            return jsonify({'success': True, 'articles': []})
-        articles = json.loads(blob.download_as_text())
-        return jsonify({'success': True, 'articles': articles})
+        if blob.exists():
+            data = json.loads(blob.download_as_text())
+            # Handle both old format (list) and new format ({articles: []})
+            if isinstance(data, list):
+                return jsonify({'success': True, 'articles': data})
+            return jsonify({'success': True, 'articles': data.get('articles', [])})
+        return jsonify({'success': True, 'articles': []})
     except Exception as e:
-        safe_print(f"[SAVED ARTICLES LIST ERROR] {str(e)}")
+        safe_print(f"[SAVED ARTICLES] Error loading: {str(e)}")
         return jsonify({'success': True, 'articles': []})
 
 
 @app.route('/api/saved-articles', methods=['POST'])
-def save_article():
-    """Save an article to the shared bank"""
+def add_saved_article():
+    """Add an article to the saved articles list"""
     if not gcs_client:
         return jsonify({'success': False, 'error': 'GCS not available'}), 503
     try:
-        article = request.json
-        if not article or not article.get('title'):
-            return jsonify({'success': False, 'error': 'Article title required'}), 400
+        article = request.json.get('article')
+        if not article or not article.get('url'):
+            return jsonify({'success': False, 'error': 'Article with URL required'}), 400
 
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blob = bucket.blob(SAVED_ARTICLES_BLOB)
 
         articles = []
         if blob.exists():
-            articles = json.loads(blob.download_as_text())
+            data = json.loads(blob.download_as_text())
+            if isinstance(data, list):
+                articles = data
+            else:
+                articles = data.get('articles', [])
 
-        # Add metadata
-        article['savedAt'] = datetime.now().isoformat()
-        article['id'] = article.get('id') or f"art-{int(datetime.now().timestamp() * 1000)}"
+        # Check for duplicate URL
+        if any(a.get('url') == article['url'] for a in articles):
+            return jsonify({'success': True, 'message': 'Already saved', 'articles': articles})
 
-        # Prevent duplicates by URL
-        if article.get('url'):
-            articles = [a for a in articles if a.get('url') != article['url']]
-
+        # Add with timestamp
+        article['dateSaved'] = datetime.now().isoformat()
         articles.insert(0, article)
-        blob.upload_from_string(json.dumps(articles), content_type='application/json')
-        return jsonify({'success': True, 'article': article})
+
+        blob.upload_from_string(json.dumps({'articles': articles}), content_type='application/json')
+        return jsonify({'success': True, 'articles': articles})
+
     except Exception as e:
-        safe_print(f"[SAVED ARTICLE ADD ERROR] {str(e)}")
+        safe_print(f"[SAVED ARTICLES] Error saving: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@app.route('/api/saved-articles/<article_id>', methods=['DELETE'])
-def delete_saved_article(article_id):
-    """Remove an article from the saved bank"""
+@app.route('/api/saved-articles', methods=['DELETE'])
+def delete_saved_article():
+    """Remove an article from saved articles by URL"""
     if not gcs_client:
-        return jsonify({'success': True})
+        return jsonify({'success': False, 'error': 'GCS not available'}), 503
     try:
+        url = request.json.get('url')
+        if not url:
+            return jsonify({'success': False, 'error': 'URL required'}), 400
+
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blob = bucket.blob(SAVED_ARTICLES_BLOB)
-        if not blob.exists():
-            return jsonify({'success': True})
-        articles = json.loads(blob.download_as_text())
-        articles = [a for a in articles if a.get('id') != article_id]
-        blob.upload_from_string(json.dumps(articles), content_type='application/json')
-        return jsonify({'success': True})
+
+        articles = []
+        if blob.exists():
+            data = json.loads(blob.download_as_text())
+            if isinstance(data, list):
+                articles = data
+            else:
+                articles = data.get('articles', [])
+
+        articles = [a for a in articles if a.get('url') != url]
+        blob.upload_from_string(json.dumps({'articles': articles}), content_type='application/json')
+        return jsonify({'success': True, 'articles': articles})
+
     except Exception as e:
-        safe_print(f"[SAVED ARTICLE DELETE ERROR] {str(e)}")
-        return jsonify({'success': True})
+        safe_print(f"[SAVED ARTICLES] Error deleting: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ============================================================================
