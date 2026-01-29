@@ -2583,11 +2583,25 @@
                 await deleteSavedArticle(article.url);
                 btn.classList.remove('is-saved');
                 btn.title = 'Save for later';
+                showPinTooltip(btn, 'Removed');
             } else {
                 await saveArticleToBank(article);
                 btn.classList.add('is-saved');
                 btn.title = 'Saved';
+                showPinTooltip(btn, 'Pinned for later');
             }
+        }
+
+        function showPinTooltip(btn, text) {
+            const existing = btn.parentElement.querySelector('.pin-tooltip');
+            if (existing) existing.remove();
+            const tip = document.createElement('span');
+            tip.className = 'pin-tooltip';
+            tip.textContent = text;
+            tip.style.cssText = 'position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); background: #272d3f; color: white; font-size: 11px; padding: 4px 10px; border-radius: 4px; white-space: nowrap; z-index: 100; pointer-events: none;';
+            btn.style.position = 'relative';
+            btn.appendChild(tip);
+            setTimeout(() => tip.remove(), 1500);
         }
 
         async function saveArticleToBank(article) {
