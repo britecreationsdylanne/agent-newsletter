@@ -2712,6 +2712,7 @@ def brand_check():
     """Check newsletter content against brand guidelines - returns structured JSON suggestions"""
     try:
         data = request.json
+        welcome_content = data.get('welcome_content', '')
         claims_content = data.get('claims_content', '')
         roundup_content = data.get('roundup_content', '')
         spotlight_content = data.get('spotlight_content', '')
@@ -2722,6 +2723,9 @@ def brand_check():
 
         # Combine all content for checking
         full_content = f"""
+WELCOME SECTION:
+{welcome_content}
+
 BRITE SPOT SECTION:
 {brite_spot_content}
 
