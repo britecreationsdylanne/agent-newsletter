@@ -3377,18 +3377,26 @@
                 if (container && container.querySelector('.research-result-item')) {
                     const cards = container.querySelectorAll('.research-result-item');
                     cards.forEach(card => {
-                        const title = card.querySelector('div[style*="font-weight: 600"]')?.textContent;
+                        const titleEl = card.querySelector('.research-result-title') || card.querySelector('div[style*="font-weight: 600"]');
+                        const title = titleEl?.textContent;
                         const isSelected = spotlightSelectedArticles.some(a =>
                             (a.title === title || a.headline === title)
                         );
                         card.style.background = isSelected ? '#f0fdf4' : '#fff';
                         card.style.borderColor = isSelected ? '#22c55e' : '#e5e7eb';
+                        if (isSelected) {
+                            card.classList.add('selected');
+                        } else {
+                            card.classList.remove('selected');
+                        }
                         const indicator = card.querySelector('.selection-indicator');
                         if (indicator) {
                             indicator.style.borderColor = isSelected ? '#22c55e' : '#ccc';
                             indicator.style.background = isSelected ? '#22c55e' : 'white';
                             indicator.innerHTML = isSelected ? '<svg style="width: 14px; height: 14px; color: white;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : '';
                         }
+                        const cb = card.querySelector('.research-result-checkbox');
+                        if (cb) cb.checked = isSelected;
                     });
                 }
             });
@@ -8624,6 +8632,8 @@ ${generateTipsItems(tipsItems)}
                         indicator.style.borderColor = '#ccc';
                         indicator.querySelector('.check-icon').style.display = 'none';
                     }
+                    const cb = element.querySelector('.research-result-checkbox');
+                    if (cb) cb.checked = false;
                     console.log('[Research] Deselected from ROUNDUP:', selectedObj.title, `(${selectedRoundup.length}/5)`);
                     trackSelection('roundup', result, true);
                 } else if (selectedRoundup.length < 5) {
@@ -8638,6 +8648,8 @@ ${generateTipsItems(tipsItems)}
                         indicator.style.borderColor = '#018181';
                         indicator.querySelector('.check-icon').style.display = 'block';
                     }
+                    const cb2 = element.querySelector('.research-result-checkbox');
+                    if (cb2) cb2.checked = true;
                     console.log('[Research] Selected for ROUNDUP:', selectedObj.title, `(${selectedRoundup.length}/5)`);
                     trackSelection('roundup', result, false);
                 } else {
@@ -8666,6 +8678,8 @@ ${generateTipsItems(tipsItems)}
                     indicator.style.borderColor = '#ccc';
                     indicator.querySelector('.check-icon').style.display = 'none';
                 }
+                const cb = item.querySelector('.research-result-checkbox');
+                if (cb) cb.checked = false;
             });
 
             // Mark this one as selected
@@ -8678,6 +8692,8 @@ ${generateTipsItems(tipsItems)}
                 indicator.style.borderColor = '#018181';
                 indicator.querySelector('.check-icon').style.display = 'block';
             }
+            const checkbox = element.querySelector('.research-result-checkbox');
+            if (checkbox) checkbox.checked = true;
 
             // Store in the correct section and show checkmark on tab
             if (currentResearchSection === 'claims') {
