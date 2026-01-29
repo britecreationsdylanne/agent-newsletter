@@ -3187,32 +3187,51 @@
                 if (!window._displayedArticles) window._displayedArticles = [];
                 window._displayedArticles.push(result);
 
+                const impact = result.impact || 'NEWS';
+                const headline = result.title || result.headline || 'Untitled';
+                const industryData = result.industry_data || result.key_data || result.snippet || '';
+                const soWhat = result.so_what || result.action || '';
+
+                const impactColors = {
+                    'HIGH': { bg: '#dc2626', border: '#dc2626', text: 'white' },
+                    'MEDIUM': { bg: '#f59e0b', border: '#f59e0b', text: 'white' },
+                    'LOW': { bg: '#6b7280', border: '#6b7280', text: 'white' },
+                    'NEWS': { bg: '#3b82f6', border: '#3b82f6', text: 'white' },
+                    'CUSTOM': { bg: '#059669', border: '#059669', text: 'white' }
+                };
+                const colors = impactColors[impact] || impactColors['NEWS'];
+
                 const card = document.createElement('div');
-                card.className = 'research-result-card';
-                card.style.cssText = `
-                    background: ${isSelected ? '#f0fdf4' : '#f9fafb'};
-                    border: 2px solid ${isSelected ? '#22c55e' : '#e5e7eb'};
-                    border-radius: 8px;
-                    padding: 12px;
-                    margin-bottom: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                `;
+                card.className = 'research-result-item';
+                card.style.cssText = `padding: 12px; border: 2px solid ${isSelected ? '#22c55e' : '#e5e7eb'}; border-radius: 8px; margin-bottom: 8px; background: ${isSelected ? '#f0fdf4' : '#fff'}; cursor: pointer; position: relative; transition: all 0.2s;`;
 
                 card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #272d3f; margin-bottom: 4px; font-size: 13px;">${result.title || result.headline}</div>
-                            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">${(result.snippet || result.industry_data || '').substring(0, 100)}...</div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span style="font-size: 11px; color: #018181;">${result.publisher || 'Unknown source'}</span>
-                                <button class="save-article-btn ${isSaved ? 'is-saved' : ''}" onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); toggleSaveArticle(this, window._displayedArticles[${articleIdx}])" title="${isSaved ? 'Saved' : 'Save for later'}">📌</button>
-                            </div>
-                        </div>
-                        <div style="width: 20px; height: 20px; border: 2px solid ${isSelected ? '#22c55e' : '#ccc'}; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ${isSelected ? '#22c55e' : 'white'};">
-                            ${isSelected ? '<span style="color: white; font-size: 12px;">✓</span>' : ''}
-                        </div>
+                    <div class="selection-indicator" style="position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border: 2px solid ${isSelected ? '#22c55e' : '#ccc'}; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: ${isSelected ? '#22c55e' : 'white'}; transition: all 0.2s;">
+                        ${isSelected ? '<svg style="width: 14px; height: 14px; color: white;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : ''}
                     </div>
+
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; padding-right: 28px;">
+                        <span style="background: ${colors.bg}; color: ${colors.text}; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">${impact}</span>
+                        <span style="margin-left: auto; font-size: 10px; color: #64748b;">${result.publisher || ''}</span>
+                        ${result.url ? `<a href="${result.url}" target="_blank" style="font-size: 10px; color: #3b82f6; text-decoration: none; margin-left: 6px;" onclick="event.stopPropagation()">Source →</a>` : ''}
+                        <button class="save-article-btn ${isSaved ? 'is-saved' : ''}" onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); toggleSaveArticle(this, window._displayedArticles[${articleIdx}])" title="${isSaved ? 'Saved' : 'Save for later'}">📌</button>
+                    </div>
+
+                    <div style="font-size: 13px; font-weight: 600; color: #1a1a1a; line-height: 1.3; margin-bottom: 8px;">${headline}</div>
+
+                    ${industryData ? `
+                    <div style="background: #f8fafc; border-left: 3px solid #3b82f6; padding: 6px 10px; margin-bottom: 8px; border-radius: 0 4px 4px 0;">
+                        <div style="font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 600; margin-bottom: 2px;">KEY DATA</div>
+                        <div style="font-size: 11px; color: #334155; line-height: 1.4;">${industryData.substring(0, 250)}${industryData.length > 250 ? '...' : ''}</div>
+                    </div>
+                    ` : ''}
+
+                    ${soWhat ? `
+                    <div style="background: #f0fdf4; border-left: 3px solid #22c55e; padding: 6px 10px; border-radius: 0 4px 4px 0;">
+                        <div style="font-size: 9px; text-transform: uppercase; color: #15803d; font-weight: 600; margin-bottom: 2px;">ACTION</div>
+                        <div style="font-size: 11px; color: #166534; line-height: 1.4;">${soWhat}</div>
+                    </div>
+                    ` : ''}
                 `;
                 card.onclick = () => toggleSpotlightArticle(result, containerId);
                 container.appendChild(card);
