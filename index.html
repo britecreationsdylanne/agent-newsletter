@@ -531,11 +531,32 @@
             background: #e0f2f2;
         }
 
+        .research-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .research-result-badge {
+            background: #FE8916;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .research-result-badge.high { background: #dc2626; }
+        .research-result-badge.low { background: #6b7280; }
+        .research-result-badge.saved { background: #7c3aed; }
+
         .research-result-title {
             font-weight: 600;
             color: #272d3f;
             font-size: 14px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            line-height: 1.4;
         }
 
         .research-result-snippet {
@@ -547,11 +568,62 @@
 
         .research-result-meta {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 8px;
             font-size: 12px;
-            color: #999;
+            color: #9ca3af;
         }
+
+        .research-result-meta a {
+            color: #018181;
+            text-decoration: none;
+        }
+
+        .research-result-meta a:hover {
+            text-decoration: underline;
+        }
+
+        .research-result-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: #018181;
+            cursor: pointer;
+        }
+
+        .research-result-keydata {
+            background: white;
+            border-left: 3px solid #3b82f6;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .research-result-keydata-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #3b82f6;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .research-result-keydata p { margin: 0; font-size: 13px; color: #555; line-height: 1.5; }
+
+        .research-result-action {
+            background: #f0fdf4;
+            border-left: 3px solid #22c55e;
+            padding: 10px 12px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .research-result-action-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #15803d;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .research-result-action p { margin: 0; font-size: 13px; color: #166534; line-height: 1.5; }
 
         .research-result-link {
             color: #018181;
@@ -2516,8 +2588,22 @@
                 isSavedArticle: true
             };
 
-            addSavedArticleToResults(articleObj);
+            addSavedArticleToResults(savedArticlesModalSection, articleObj);
             hideSavedArticlesModal();
+        }
+
+        // Handle clicks on research result items (uses data attributes, survives innerHTML cache)
+        function handleItemClick(item) {
+            const idx = parseInt(item.getAttribute('data-article-idx'));
+            const section = item.getAttribute('data-section');
+            if (isNaN(idx) || !window._displayedArticles || !window._displayedArticles[idx]) return;
+            const article = window._displayedArticles[idx];
+            if (section === 'spotlight') {
+                const containerId = item.closest('.research-card-results')?.id || 'spotlightPerplexityResults';
+                toggleSpotlightArticle(article, containerId);
+            } else {
+                selectResearchResult(article._cardType || 'saved', idx, item, article);
+            }
         }
 
         function handleCheckboxClick(checkbox, e) {
@@ -2525,25 +2611,45 @@
             e.stopPropagation();
             e.stopImmediatePropagation();
             const item = checkbox.closest('.research-result-item');
-            if (item && item.onclick) {
-                item.onclick();
-            }
+            if (item) handleItemClick(item);
         }
 
-        function addSavedArticleToResults(article) {
-            const container = document.querySelector('.research-section.active .research-card-results')
-                || document.getElementById('perplexityResults');
-            if (!container) return;
+        function addSavedArticleToResults(section, article) {
+            let resultsDiv;
+            if (section === 'spotlight') {
+                resultsDiv = document.getElementById('spotlightPerplexityResults');
+            } else {
+                resultsDiv = document.getElementById('perplexityResults');
+            }
+            if (!resultsDiv) return;
+
+            // Check for duplicate
+            const existingItems = resultsDiv.querySelectorAll('.research-result-item');
+            for (const existing of existingItems) {
+                const link = existing.querySelector('a[href]');
+                if (link && link.href === article.url) {
+                    alert('This article is already in the results.');
+                    return;
+                }
+            }
+
+            const savedArticleIdx = window._displayedArticles ? window._displayedArticles.length : 0;
+            if (!window._displayedArticles) window._displayedArticles = [];
+            article._cardType = 'saved';
+            window._displayedArticles.push(article);
 
             const item = document.createElement('div');
             item.className = 'research-result-item';
             item.style.borderLeft = '4px solid #7c3aed';
+            item.setAttribute('data-article-idx', savedArticleIdx);
+            item.setAttribute('data-section', section);
+            item.setAttribute('onclick', 'handleItemClick(this)');
             item.innerHTML = `
                 <div class="research-result-header">
-                    <span class="research-result-badge" style="background: #7c3aed; color: white;">SAVED</span>
+                    <span class="research-result-badge saved">SAVED</span>
                     <div class="research-result-meta">
                         <span>${article.publisher}</span>
-                        <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source &rarr;</a>
+                        <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>
                         <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                     </div>
                 </div>
@@ -2556,25 +2662,14 @@
                 ` : ''}
             `;
 
-            if (typeof researchResults !== 'undefined') {
-                if (!researchResults.perplexity) researchResults.perplexity = [];
-                researchResults.perplexity.unshift(article);
-            }
-
-            item.onclick = () => {
-                const checkbox = item.querySelector('.research-result-checkbox');
-                if (checkbox) checkbox.checked = !checkbox.checked;
-                item.classList.toggle('selected');
-                if (typeof selectArticle === 'function') {
-                    selectArticle(article, item);
-                }
-            };
-
-            if (container.firstChild) {
-                container.insertBefore(item, container.firstChild);
+            if (resultsDiv.firstChild) {
+                resultsDiv.insertBefore(item, resultsDiv.firstChild);
             } else {
-                container.appendChild(item);
+                resultsDiv.appendChild(item);
             }
+
+            // Auto-select
+            setTimeout(() => handleItemClick(item), 50);
         }
 
         async function toggleSaveArticle(btn, article) {
@@ -3279,22 +3374,20 @@
             // Re-render each container that has results
             ['spotlightCuratedResults', 'spotlightPerplexityResults', 'spotlightSignalsResults'].forEach(containerId => {
                 const container = document.getElementById(containerId);
-                // Only refresh if it has result cards (not the default placeholder)
-                if (container && container.querySelector('.research-result-card')) {
-                    const cards = container.querySelectorAll('.research-result-card');
+                if (container && container.querySelector('.research-result-item')) {
+                    const cards = container.querySelectorAll('.research-result-item');
                     cards.forEach(card => {
-                        // Extract URL from the card's onclick data
                         const title = card.querySelector('div[style*="font-weight: 600"]')?.textContent;
                         const isSelected = spotlightSelectedArticles.some(a =>
                             (a.title === title || a.headline === title)
                         );
-                        card.style.background = isSelected ? '#f0fdf4' : '#f9fafb';
-                        card.style.border = `2px solid ${isSelected ? '#22c55e' : '#e5e7eb'}`;
-                        const checkbox = card.querySelector('div[style*="width: 20px"]');
-                        if (checkbox) {
-                            checkbox.style.borderColor = isSelected ? '#22c55e' : '#ccc';
-                            checkbox.style.background = isSelected ? '#22c55e' : 'white';
-                            checkbox.innerHTML = isSelected ? '<span style="color: white; font-size: 12px;">✓</span>' : '';
+                        card.style.background = isSelected ? '#f0fdf4' : '#fff';
+                        card.style.borderColor = isSelected ? '#22c55e' : '#e5e7eb';
+                        const indicator = card.querySelector('.selection-indicator');
+                        if (indicator) {
+                            indicator.style.borderColor = isSelected ? '#22c55e' : '#ccc';
+                            indicator.style.background = isSelected ? '#22c55e' : 'white';
+                            indicator.innerHTML = isSelected ? '<svg style="width: 14px; height: 14px; color: white;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : '';
                         }
                     });
                 }
