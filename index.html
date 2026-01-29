@@ -2601,24 +2601,34 @@
         function handleItemClick(item) {
             const idx = parseInt(item.getAttribute('data-article-idx'));
             const section = item.getAttribute('data-section');
-            if (isNaN(idx) || !window._displayedArticles || !window._displayedArticles[idx]) return;
+            console.log('[Click] handleItemClick:', { idx, section, hasArticles: !!window._displayedArticles, count: window._displayedArticles?.length });
+            if (isNaN(idx) || !window._displayedArticles || !window._displayedArticles[idx]) {
+                console.warn('[Click] handleItemClick skipped - idx:', idx, 'articles:', window._displayedArticles?.length);
+                return;
+            }
             const article = window._displayedArticles[idx];
-            if (section === 'spotlight') {
-                const containerId = item.closest('.research-card-results')?.id || 'spotlightPerplexityResults';
-                toggleSpotlightArticle(article, containerId);
-            } else {
-                selectResearchResult(article._cardType || 'saved', idx, item, article);
+            try {
+                if (section === 'spotlight') {
+                    const containerId = item.closest('.research-card-results')?.id || 'spotlightPerplexityResults';
+                    toggleSpotlightArticle(article, containerId);
+                } else {
+                    selectResearchResult(article._cardType || 'saved', idx, item, article);
+                }
+            } catch (err) {
+                console.error('[Click] selection error:', err);
             }
         }
 
         function handleCheckboxClick(checkbox, e) {
             e.stopPropagation();
-            e.stopImmediatePropagation();
+            e._checkboxHandled = true;
+            console.log('[Click] handleCheckboxClick fired');
             const item = checkbox.closest('.research-result-item');
             if (item) {
                 handleItemClick(item);
-                // Sync checkbox to match actual selection state
-                checkbox.checked = item.classList.contains('selected');
+                setTimeout(function() {
+                    checkbox.checked = item.classList.contains('selected');
+                }, 0);
             }
         }
 
@@ -9599,6 +9609,27 @@ ${generateTipsItems(tipsItems)}
             }
         });
     })();
+
+    // === BACKUP: Event delegation for checkbox clicks ===
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList && e.target.classList.contains('research-result-checkbox')) {
+            if (e._checkboxHandled) return;
+            console.log('[Delegation] Checkbox click caught by backup delegation');
+            var checkbox = e.target;
+            var item = checkbox.closest('.research-result-item');
+            if (item) {
+                e.stopPropagation();
+                try {
+                    handleItemClick(item);
+                } catch (err) {
+                    console.error('[Delegation] handleItemClick error:', err);
+                }
+                setTimeout(function() {
+                    checkbox.checked = item.classList.contains('selected');
+                }, 0);
+            }
+        }
+    });
     </script>
 
     <!-- Briteco Newsletter Template -->
