@@ -3409,6 +3409,46 @@ def send_to_ontraport():
         return jsonify({"success": False, "error": str(e)}), 500
 
 # ============================================================================
+# NOT-GOOD-FIT TRACKING
+# ============================================================================
+
+NOT_GOOD_FIT_BLOB = 'feedback/not-good-fit.json'
+
+@app.route('/api/not-good-fit', methods=['POST'])
+def track_not_good_fit():
+    """Track articles marked as 'not a good fit' for learning"""
+    if not gcs_client:
+        return jsonify({'success': False, 'error': 'GCS not available'}), 503
+    try:
+        article = request.json.get('article', {})
+        if not article.get('url'):
+            return jsonify({'success': False, 'error': 'Article URL required'}), 400
+
+        bucket = gcs_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(NOT_GOOD_FIT_BLOB)
+
+        entries = []
+        if blob.exists():
+            data = json.loads(blob.download_as_text())
+            entries = data.get('entries', [])
+
+        if not any(e.get('url') == article['url'] for e in entries):
+            entries.append({
+                'url': article['url'],
+                'title': article.get('title', ''),
+                'publisher': article.get('publisher', ''),
+                'markedAt': datetime.now(CHICAGO_TZ).isoformat()
+            })
+            blob.upload_from_string(json.dumps({'entries': entries}), content_type='application/json')
+
+        return jsonify({'success': True, 'count': len(entries)})
+
+    except Exception as e:
+        safe_print(f"[NOT-GOOD-FIT] Error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
 # IMAGE HOSTING - GCS Upload
 # ============================================================================
 
