@@ -590,6 +590,38 @@
             cursor: pointer;
         }
 
+        .result-row {
+            display: flex;
+            align-items: stretch;
+            margin-bottom: 0;
+        }
+        .pin-gutter {
+            width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .pin-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1.5px solid #d1d5db;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            transition: all 0.2s;
+            padding: 0;
+        }
+        .pin-btn::after { content: '\uD83D\uDCCC'; font-size: 12px; opacity: 0.35; }
+        .pin-btn:hover { border-color: #f59e0b; background: #fef3c7; transform: scale(1.1); }
+        .pin-btn:hover::after { opacity: 1; }
+        .pin-btn.pinned { border-color: #f59e0b; background: #f59e0b; }
+        .pin-btn.pinned::after { opacity: 1; }
+
         .research-result-keydata {
             background: white;
             border-left: 3px solid #3b82f6;
@@ -1228,7 +1260,14 @@
                     <textarea id="headerIntroInput" rows="3" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="e.g., Welcome to this month's edition! Here's what's new in insurance..."></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 15px;">
                         <span style="font-size: 12px; color: #666;">This text appears at the top of the newsletter, below the main header and before The Brite Spot section.</span>
-                        <button class="btn-secondary btn" style="padding: 8px 16px; white-space: nowrap; flex-shrink: 0;" onclick="rewriteHeaderIntro()">AI Rewrite</button>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                            <select id="headerIntroTone" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                                <option value="professional">Professional</option>
+                                <option value="friendly" selected>Friendly</option>
+                                <option value="exciting">Exciting</option>
+                            </select>
+                            <button class="btn-secondary btn" style="padding: 8px 16px; white-space: nowrap; flex-shrink: 0;" onclick="rewriteHeaderIntro()">AI Rewrite</button>
+                        </div>
                     </div>
                 </div>
                 <div id="headerIntroRewriteResult" style="display: none; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
@@ -1246,7 +1285,15 @@
                     <textarea id="briteSpotInput" rows="3" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;" placeholder="Enter a short intro paragraph about BriteCo news or updates..."></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                         <span style="font-size: 12px; color: #666;">A brief introduction paragraph that appears before the bullet points.</span>
-                        <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpotIntro()">AI Rewrite</button>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                            <select id="briteSpotIntroTone" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                                <option value="witty" selected>Witty</option>
+                                <option value="exciting">Exciting</option>
+                                <option value="informative">Informative</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                            <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpotIntro()">AI Rewrite</button>
+                        </div>
                     </div>
                 </div>
                 <div id="briteSpotIntroRewriteResult" style="display: none; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
@@ -1267,7 +1314,15 @@
 • Partner integration news"></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                         <span id="briteSpotWordCount" style="font-size: 13px; color: #666;">0 / 100 words</span>
-                        <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpotBullets()">AI Rewrite</button>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                            <select id="briteSpotBulletsTone" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                                <option value="witty" selected>Witty</option>
+                                <option value="exciting">Exciting</option>
+                                <option value="informative">Informative</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                            <button class="btn-secondary btn" style="padding: 8px 16px;" onclick="rewriteBriteSpotBullets()">AI Rewrite</button>
+                        </div>
                     </div>
                 </div>
 
@@ -2641,11 +2696,10 @@
             }
             if (!resultsDiv) return;
 
-            // Check for duplicate
+            // Check for duplicate by comparing data-url attribute (raw string, not browser-resolved)
             const existingItems = resultsDiv.querySelectorAll('.research-result-item');
             for (const existing of existingItems) {
-                const link = existing.querySelector('a[href]');
-                if (link && link.href === article.url) {
+                if (existing.dataset.url && article.url && existing.dataset.url === article.url) {
                     alert('This article is already in the results.');
                     return;
                 }
@@ -2662,6 +2716,7 @@
             item.setAttribute('data-article-idx', savedArticleIdx);
             item.setAttribute('data-section', section);
             item.setAttribute('data-preserved', 'true');
+            item.dataset.url = article.url || '';
             item.setAttribute('onclick', 'handleItemClick(this)');
             item.innerHTML = `
                 <div class="research-result-header">
@@ -2669,7 +2724,6 @@
                     <div class="research-result-meta">
                         <span>${article.publisher}</span>
                         <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>
-                        <button class="save-article-btn is-saved" onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();" title="Saved">📌</button>
                         <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                     </div>
                 </div>
@@ -2682,10 +2736,23 @@
                 ` : ''}
             `;
 
+            // Wrap in result-row with pin gutter (already pinned)
+            const row = document.createElement('div');
+            row.className = 'result-row';
+            const pinGutter = document.createElement('div');
+            pinGutter.className = 'pin-gutter';
+            const pinBtn = document.createElement('button');
+            pinBtn.className = 'pin-btn pinned';
+            pinBtn.title = 'Saved';
+            pinBtn.onclick = function(e) { e.stopPropagation(); };
+            pinGutter.appendChild(pinBtn);
+            row.appendChild(pinGutter);
+            row.appendChild(item);
+
             if (resultsDiv.firstChild) {
-                resultsDiv.insertBefore(item, resultsDiv.firstChild);
+                resultsDiv.insertBefore(row, resultsDiv.firstChild);
             } else {
-                resultsDiv.appendChild(item);
+                resultsDiv.appendChild(row);
             }
 
             // Auto-select
@@ -2698,25 +2765,28 @@
             if (alreadySaved) {
                 await deleteSavedArticle(article.url);
                 btn.classList.remove('is-saved');
+                btn.classList.remove('pinned');
                 btn.title = 'Save for later';
                 showPinTooltip(btn, 'Removed');
             } else {
                 await saveArticleToBank(article);
                 btn.classList.add('is-saved');
+                btn.classList.add('pinned');
                 btn.title = 'Saved';
                 showPinTooltip(btn, 'Pinned for later');
             }
         }
 
         function showPinTooltip(btn, text) {
-            const existing = btn.parentElement.querySelector('.pin-tooltip');
+            const parent = btn.closest('.pin-gutter') || btn.parentElement;
+            const existing = parent.querySelector('.pin-tooltip');
             if (existing) existing.remove();
             const tip = document.createElement('span');
             tip.className = 'pin-tooltip';
             tip.textContent = text;
-            tip.style.cssText = 'position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); background: #272d3f; color: white; font-size: 11px; padding: 4px 10px; border-radius: 4px; white-space: nowrap; z-index: 100; pointer-events: none;';
-            btn.style.position = 'relative';
-            btn.appendChild(tip);
+            tip.style.cssText = 'position: absolute; left: 36px; top: 50%; transform: translateY(-50%); background: #272d3f; color: white; font-size: 11px; padding: 4px 10px; border-radius: 4px; white-space: nowrap; z-index: 100; pointer-events: none;';
+            parent.style.position = 'relative';
+            parent.appendChild(tip);
             setTimeout(() => tip.remove(), 1500);
         }
 
@@ -2985,7 +3055,7 @@
                 const response = await fetch(`${API_BASE}/api/rewrite-section`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: input, section: 'header_intro', month: selectedMonth })
+                    body: JSON.stringify({ content: input, section: 'header_intro', month: selectedMonth, tone: document.getElementById('headerIntroTone').value })
                 });
 
                 const data = await response.json();
@@ -3027,7 +3097,7 @@
                 const response = await fetch(`${API_BASE}/api/rewrite-section`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: input, section: 'brite_spot_intro' })
+                    body: JSON.stringify({ content: input, section: 'brite_spot_intro', tone: document.getElementById('briteSpotIntroTone').value })
                 });
 
                 const data = await response.json();
@@ -3070,7 +3140,7 @@
                 const response = await fetch(`${API_BASE}/api/rewrite-section`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: input, section: 'brite_spot_bullets' })
+                    body: JSON.stringify({ content: input, section: 'brite_spot_bullets', tone: document.getElementById('briteSpotBulletsTone').value })
                 });
 
                 const data = await response.json();
@@ -3160,7 +3230,7 @@
 
                     // Show queries header then results
                     // Preserve saved/custom article cards before clearing
-                    const spotPreserved = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
+                    const spotPreserved = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]')).map(item => item.closest('.result-row') || item);
                     resultsDiv.innerHTML = '';
                     spotPreserved.forEach(card => resultsDiv.appendChild(card));
                     if (data.queries_used && data.queries_used.length > 0) {
@@ -3224,7 +3294,7 @@
 
                     // Show signals searched then results
                     // Preserve saved/custom article cards before clearing
-                    const sigPreserved = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
+                    const sigPreserved = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]')).map(item => item.closest('.result-row') || item);
                     resultsDiv.innerHTML = '';
                     sigPreserved.forEach(card => resultsDiv.appendChild(card));
                     if (data.signals_searched && data.signals_searched.length > 0) {
@@ -3286,7 +3356,7 @@
 
                     // Show queries header then results
                     // Preserve saved/custom article cards before clearing
-                    const curPreserved = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
+                    const curPreserved = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]')).map(item => item.closest('.result-row') || item);
                     resultsDiv.innerHTML = '';
                     curPreserved.forEach(card => resultsDiv.appendChild(card));
                     if (data.queries_used && data.queries_used.length > 0) {
@@ -3353,7 +3423,6 @@
                         <div class="research-result-meta">
                             <span>${result.publisher || ''}</span>
                             ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
-                            <button class="save-article-btn ${isSaved ? 'is-saved' : ''}" onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); toggleSaveArticle(this, window._displayedArticles[${articleIdx}])" title="${isSaved ? 'Saved' : 'Save for later'}">📌</button>
                             <input type="checkbox" class="research-result-checkbox" ${isSelected ? 'checked' : ''} onclick="handleCheckboxClick(this, event)">
                         </div>
                     </div>
@@ -3374,7 +3443,20 @@
                     </div>
                     ` : ''}
                 `;
-                container.appendChild(card);
+
+                // Wrap in result-row with pin gutter (pin outside card)
+                const row = document.createElement('div');
+                row.className = 'result-row';
+                const pinGutter = document.createElement('div');
+                pinGutter.className = 'pin-gutter';
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'pin-btn' + (isSaved ? ' pinned' : '');
+                pinBtn.title = isSaved ? 'Saved' : 'Save for later';
+                pinBtn.onclick = function(e) { e.stopPropagation(); toggleSaveArticle(pinBtn, window._displayedArticles[articleIdx]); };
+                pinGutter.appendChild(pinBtn);
+                row.appendChild(pinGutter);
+                row.appendChild(card);
+                container.appendChild(row);
             });
         }
 
@@ -3412,18 +3494,12 @@
                         const isSelected = spotlightSelectedArticles.some(a =>
                             (a.title === title || a.headline === title)
                         );
-                        card.style.background = isSelected ? '#f0fdf4' : '#fff';
-                        card.style.borderColor = isSelected ? '#22c55e' : '#e5e7eb';
+                        card.style.background = isSelected ? '#e0f2f2' : '#fff';
+                        card.style.borderColor = isSelected ? '#018181' : '#e5e7eb';
                         if (isSelected) {
                             card.classList.add('selected');
                         } else {
                             card.classList.remove('selected');
-                        }
-                        const indicator = card.querySelector('.selection-indicator');
-                        if (indicator) {
-                            indicator.style.borderColor = isSelected ? '#22c55e' : '#ccc';
-                            indicator.style.background = isSelected ? '#22c55e' : 'white';
-                            indicator.innerHTML = isSelected ? '<svg style="width: 14px; height: 14px; color: white;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : '';
                         }
                         const cb = card.querySelector('.research-result-checkbox');
                         if (cb) cb.checked = isSelected;
@@ -3459,7 +3535,7 @@
                 if (data.success) {
                     spotlightGeneratedContent = data.content;
                     btn.innerHTML = '✓ Spotlight Generated';
-                    btn.style.background = '#22c55e';
+                    btn.style.background = '#018181';
 
                     // Populate and show the review page
                     displaySpotlightReview(data.content);
@@ -7816,7 +7892,7 @@ ${generateTipsItems(tipsItems)}
 
                     // Show queries header then three-section results
                     // Preserve saved/custom article cards before clearing
-                    const preservedCards = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
+                    const preservedCards = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]')).map(item => item.closest('.result-row') || item);
                     resultsDiv.innerHTML = '';
                     preservedCards.forEach(card => resultsDiv.appendChild(card));
                     if (data.queries_used && data.queries_used.length > 0) {
@@ -8014,7 +8090,6 @@ ${generateTipsItems(tipsItems)}
                         <div class="research-result-meta">
                             <span>${result.publisher || ''}</span>
                             ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
-                            <button class="save-article-btn ${isSaved ? 'is-saved' : ''}" onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); toggleSaveArticle(this, window._displayedArticles[${articleIdx}])" title="${isSaved ? 'Saved' : 'Save for later'}">📌</button>
                             <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                         </div>
                     </div>
@@ -8036,7 +8111,19 @@ ${generateTipsItems(tipsItems)}
                     ` : ''}
                 `;
 
-                container.appendChild(item);
+                // Wrap in result-row with pin gutter (pin outside card)
+                const row = document.createElement('div');
+                row.className = 'result-row';
+                const pinGutter = document.createElement('div');
+                pinGutter.className = 'pin-gutter';
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'pin-btn' + (isSaved ? ' pinned' : '');
+                pinBtn.title = isSaved ? 'Saved' : 'Save for later';
+                pinBtn.onclick = function(e) { e.stopPropagation(); toggleSaveArticle(pinBtn, window._displayedArticles[articleIdx]); };
+                pinGutter.appendChild(pinBtn);
+                row.appendChild(pinGutter);
+                row.appendChild(item);
+                container.appendChild(row);
             });
         }
 
@@ -8652,12 +8739,6 @@ ${generateTipsItems(tipsItems)}
                     element.classList.remove('selected');
                     element.style.borderColor = '#e5e7eb';
                     element.style.background = '#fff';
-                    const indicator = element.querySelector('.selection-indicator');
-                    if (indicator) {
-                        indicator.style.background = 'white';
-                        indicator.style.borderColor = '#ccc';
-                        indicator.querySelector('.check-icon').style.display = 'none';
-                    }
                     const cb = element.querySelector('.research-result-checkbox');
                     if (cb) cb.checked = false;
                     console.log('[Research] Deselected from ROUNDUP:', selectedObj.title, `(${selectedRoundup.length}/5)`);
@@ -8667,13 +8748,7 @@ ${generateTipsItems(tipsItems)}
                     selectedRoundup.push(selectedObj);
                     element.classList.add('selected');
                     element.style.borderColor = '#018181';
-                    element.style.background = '#e6f4f4';
-                    const indicator = element.querySelector('.selection-indicator');
-                    if (indicator) {
-                        indicator.style.background = '#018181';
-                        indicator.style.borderColor = '#018181';
-                        indicator.querySelector('.check-icon').style.display = 'block';
-                    }
+                    element.style.background = '#e0f2f2';
                     const cb2 = element.querySelector('.research-result-checkbox');
                     if (cb2) cb2.checked = true;
                     console.log('[Research] Selected for ROUNDUP:', selectedObj.title, `(${selectedRoundup.length}/5)`);
@@ -8698,12 +8773,6 @@ ${generateTipsItems(tipsItems)}
                 item.classList.remove('selected');
                 item.style.borderColor = '#e5e7eb';
                 item.style.background = '#fff';
-                const indicator = item.querySelector('.selection-indicator');
-                if (indicator) {
-                    indicator.style.background = 'white';
-                    indicator.style.borderColor = '#ccc';
-                    indicator.querySelector('.check-icon').style.display = 'none';
-                }
                 const cb = item.querySelector('.research-result-checkbox');
                 if (cb) cb.checked = false;
             });
@@ -8711,13 +8780,7 @@ ${generateTipsItems(tipsItems)}
             // Mark this one as selected
             element.classList.add('selected');
             element.style.borderColor = '#018181';
-            element.style.background = '#e6f4f4';
-            const indicator = element.querySelector('.selection-indicator');
-            if (indicator) {
-                indicator.style.background = '#018181';
-                indicator.style.borderColor = '#018181';
-                indicator.querySelector('.check-icon').style.display = 'block';
-            }
+            element.style.background = '#e0f2f2';
             const checkbox = element.querySelector('.research-result-checkbox');
             if (checkbox) checkbox.checked = true;
 
@@ -8746,7 +8809,7 @@ ${generateTipsItems(tipsItems)}
 
         function displayExplorerResults(results, container, queriesUsed = null) {
             // Preserve saved/custom article cards before clearing
-            const preservedCards = Array.from(container.querySelectorAll('.research-result-item[data-preserved="true"]'));
+            const preservedCards = Array.from(container.querySelectorAll('.research-result-item[data-preserved="true"]')).map(item => item.closest('.result-row') || item);
             container.innerHTML = '';
             preservedCards.forEach(card => container.appendChild(card));
 
@@ -8795,7 +8858,6 @@ ${generateTipsItems(tipsItems)}
                         <div class="research-result-meta">
                             <span>${result.publisher || 'Unknown source'}</span>
                             ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
-                            <button class="save-article-btn ${isSaved ? 'is-saved' : ''}" onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation(); toggleSaveArticle(this, window._displayedArticles[${articleIdx}])" title="${isSaved ? 'Saved' : 'Save for later'}">📌</button>
                             <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                         </div>
                     </div>
@@ -8816,7 +8878,19 @@ ${generateTipsItems(tipsItems)}
                     ` : ''}
                 `;
 
-                container.appendChild(item);
+                // Wrap in result-row with pin gutter (pin outside card)
+                const row = document.createElement('div');
+                row.className = 'result-row';
+                const pinGutter = document.createElement('div');
+                pinGutter.className = 'pin-gutter';
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'pin-btn' + (isSaved ? ' pinned' : '');
+                pinBtn.title = isSaved ? 'Saved' : 'Save for later';
+                pinBtn.onclick = function(e) { e.stopPropagation(); toggleSaveArticle(pinBtn, window._displayedArticles[articleIdx]); };
+                pinGutter.appendChild(pinBtn);
+                row.appendChild(pinGutter);
+                row.appendChild(item);
+                container.appendChild(row);
             });
         }
 

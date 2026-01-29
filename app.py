@@ -949,6 +949,8 @@ def rewrite_britespot():
             return jsonify({'success': False, 'error': 'Claude client not available'}), 500
 
         tone_instructions = {
+            'witty': 'Use a clever, witty tone with subtle humor — smart wordplay welcome but keep it tasteful and professional',
+            'friendly': 'Use a warm, conversational, and approachable tone',
             'exciting': 'Make it energetic and exciting with action words',
             'informative': 'Keep it clear, factual, and professional',
             'professional': 'Use formal business language and tone'
@@ -995,6 +997,7 @@ def rewrite_section():
         content = data.get('content', '')
         section = data.get('section', '')
         month = data.get('month', 'january')
+        tone = data.get('tone', '')
 
         if not content:
             return jsonify({'success': False, 'error': 'Content required'}), 400
@@ -1002,7 +1005,16 @@ def rewrite_section():
         if not section:
             return jsonify({'success': False, 'error': 'Section type required'}), 400
 
-        print(f"\n[API] Rewriting {section} content...")
+        print(f"\n[API] Rewriting {section} content (tone: {tone})...")
+
+        tone_instructions = {
+            'witty': 'Use a clever, witty tone with subtle humor — smart wordplay welcome but keep it tasteful and professional.',
+            'friendly': 'Use a warm, conversational, and approachable tone.',
+            'exciting': 'Make it energetic and exciting with action words.',
+            'informative': 'Keep it clear, factual, and professional.',
+            'professional': 'Use formal business language and tone.'
+        }
+        tone_line = f"\n- TONE: {tone_instructions.get(tone, '')}" if tone else ""
 
         if not claude_client:
             return jsonify({'success': False, 'error': 'Claude client not available'}), 500
@@ -1019,7 +1031,7 @@ STYLE GUIDE REQUIREMENTS:
 - Tone: Warm but professional greeting
 - Reference the current month: {month.capitalize()}
 - Tease 2-3 key topics that would be in the issue
-- Can include a call-to-action if there's a priority item
+- Can include a call-to-action if there's a priority item{tone_line}
 
 EXAMPLES FROM PAST ISSUES:
 - "Thank you to everyone who completed our annual independent agent survey. We have now picked our winners. Keep reading to find out if you are a recipient and get the latest on the homeowners insurance crisis."
@@ -1043,7 +1055,7 @@ STYLE GUIDE REQUIREMENTS:
 - Purpose: BriteCo company news, product updates, or promotions
 - Tone: Warm, supportive, promotional (but not pushy)
 - Highlight agent benefits (commissions, ease of use, client value)
-- This appears before bullet points listing specific features/updates
+- This appears before bullet points listing specific features/updates{tone_line}
 
 KEY MESSAGING TO EMPHASIZE (if relevant):
 - No claims reporting to CLUE or A-Plus (doesn't impact HO premium)
@@ -1070,7 +1082,7 @@ STYLE GUIDE REQUIREMENTS:
 - Each bullet: 1-2 concise sentences
 - Focus on value to independent insurance agents
 - Action-oriented when possible
-- Total: 3-5 bullets
+- Total: 3-5 bullets{tone_line}
 
 VOICE:
 - Clear and direct
@@ -3591,7 +3603,7 @@ def list_published():
                     }
                 })
         newsletters.sort(key=lambda d: d.get('lastSavedAt', ''), reverse=True)
-        return jsonify({'success': True, 'newsletters': newsletters[:12]})
+        return jsonify({'success': True, 'newsletters': newsletters})
     except Exception as e:
         safe_print(f"[PUBLISHED LIST ERROR] {str(e)}")
         return jsonify({'success': True, 'newsletters': []})
