@@ -2180,16 +2180,17 @@
     </div>
 
     <!-- Saved Drafts Section -->
-    <div id="draftsSection" style="padding: 80px 20px; margin-top: 60px; background: #3B5A6E;">
+    <div id="draftsSection" class="previous-newsletters-section">
         <div style="max-width: 1200px; margin: 0 auto;">
             <div style="margin-bottom: 40px; text-align: center;">
-                <h2 style="font-size: 36px; color: white; margin-bottom: 12px; font-weight: 700;">Saved Drafts</h2>
-                <p style="color: rgba(255,255,255,0.8); font-size: 16px;">Resume an in-progress newsletter</p>
+                <h2>Saved Drafts</h2>
+                <p class="subtitle">Resume an in-progress newsletter</p>
             </div>
             <div id="draftsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px;"></div>
-            <div id="draftsEmpty" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
-                <p style="font-size: 18px;">📝 No Drafts In Progress</p>
-                <p>Any newsletters in progress will appear here automatically</p>
+            <div id="draftsEmpty" class="newsletter-placeholder">
+                <div class="icon">📝</div>
+                <h3 class="title">No Drafts In Progress</h3>
+                <p class="message">Any newsletters in progress will appear here automatically</p>
             </div>
         </div>
     </div>
