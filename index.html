@@ -750,90 +750,89 @@
             font-size: 14px;
         }
 
-        /* Link Toolbar */
-        .link-toolbar {
-            display: none;
-            position: fixed;
-            z-index: 10000;
-            background: #272d3f;
+        /* Editable section blocks */
+        .editable {
+            background: white;
+            border: 2px solid #e5e7eb;
             border-radius: 8px;
-            padding: 6px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-            gap: 4px;
-            align-items: center;
+            padding: 15px;
+            min-height: 100px;
         }
-        .link-toolbar.visible { display: flex; }
-        .link-toolbar button {
-            background: transparent;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 13px;
+
+        .editable:focus {
+            outline: none;
+            border-color: #018181;
+        }
+
+        /* Link Toolbar (inline per-section) */
+        .link-toolbar {
             display: flex;
             align-items: center;
             gap: 4px;
+            margin-bottom: 4px;
         }
-        .link-toolbar button:hover { background: rgba(255,255,255,0.15); }
-        .link-toolbar .separator {
-            width: 1px;
-            height: 20px;
-            background: rgba(255,255,255,0.2);
+
+        .link-toolbar-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .link-toolbar-btn:hover {
+            background: #e5e7eb;
         }
 
         /* Link Popover */
         .link-popover {
             display: none;
-            position: fixed;
-            z-index: 10001;
             background: white;
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-            width: 340px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 6px;
         }
-        .link-popover.visible { display: block; }
-        .link-popover label {
+
+        .link-popover.show {
             display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #4b5563;
-            margin-bottom: 4px;
         }
-        .link-popover input[type="text"] {
+
+        .link-popover input {
+            display: block;
             width: 100%;
-            padding: 8px 10px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
+            padding: 6px 8px;
+            margin-bottom: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
             font-size: 13px;
-            margin-bottom: 10px;
-            outline: none;
+            box-sizing: border-box;
         }
-        .link-popover input[type="text"]:focus { border-color: #018181; }
-        .link-popover .link-popover-actions {
+
+        .link-popover-actions {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             justify-content: flex-end;
         }
-        .link-popover .link-popover-actions button {
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 13px;
+
+        .link-popover-actions button {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
             cursor: pointer;
-            border: none;
+            border: 1px solid #d1d5db;
         }
-        .link-popover .btn-link-apply {
+
+        .link-popover-actions .link-insert-btn {
             background: #018181;
             color: white;
-        }
-        .link-popover .btn-link-cancel {
-            background: #f3f4f6;
-            color: #374151;
-        }
-        .link-popover .btn-link-remove {
-            background: #fee2e2;
-            color: #dc2626;
+            border-color: #018181;
         }
 
         .btn-green {
@@ -1743,8 +1742,88 @@
             <h2>✏️ Review & Edit Content</h2>
             <p>Your AI-generated newsletter is ready! Edit any section before continuing.</p>
 
-            <div id="generatedContent" class="content-section" contenteditable="true" style="border: 2px dashed #e5e7eb; padding: 20px; border-radius: 8px; min-height: 400px;">
-                <!-- Content will be displayed here -->
+            <div class="content-section">
+                <h3>BriteCo Brief Intro</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-headerIntro')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-review-headerIntro">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('review-headerIntro')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('review-headerIntro')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="review-headerIntro"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Brite Spot</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-britespot')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-review-britespot">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('review-britespot')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('review-britespot')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="review-britespot"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Curious Claims</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-claims')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-review-claims">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('review-claims')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('review-claims')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="review-claims"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>News Roundup</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-roundup')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-review-roundup">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('review-roundup')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('review-roundup')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="review-roundup"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>InsurNews Spotlight</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-spotlight')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-review-spotlight">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('review-spotlight')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('review-spotlight')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="review-spotlight"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Agent Advantage</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-tips')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-review-tips">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('review-tips')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('review-tips')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="review-tips"></div>
             </div>
 
             <div class="buttons">
@@ -1847,8 +1926,93 @@
             <h2>📝 Final Copy</h2>
             <p class="step-description">Review and edit all content before generating images. This is the source of truth.</p>
 
-            <div id="finalCopyContent" class="content-section" contenteditable="true" style="border: 2px dashed #e5e7eb; padding: 20px; border-radius: 8px; min-height: 400px;">
-                <!-- Populated by populateFinalCopy() with same styling as step 5 -->
+            <div class="content-section">
+                <h3>BriteCo Brief Intro</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-headerIntro')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-fc-headerIntro">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('fc-headerIntro')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-headerIntro')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="fc-headerIntro"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Brite Spot</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-britespot')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-fc-britespot">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('fc-britespot')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-britespot')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="fc-britespot"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Curious Claims</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-claims')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-fc-claims">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('fc-claims')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-claims')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="fc-claims"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>News Roundup</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-roundup')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-fc-roundup">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('fc-roundup')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-roundup')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="fc-roundup"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>InsurNews Spotlight</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-spotlight')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-fc-spotlight">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('fc-spotlight')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-spotlight')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="fc-spotlight"></div>
+            </div>
+
+            <div class="content-section">
+                <h3>Agent Advantage</h3>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-tips')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-fc-tips">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('fc-tips')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-tips')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="fc-tips"></div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 8px; text-align: center;">
+                <button class="btn" onclick="saveDraft(); this.textContent='✓ Saved'; setTimeout(() => this.textContent='💾 Save Draft', 2000);" style="background: #22c55e; padding: 10px 30px;">💾 Save Draft</button>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #666;">Save your progress before continuing</p>
             </div>
 
             <div class="buttons">
@@ -4272,11 +4436,9 @@
         }
 
         function displayGeneratedContent() {
-            const container = document.getElementById('generatedContent');
-
             // Helper function to recursively extract all text from any object structure
             function extractTextFromObject(obj, depth = 0) {
-                if (depth > 5) return ''; // Prevent infinite recursion
+                if (depth > 5) return '';
                 if (!obj) return '';
                 if (typeof obj === 'string') return obj;
                 if (typeof obj === 'number') return '';
@@ -4284,17 +4446,12 @@
                     return obj.map(item => extractTextFromObject(item, depth + 1)).filter(t => t.length > 10).join('\n\n');
                 }
                 if (typeof obj === 'object') {
-                    // Priority keys for content
                     const priorityKeys = ['body', 'content', 'text', 'paragraph', 'summary', 'description', 'intro', 'tip'];
                     for (const key of priorityKeys) {
-                        if (obj[key] && typeof obj[key] === 'string' && obj[key].length > 20) {
-                            return obj[key];
-                        }
+                        if (obj[key] && typeof obj[key] === 'string' && obj[key].length > 20) return obj[key];
                     }
-                    // Try all string values
                     const texts = [];
                     for (const [key, val] of Object.entries(obj)) {
-                        // Skip keys that are metadata
                         if (['subheader', 'h3', 'title', 'heading', 'url', 'source', 'link', 'id', 'type'].includes(key)) continue;
                         const extracted = extractTextFromObject(val, depth + 1);
                         if (extracted && extracted.length > 20) texts.push(extracted);
@@ -4304,24 +4461,19 @@
                 return '';
             }
 
-            // Helper function to clean content for display and style links blue
-            function cleanContentForDisplay(content, sectionType = null) {
+            // Helper to clean content for display and style links blue
+            function cleanContentForDisplay(content) {
                 if (!content) return 'Content not available';
-
                 let contentStr;
-
-                // Handle spotlight object structure: { subheader, h3s: [{ h3, body }] }
                 if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
                     if (content.h3s && Array.isArray(content.h3s) && content.h3s.length > 0) {
-                        // Spotlight format - extract body paragraphs from h3s array with proper spacing
                         let paragraphs = [];
                         content.h3s.forEach((h3Item, idx) => {
                             const bodyText = h3Item.body || h3Item.content || h3Item.text || '';
                             if (bodyText) {
                                 const isLast = idx === content.h3s.length - 1;
-                                // Check if already HTML formatted
                                 if (typeof bodyText === 'string' && (bodyText.includes('<p') || bodyText.includes('<div'))) {
-                                    paragraphs.push(bodyText);  // Use directly
+                                    paragraphs.push(bodyText);
                                 } else {
                                     paragraphs.push(`<p style="margin: 0${isLast ? '' : ' 0 16px 0'}; line-height: 1.7;">${bodyText}</p>`);
                                 }
@@ -4329,9 +4481,8 @@
                         });
                         contentStr = paragraphs.join('');
                     } else if (content.body) {
-                        // Check if body is already HTML formatted (contains <p> or <div> tags)
                         if (typeof content.body === 'string' && (content.body.includes('<p') || content.body.includes('<div'))) {
-                            contentStr = content.body;  // Use directly without re-wrapping
+                            contentStr = content.body;
                         } else {
                             contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.body}</p>`;
                         }
@@ -4340,7 +4491,6 @@
                     } else if (content.text) {
                         contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.text}</p>`;
                     } else if (content.sections && Array.isArray(content.sections)) {
-                        // Handle sections array format
                         let paragraphs = [];
                         content.sections.forEach(section => {
                             const text = section.body || section.content || section.text || '';
@@ -4348,204 +4498,127 @@
                         });
                         contentStr = paragraphs.join('');
                     } else {
-                        // Use recursive extraction - NEVER return JSON
                         const extracted = extractTextFromObject(content);
                         if (extracted && extracted.length > 20) {
-                            contentStr = extracted.split('\n\n').map(p =>
-                                `<p style="margin: 0 0 16px 0; line-height: 1.7;">${p}</p>`
-                            ).join('');
+                            contentStr = extracted.split('\n\n').map(p => `<p style="margin: 0 0 16px 0; line-height: 1.7;">${p}</p>`).join('');
                         } else {
-                            contentStr = '<p style="margin: 0 0 16px 0; line-height: 1.7; color: #999;">Content could not be parsed. Please try regenerating.</p>';
+                            contentStr = '<p style="color: #999;">Content could not be parsed. Please try regenerating.</p>';
                         }
                     }
                 } else if (typeof content === 'string') {
                     contentStr = content;
                 } else if (Array.isArray(content)) {
-                    // Handle array of items
                     contentStr = content.map(item => {
                         if (typeof item === 'string') return `<p style="margin: 0 0 16px 0; line-height: 1.7;">${item}</p>`;
                         const text = extractTextFromObject(item);
                         return text ? `<p style="margin: 0 0 16px 0; line-height: 1.7;">${text}</p>` : '';
                     }).filter(p => p).join('');
                 } else {
-                    contentStr = '<p style="margin: 0 0 16px 0; line-height: 1.7; color: #999;">Content could not be parsed.</p>';
+                    contentStr = '<p style="color: #999;">Content could not be parsed.</p>';
                 }
-
-                // Fix white text color
                 contentStr = contentStr.replace(/color:\s*#ffffff;?/gi, 'color: #1f2937;');
-
-                // Convert markdown headers ## to bold text
-                // Handle ### first (more specific), then ##
                 contentStr = contentStr.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
                 contentStr = contentStr.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
-                // Also handle ## after newlines (not just line start)
                 contentStr = contentStr.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
-                // Handle ## after closing HTML tags like </p>## or >##
                 contentStr = contentStr.replace(/>##\s*([^<\n]+)/g, '><strong style="font-size: 17px; color: #282D3E;">$1</strong>');
-                // Convert markdown bold **text** to <strong>
                 contentStr = contentStr.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-                // Clean up any stray ** that weren't part of a proper pair
                 contentStr = contentStr.replace(/\*\*/g, '');
-
-                // Convert markdown links [text](url) to HTML links first
                 contentStr = contentStr.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-
-                // Style all links blue - first remove any existing color styles on links, then add blue
-                contentStr = contentStr.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>'); // Remove existing styles
+                contentStr = contentStr.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
                 contentStr = contentStr.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
-
                 return contentStr;
             }
 
-            // Get content as strings
-            let introContent = cleanContentForDisplay(generatedIntroContent);
-            let claimsContent = cleanContentForDisplay(generatedClaimsContent);
-            // Spotlight: use generatedSpotlightContent OR fall back to Step 2B spotlightGeneratedContent
-            let spotlightDataForDisplay = generatedSpotlightContent || spotlightGeneratedContent || null;
-            let spotlightContent = cleanContentForDisplay(spotlightDataForDisplay);
-
-            // Get Brite Spot content - try multiple sources (now paragraph + bullets)
-            let briteSpotParagraph = briteSpotContent || '';
-            let briteSpotBulletsList = briteSpotBullets || [];
-
-            // Build combined Brite Spot display with paragraph and bullets
-            let briteSpotDisplayContent = '';
-            if (briteSpotParagraph) {
-                briteSpotDisplayContent = `<p style="margin: 0 0 12px 0;">${briteSpotParagraph}</p>`;
-            }
-            if (briteSpotBulletsList.length > 0) {
-                briteSpotDisplayContent += '<ul style="margin: 0; padding-left: 20px;">';
-                briteSpotBulletsList.forEach(bullet => {
-                    briteSpotDisplayContent += `<li style="margin-bottom: 6px;">${bullet}</li>`;
-                });
-                briteSpotDisplayContent += '</ul>';
-            }
-            // Fallback to old generated content if no new paragraph/bullets
-            if (!briteSpotDisplayContent) {
-                briteSpotDisplayContent = cleanContentForDisplay(generatedBriteSpotContent || briteSpotRewritten || '');
-            }
-
-            // Get header intro from Step 1 input
-            let headerIntroDisplay = headerIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
-
-            let html = '';
-
-            // BRITECO BRIEF HEADER INTRO SECTION (if available)
-            if (headerIntroDisplay) {
-                html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
-                html += '<h3 style="margin: 0 0 5px 0; color: #008181;">BriteCo Brief Intro</h3>';
-                html += `<div id="headerIntroContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${headerIntroDisplay}</div>`;
-                html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('headerIntro')">Edit</button>`;
-                html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('headerIntro')">💾 Save</button>`;
-                html += `</div>`;
-            }
-
-            // INTRODUCTION SECTION removed per user request - BriteCo Brief Intro from Step 1 is used instead
-
-            // BRITE SPOT SECTION (if available)
-            if (briteSpotDisplayContent && briteSpotDisplayContent !== 'Content not available') {
-                html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
-                html += '<h3 style="margin: 0 0 5px 0; color: #008181;">The Brite Spot</h3>';
-                html += `<div id="briteSpotContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${briteSpotDisplayContent}</div>`;
-                html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('briteSpot')">Edit</button>`;
-                html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('briteSpot')">💾 Save</button>`;
-                html += `</div>`;
-            }
-
-            // Helper for source links
-            const makeSourceLink = (url) => url ? `<br><a href="${url}" target="_blank" style="color: #018181; text-decoration: underline; font-size: 13px;">Read more →</a>` : '';
-
-            // CURIOUS CLAIMS SECTION
-            html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
-            html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Curious Claims</h3>';
-            html += `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${selectedClaims?.title || 'Curious Claims'}</h4>`;
-            html += `<div id="claimsContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${claimsContent}${makeSourceLink(selectedClaims?.url || selectedClaims?.source_url)}</div>`;
-            html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('claims')">Edit</button>`;
-            html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('claims')">💾 Save</button>`;
-            html += `</div>`;
-
-            // Helper to make links blue in any text (defined early for use in all sections)
-            function styleLinksBlueEarly(text) {
-                if (!text) return '';
-                // Convert markdown links [text](url) to HTML
-                text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-                // Remove existing styles on links
-                text = text.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
-                // Add blue styling
-                text = text.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
-                return text;
-            }
-
-            // NEWS ROUNDUP SECTION (5 bullets)
-            html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
-            html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Insurance News Roundup</h3>';
-            html += '<ul id="roundupContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6; padding-left: 20px;">';
-            if (Array.isArray(generatedRoundupContent)) {
-                generatedRoundupContent.forEach(item => {
-                    const itemText = styleLinksBlueEarly(item.summary || item);
-                    html += `<li style="margin-bottom: 8px;">${itemText}</li>`;
-                });
-            } else {
-                html += `<li>${styleLinksBlueEarly(generatedRoundupContent) || 'News roundup content'}</li>`;
-            }
-            html += '</ul>';
-            html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('roundup')">Edit</button>`;
-            html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('roundup')">💾 Save</button>`;
-            html += `</div>`;
-
-            // INSURNEWS SPOTLIGHT SECTION
-            html += '<div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">';
-            html += '<h3 style="margin: 0 0 5px 0; color: #008181;">InsurNews Spotlight</h3>';
-            html += `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${generatedSpotlightSubheader || 'Industry Spotlight'}</h4>`;
-            html += `<div id="spotlightContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">${spotlightContent}</div>`;
-            html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('spotlight')">Edit</button>`;
-            html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('spotlight')">💾 Save</button>`;
-            html += `</div>`;
-
-            // Helper to make links blue in any text
             function styleLinksBlue(text) {
                 if (!text) return '';
-                // Convert markdown links [text](url) to HTML
                 text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-                // Remove existing styles on links
                 text = text.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
-                // Add blue styling
                 text = text.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
                 return text;
             }
 
-            // AGENT ADVANTAGE SECTION (intro + 5 tips from single article)
-            html += '<div style="margin-bottom: 20px;">';
-            html += '<h3 style="margin: 0 0 5px 0; color: #008181;">Agent Advantage</h3>';
-            html += '<div id="tipsContentBox" contenteditable="true" style="outline: none; color: #555; font-size: 14px; line-height: 1.6;">';
-            // Handle new format: { intro, tips: [{ title, tip }] }
-            if (generatedTipsContent && generatedTipsContent.intro) {
-                html += `<p style="margin-bottom: 15px;">${styleLinksBlue(generatedTipsContent.intro)}</p>`;
-                html += '<ol style="padding-left: 20px; margin: 0;">';
-                (generatedTipsContent.tips || []).forEach(item => {
-                    const title = item.title ? `<strong>${item.title}:</strong> ` : '';
-                    const tipText = styleLinksBlue(item.tip || item);
-                    html += `<li style="margin-bottom: 10px;">${title}${tipText}</li>`;
-                });
-                html += '</ol>';
-            } else if (Array.isArray(generatedTipsContent)) {
-                // Old format: array of tips
-                html += '<ol style="padding-left: 20px; margin: 0;">';
-                generatedTipsContent.forEach(item => {
-                    const title = item.title ? `<strong>${item.title}:</strong> ` : '';
-                    const tipText = styleLinksBlue(item.tip || item);
-                    html += `<li style="margin-bottom: 8px;">${title}${tipText}</li>`;
-                });
-                html += '</ol>';
-            } else {
-                html += `<p>${styleLinksBlue(generatedTipsContent) || 'Agent tips content'}</p>`;
-            }
-            html += '</div>';
-            html += `<button class="btn-secondary btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px;" onclick="editSection('tips')">Edit</button>`;
-            html += `<button class="btn-secondary btn save-section-btn" style="font-size: 12px; padding: 6px 12px; margin-top: 8px; margin-left: 8px;" onclick="saveSection('tips')">💾 Save</button>`;
-            html += `</div>`;
+            const makeSourceLink = (url) => url ? `<br><a href="${url}" target="_blank" style="color: #018181; text-decoration: underline; font-size: 13px;">Read more →</a>` : '';
 
-            container.innerHTML = html;
+            // Populate per-section editable divs
+
+            // 1. BriteCo Brief Intro
+            const headerIntroEl = document.getElementById('review-headerIntro');
+            if (headerIntroEl) {
+                const headerIntroDisplay = headerIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
+                headerIntroEl.innerHTML = headerIntroDisplay || '<p style="color:#999;">No intro content</p>';
+            }
+
+            // 2. Brite Spot
+            const briteSpotEl = document.getElementById('review-britespot');
+            if (briteSpotEl) {
+                let bsContent = '';
+                const bsParagraph = briteSpotContent || '';
+                const bsBullets = briteSpotBullets || [];
+                if (bsParagraph) bsContent = `<p style="margin: 0 0 12px 0;">${bsParagraph}</p>`;
+                if (bsBullets.length > 0) {
+                    bsContent += '<ul style="margin: 0; padding-left: 20px;">';
+                    bsBullets.forEach(b => { bsContent += `<li style="margin-bottom: 6px;">${b}</li>`; });
+                    bsContent += '</ul>';
+                }
+                if (!bsContent) bsContent = cleanContentForDisplay(generatedBriteSpotContent || briteSpotRewritten || '');
+                briteSpotEl.innerHTML = bsContent;
+            }
+
+            // 3. Curious Claims
+            const claimsEl = document.getElementById('review-claims');
+            if (claimsEl) {
+                const claimsContent = cleanContentForDisplay(generatedClaimsContent);
+                const sourceLink = makeSourceLink(selectedClaims?.url || selectedClaims?.source_url);
+                claimsEl.innerHTML = `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${selectedClaims?.title || 'Curious Claims'}</h4>${claimsContent}${sourceLink}`;
+            }
+
+            // 4. News Roundup
+            const roundupEl = document.getElementById('review-roundup');
+            if (roundupEl) {
+                let roundupHtml = '<ul style="padding-left: 20px; margin: 0;">';
+                if (Array.isArray(generatedRoundupContent)) {
+                    generatedRoundupContent.forEach(item => {
+                        roundupHtml += `<li style="margin-bottom: 8px;">${styleLinksBlue(item.summary || item)}</li>`;
+                    });
+                } else {
+                    roundupHtml += `<li>${styleLinksBlue(generatedRoundupContent) || 'News roundup content'}</li>`;
+                }
+                roundupHtml += '</ul>';
+                roundupEl.innerHTML = roundupHtml;
+            }
+
+            // 5. InsurNews Spotlight
+            const spotlightEl = document.getElementById('review-spotlight');
+            if (spotlightEl) {
+                const spotlightData = generatedSpotlightContent || spotlightGeneratedContent || null;
+                const spotlightContent = cleanContentForDisplay(spotlightData);
+                spotlightEl.innerHTML = `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${generatedSpotlightSubheader || 'Industry Spotlight'}</h4>${spotlightContent}`;
+            }
+
+            // 6. Agent Advantage
+            const tipsEl = document.getElementById('review-tips');
+            if (tipsEl) {
+                let tipsHtml = '';
+                if (generatedTipsContent && generatedTipsContent.intro) {
+                    tipsHtml += `<p style="margin-bottom: 15px;">${styleLinksBlue(generatedTipsContent.intro)}</p>`;
+                    tipsHtml += '<ol style="padding-left: 20px; margin: 0;">';
+                    (generatedTipsContent.tips || []).forEach(item => {
+                        const title = item.title ? `<strong>${item.title}:</strong> ` : '';
+                        tipsHtml += `<li style="margin-bottom: 10px;">${title}${styleLinksBlue(item.tip || item)}</li>`;
+                    });
+                    tipsHtml += '</ol>';
+                } else if (Array.isArray(generatedTipsContent)) {
+                    tipsHtml += '<ol style="padding-left: 20px; margin: 0;">';
+                    generatedTipsContent.forEach(item => {
+                        const title = item.title ? `<strong>${item.title}:</strong> ` : '';
+                        tipsHtml += `<li style="margin-bottom: 8px;">${title}${styleLinksBlue(item.tip || item)}</li>`;
+                    });
+                    tipsHtml += '</ol>';
+                } else {
+                    tipsHtml = `<p>${styleLinksBlue(generatedTipsContent) || 'Agent tips content'}</p>`;
+                }
+                tipsEl.innerHTML = tipsHtml;
+            }
         }
 
         function editSection(sectionType) {
@@ -4629,18 +4702,97 @@
             console.log(`[Save] ${sectionType} section saved`);
         }
 
+        // ============================================================================
+        // LINK TOOLBAR FUNCTIONS (matching jeweler pattern)
+        // ============================================================================
+        let linkTargetEditorId = null;
+        let savedSelection = null;
+
+        function saveSelection() {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                savedSelection = sel.getRangeAt(0).cloneRange();
+            }
+        }
+
+        function restoreSelection() {
+            if (savedSelection) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(savedSelection);
+            }
+        }
+
+        function showLinkPopover(editorId) {
+            const editor = document.getElementById(editorId);
+            if (editor) editor.focus();
+            saveSelection();
+
+            linkTargetEditorId = editorId;
+            document.querySelectorAll('.link-popover').forEach(p => p.classList.remove('show'));
+            const popover = document.getElementById('lp-' + editorId);
+            if (popover) {
+                popover.classList.add('show');
+                const sel = window.getSelection();
+                const selectedText = sel.toString().trim();
+                const textInput = popover.querySelector('.lp-text');
+                const urlInput = popover.querySelector('.lp-url');
+                if (textInput) textInput.value = selectedText || '';
+                if (urlInput) { urlInput.value = ''; urlInput.focus(); }
+            }
+        }
+
+        function hideLinkPopover(editorId) {
+            const popover = document.getElementById('lp-' + editorId);
+            if (popover) popover.classList.remove('show');
+            linkTargetEditorId = null;
+        }
+
+        function insertLink(editorId) {
+            const popover = document.getElementById('lp-' + editorId);
+            if (!popover) return;
+            const text = popover.querySelector('.lp-text').value.trim();
+            const url = popover.querySelector('.lp-url').value.trim();
+            if (!url) return;
+
+            const displayText = text || url;
+            const linkHtml = `<a href="${url}" style="color:#008181;text-decoration:underline;" target="_blank">${displayText}</a>`;
+
+            const editor = document.getElementById(editorId);
+            if (editor) {
+                editor.focus();
+                restoreSelection();
+                document.execCommand('insertHTML', false, linkHtml);
+            }
+
+            hideLinkPopover(editorId);
+        }
+
+        // Track cursor in editable divs for link insertion
+        document.addEventListener('selectionchange', function() {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                const node = sel.anchorNode;
+                if (node) {
+                    const editable = node.nodeType === 1 ? node.closest('.editable') : (node.parentElement ? node.parentElement.closest('.editable') : null);
+                    if (editable) {
+                        savedSelection = sel.getRangeAt(0).cloneRange();
+                    }
+                }
+            }
+        });
+
         async function checkBrandGuidelines() {
             try {
                 showStep(6); // Brand Check loading screen
 
-                // Get the edited content from the contenteditable divs
-                // Use different variable names to avoid shadowing outer scope variables
-                const welcomeText = document.getElementById('headerIntroContentBox')?.innerHTML || headerIntroContent || '';
-                const briteSpotText = document.getElementById('briteSpotContentBox')?.innerHTML || briteSpotRewritten || briteSpotContent || '';
-                const claimsText = document.getElementById('claimsContentBox')?.innerHTML || '';
-                const roundupText = document.getElementById('roundupContentBox')?.innerHTML || '';
-                const spotlightText = document.getElementById('spotlightContentBox')?.innerHTML || '';
-                const tipsText = document.getElementById('tipsContentBox')?.innerHTML || '';
+                // Get the edited content from the per-section editable divs
+                const welcomeText = document.getElementById('review-headerIntro')?.innerHTML || headerIntroContent || '';
+                const briteSpotText = document.getElementById('review-britespot')?.innerHTML || briteSpotRewritten || briteSpotContent || '';
+                const claimsText = document.getElementById('review-claims')?.innerHTML || '';
+                const roundupText = document.getElementById('review-roundup')?.innerHTML || '';
+                const spotlightText = document.getElementById('review-spotlight')?.innerHTML || '';
+                const tipsText = document.getElementById('review-tips')?.innerHTML || '';
 
                 const response = await fetch(`${API_BASE}/api/brand-check`, {
                     method: 'POST',
@@ -4696,27 +4848,27 @@
 
             // Get the full newsletter content with highlighting (matching venue-voice approach)
             const welcomeContent = highlightContent(
-                document.getElementById('headerIntroContentBox')?.innerHTML || '',
+                document.getElementById('review-headerIntro')?.innerHTML || '',
                 suggestions.filter(s => s.section === 'welcome')
             );
             const briteSpotContent = highlightContent(
-                document.getElementById('briteSpotContentBox')?.innerHTML || '',
+                document.getElementById('review-britespot')?.innerHTML || '',
                 suggestions.filter(s => s.section === 'brite_spot')
             );
             const claimsContent = highlightContent(
-                document.getElementById('claimsContentBox')?.innerHTML || '',
+                document.getElementById('review-claims')?.innerHTML || '',
                 suggestions.filter(s => s.section === 'claims')
             );
             const roundupContent = highlightContent(
-                document.getElementById('roundupContentBox')?.innerHTML || '',
+                document.getElementById('review-roundup')?.innerHTML || '',
                 suggestions.filter(s => s.section === 'roundup')
             );
             const spotlightContent = highlightContent(
-                document.getElementById('spotlightContentBox')?.innerHTML || '',
+                document.getElementById('review-spotlight')?.innerHTML || '',
                 suggestions.filter(s => s.section === 'spotlight')
             );
             const tipsContent = highlightContent(
-                document.getElementById('tipsContentBox')?.innerHTML || '',
+                document.getElementById('review-tips')?.innerHTML || '',
                 suggestions.filter(s => s.section === 'tips')
             );
 
@@ -4849,11 +5001,12 @@
         function acceptSuggestion(suggestionId, original, suggested, section) {
             // Map section names to content box IDs
             const sectionToContentBox = {
-                'brite_spot': 'briteSpotContentBox',
-                'claims': 'claimsContentBox',
-                'roundup': 'roundupContentBox',
-                'spotlight': 'spotlightContentBox',
-                'tips': 'tipsContentBox'
+                'welcome': 'review-headerIntro',
+                'brite_spot': 'review-britespot',
+                'claims': 'review-claims',
+                'roundup': 'review-roundup',
+                'spotlight': 'review-spotlight',
+                'tips': 'review-tips'
             };
 
             // Decode HTML entities for comparison
@@ -4861,7 +5014,7 @@
             const decodedSuggested = suggested.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\\'/g, "'");
 
             // Get the content box for this section and update it
-            const contentBoxId = sectionToContentBox[section] || `${section}ContentBox`;
+            const contentBoxId = sectionToContentBox[section] || `review-${section}`;
             const contentBox = document.getElementById(contentBoxId);
 
             if (contentBox) {
@@ -5088,10 +5241,10 @@
 
             try {
                 // Gather all newsletter content from editable boxes (user may have edited)
-                const spotlightBox = document.getElementById('spotlightContentBox');
+                const spotlightBox = document.getElementById('fc-spotlight') || document.getElementById('review-spotlight');
                 let spotlightExport = null;
 
-                // Try Step 5 editable box first
+                // Try Final Copy or Review editable div first
                 if (spotlightBox && spotlightBox.innerHTML && spotlightBox.innerHTML.trim() !== '' && !spotlightBox.innerHTML.includes('Content not available')) {
                     spotlightExport = {
                         subheader: generatedSpotlightSubheader || (spotlightGeneratedContent?.subheader || 'Industry Spotlight'),
@@ -5110,17 +5263,17 @@
                 console.log('[Export] Spotlight export data:', spotlightExport);
 
                 // Get BriteCo Brief Intro - check Step 5 box first, then saved content, then Step 1 input
-                const headerIntroExport = document.getElementById('headerIntroContentBox')?.innerHTML
+                const headerIntroExport = (document.getElementById('fc-headerIntro') || document.getElementById('review-headerIntro'))?.innerHTML
                     || headerIntroContent
                     || document.getElementById('headerIntroInput')?.value?.trim()
                     || '';
 
                 const content = {
                     header_intro: headerIntroExport,
-                    introduction: document.getElementById('introContentBox')?.innerHTML || generatedIntroContent || '',
-                    brite_spot: document.getElementById('briteSpotContentBox')?.innerHTML || briteSpotRewritten || briteSpotContent || '',
-                    curious_claims: document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '',
-                    roundup: document.getElementById('roundupContentBox')?.innerHTML || generatedRoundupContent || '',
+                    introduction: generatedIntroContent || '',
+                    brite_spot: (document.getElementById('fc-britespot') || document.getElementById('review-britespot'))?.innerHTML || briteSpotRewritten || briteSpotContent || '',
+                    curious_claims: (document.getElementById('fc-claims') || document.getElementById('review-claims'))?.innerHTML || generatedClaimsContent || '',
+                    roundup: (document.getElementById('fc-roundup') || document.getElementById('review-roundup'))?.innerHTML || generatedRoundupContent || '',
                     spotlight: spotlightExport,
                     agent_tips: generatedTipsContent || ''
                 };
@@ -6980,20 +7133,16 @@ ${introText ? `<p style="margin: 0 0 28px 0; font-family: Montserrat, Helvetica,
 <img src="${assets.briteSpotBanner}" width="580" alt="The Brite Spot" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
 </td>
 </tr>
-<!-- Section Content - Text LEFT, Image RIGHT -->
+<!-- Section Content - Full-width image layout -->
 <tr>
-<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<tr>
-<td valign="top" class="mobile-stack mobile-stack-padding" style="padding-right: 25px;">
-${briteSpotText ? `<p class="dark-text-secondary" style="margin: 0 0 18px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${briteSpotText}</p>` : ''}
-${generateBulletItems(briteSpotBullets)}
-</td>
-<td width="254" valign="top" class="mobile-stack">
-<img src="${briteSpotImage || assets.blankImage}" width="254" alt="Brite Spot" style="width: 254px; max-width: 254px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<td style="background-color: #ffffff; padding: 20px 45px 10px;" class="mobile-padding section-bg">
+<img src="${briteSpotImage || assets.blankImage}" width="490" alt="Brite Spot" style="width: 100%; max-width: 490px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
 </td>
 </tr>
-</table>
+<tr>
+<td style="background-color: #ffffff; padding: 15px 45px 35px;" class="mobile-padding section-bg">
+${briteSpotText ? `<p class="dark-text-secondary" style="margin: 0 0 18px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${briteSpotText}</p>` : ''}
+${generateBulletItems(briteSpotBullets)}
 </td>
 </tr>
 </table>
@@ -7266,7 +7415,7 @@ ${generateTipsItems(tipsItems)}
 
             // Get introduction content from Newsletter Header Intro (page 1 box 1)
             // Try: 1) Step 5 editable box, 2) saved headerIntroContent, 3) page 1 input
-            const introText = document.getElementById('headerIntroContentBox')?.innerText
+            const introText = (document.getElementById('fc-headerIntro') || document.getElementById('review-headerIntro'))?.innerText
                 || headerIntroContent
                 || document.getElementById('headerIntroInput')?.value?.trim()
                 || '';
@@ -7278,7 +7427,7 @@ ${generateTipsItems(tipsItems)}
 
             // If no Step 1 content, try contenteditable box (may have been edited)
             if (!briteSpotTextForTemplate) {
-                const contentBoxHtml = document.getElementById('briteSpotContentBox')?.innerHTML || generatedBriteSpotContent || '';
+                const contentBoxHtml = (document.getElementById('fc-britespot') || document.getElementById('review-britespot'))?.innerHTML || generatedBriteSpotContent || '';
                 // Extract paragraph from HTML if needed
                 if (contentBoxHtml.includes('<p')) {
                     const match = contentBoxHtml.match(/<p[^>]*>([\s\S]*?)<\/p>/);
@@ -7289,7 +7438,7 @@ ${generateTipsItems(tipsItems)}
             }
 
             // Get claims content
-            const claimsText = document.getElementById('claimsContentBox')?.innerHTML || generatedClaimsContent || '';
+            const claimsText = (document.getElementById('fc-claims') || document.getElementById('review-claims'))?.innerHTML || generatedClaimsContent || '';
 
             // Get roundup content - array of news items
             let roundupItems = [];
@@ -7324,7 +7473,7 @@ ${generateTipsItems(tipsItems)}
                     spotlightText = generatedSpotlightContent.body;
                 }
             } else {
-                spotlightText = document.getElementById('spotlightContentBox')?.innerHTML || generatedSpotlightContent || '';
+                spotlightText = (document.getElementById('fc-spotlight') || document.getElementById('review-spotlight'))?.innerHTML || generatedSpotlightContent || '';
             }
 
             // Get tips content - array of tips with titles
@@ -7988,7 +8137,10 @@ ${generateTipsItems(tipsItems)}
             lastSearchQuery = query;
             lastSearchSource = 'perplexity';
 
+            // Preserve saved/custom articles before clearing for spinner
+            const preservedBeforeSearch = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Searching with Perplexity AI & analyzing with GPT-5.2...</p></div>';
+            preservedBeforeSearch.forEach(item => resultsDiv.insertBefore(item, resultsDiv.firstChild));
 
             try {
                 const response = await fetch(`${API_BASE}/api/v2/search-perplexity`, {
@@ -8045,7 +8197,9 @@ ${generateTipsItems(tipsItems)}
             lastSearchQuery = 'market signals';
             lastSearchSource = 'insights';
 
+            const preservedInsights = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Analyzing all 8 market signals...</p></div>';
+            preservedInsights.forEach(item => resultsDiv.insertBefore(item, resultsDiv.firstChild));
 
             try {
                 const response = await fetch(`${API_BASE}/api/v2/search-insights`, {
@@ -8096,7 +8250,9 @@ ${generateTipsItems(tipsItems)}
             lastSearchQuery = query;
             lastSearchSource = 'explorer';
 
+            const preservedExplorer = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
             resultsDiv.innerHTML = '<div class="research-card-loading"><div class="spinner"></div><p>Searching sources & analyzing story angles...</p></div>';
+            preservedExplorer.forEach(item => resultsDiv.insertBefore(item, resultsDiv.firstChild));
 
             try {
                 const response = await fetch(`${API_BASE}/api/v2/search-sources`, {
@@ -9150,6 +9306,22 @@ ${generateTipsItems(tipsItems)}
             updateProgress(stepNum);
             window.scrollTo(0, 0);
 
+            // Populate per-section editable divs when navigating to step 5 or 7b (e.g., from draft load)
+            if (stepNum == 5 || stepNum === '5') {
+                // Only populate if divs are empty (not already populated by generateContent)
+                const introDiv = document.getElementById('review-headerIntro');
+                if (introDiv && !introDiv.innerHTML.trim()) {
+                    displayGeneratedContent();
+                }
+            }
+            if (stepNum === '7b') {
+                const fcDiv = document.getElementById('fc-headerIntro');
+                if (fcDiv && !fcDiv.innerHTML.trim()) {
+                    displayGeneratedContent();
+                    populateFinalCopy();
+                }
+            }
+
             // Note: Meme generation now happens via the prompt step (15_5) → step 16 flow
             // No longer auto-generate on entering step 16
 
@@ -9520,50 +9692,45 @@ ${generateTipsItems(tipsItems)}
         // ============================================================
 
         function populateFinalCopy() {
-            // Reuse the same rendering logic as displayGeneratedContent (Step 5)
-            // so the Final Copy page matches the pre-brand-check page appearance
-            const container = document.getElementById('finalCopyContent');
-            if (!container) return;
-
-            // Re-call displayGeneratedContent's logic into the final copy container
-            // We temporarily swap the target, render, then swap back
-            const step5Container = document.getElementById('generatedContent');
-            if (step5Container && step5Container.innerHTML.trim()) {
-                // Copy the rendered HTML from step 5 directly
-                container.innerHTML = step5Container.innerHTML;
-            } else {
-                // Fallback: call displayGeneratedContent which renders into generatedContent,
-                // then copy the result
-                displayGeneratedContent();
-                const step5 = document.getElementById('generatedContent');
-                if (step5) container.innerHTML = step5.innerHTML;
-            }
+            // Copy content from review-* divs (Step 5) into fc-* divs (Step 7b)
+            const sections = ['headerIntro', 'britespot', 'claims', 'roundup', 'spotlight', 'tips'];
+            sections.forEach(section => {
+                const src = document.getElementById('review-' + section);
+                const dst = document.getElementById('fc-' + section);
+                if (src && dst) {
+                    dst.innerHTML = src.innerHTML;
+                }
+            });
         }
 
         function saveFinalCopyToState() {
             try {
-                // Final copy now uses the same rendered IDs as step 5 (inside finalCopyContent)
-                const container = document.getElementById('finalCopyContent');
-                if (!container) return;
-                const getBox = id => container.querySelector('#' + id);
-                const getHtml = id => { const el = getBox(id); return el ? el.innerHTML.trim() : ''; };
+                // Read from fc-* editable divs and save to global state variables
+                const getHtml = id => { const el = document.getElementById(id); return el ? el.innerHTML.trim() : ''; };
 
-                const introHtml = getHtml('headerIntroContentBox');
+                const introHtml = getHtml('fc-headerIntro');
                 if (introHtml) headerIntroContent = introHtml;
 
-                const bsHtml = getHtml('briteSpotContentBox');
-                if (bsHtml) briteSpotContent = bsHtml;
+                const bsHtml = getHtml('fc-britespot');
+                if (bsHtml) {
+                    briteSpotContent = bsHtml;
+                    briteSpotRewritten = bsHtml;
+                    generatedBriteSpotContent = bsHtml;
+                }
 
-                const claimsHtml = getHtml('claimsContentBox');
+                const claimsHtml = getHtml('fc-claims');
                 if (claimsHtml) generatedClaimsContent = claimsHtml;
 
-                const roundupHtml = getHtml('roundupContentBox');
+                const roundupHtml = getHtml('fc-roundup');
                 if (roundupHtml) generatedRoundupContent = roundupHtml;
 
-                const spotlightHtml = getHtml('spotlightContentBox');
-                if (spotlightHtml) generatedSpotlightContent = spotlightHtml;
+                const spotlightHtml = getHtml('fc-spotlight');
+                if (spotlightHtml) {
+                    generatedSpotlightContent = spotlightHtml;
+                    spotlightGeneratedContent = spotlightHtml;
+                }
 
-                const tipsHtml = getHtml('tipsContentBox');
+                const tipsHtml = getHtml('fc-tips');
                 if (tipsHtml) generatedTipsContent = tipsHtml;
             } catch (e) { console.error('[FinalCopy] Save error:', e); }
         }
