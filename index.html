@@ -7558,7 +7558,8 @@ ${generateTipsItems(tipsItems)}
                 console.log('[ONTRAPORT] Response:', data);
 
                 if (data.success) {
-                    publishDraft();
+                    await saveDraft();
+                    await publishDraft();
                     alert('✅ Successfully pushed to Ontraport!');
                     console.log('✅ Ontraport campaign created:', data);
                 } else {
@@ -9496,14 +9497,19 @@ ${generateTipsItems(tipsItems)}
                 const userEmail = (window.AUTH_USER && window.AUTH_USER.email) || 'unknown';
                 const savedBy = userEmail.split('@')[0].replace(/\./g, '-');
                 const filename = `drafts/${selectedMonth.toLowerCase()}-${new Date().getFullYear()}-${savedBy}.json`;
-                await fetch(`${API_BASE}/api/publish-draft`, {
+                const resp = await fetch(`${API_BASE}/api/publish-draft`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ file: filename })
                 });
-                console.log('[Draft] Published');
-                loadDrafts();
-                loadNewsletterArchive();
+                const result = await resp.json();
+                if (result.success) {
+                    console.log('[Draft] Published successfully:', result.file);
+                } else {
+                    console.error('[Draft] Publish API returned error:', result.error);
+                }
+                await loadDrafts();
+                await loadNewsletterArchive();
             } catch (e) {
                 console.error('[Draft] Publish failed:', e);
             }
