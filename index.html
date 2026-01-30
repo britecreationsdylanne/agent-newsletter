@@ -8651,12 +8651,14 @@ ${generateTipsItems(tipsItems)}
             // Update section label with section-specific instructions
             const labels = { claims: 'Curious Claims', roundup: 'News Roundup', tips: 'Agent Advantage' };
             const instructions = {
-                claims: 'Search and select <strong>1 article</strong> below.',
+                claims: 'Search and select one article below.',
                 roundup: `Search and select <strong>5 articles</strong> below. (${selectedRoundup.length}/5 selected)`,
-                tips: 'Search and select <strong>1 article</strong> below.'
+                tips: 'Search and select one article below.'
             };
-            document.getElementById('researchSectionLabel').innerHTML =
-                `Researching for: <strong>${labels[section]}</strong> section. ${instructions[section]}`;
+            const titleEl = document.getElementById('researchSectionTitle');
+            const descEl = document.getElementById('researchSectionDesc');
+            if (titleEl) titleEl.innerHTML = labels[section];
+            if (descEl) descEl.innerHTML = instructions[section];
 
             // Update search inputs with section-specific defaults
             const defaults = sectionSearchDefaults[section];
@@ -8875,8 +8877,8 @@ ${generateTipsItems(tipsItems)}
 
                 // Update tab check and label
                 document.getElementById('roundupTabCheck').style.display = selectedRoundup.length > 0 ? 'inline' : 'none';
-                document.getElementById('researchSectionLabel').innerHTML =
-                    `Researching for: <strong>News Roundup</strong> section. Search and select <strong>5 articles</strong> below. (${selectedRoundup.length}/5 selected)`;
+                const descEl = document.getElementById('researchSectionDesc');
+                if (descEl) descEl.innerHTML = `Search and select <strong>5 articles</strong> below. (${selectedRoundup.length}/5 selected)`;
 
                 updateResearchNextButton();
                 return;
