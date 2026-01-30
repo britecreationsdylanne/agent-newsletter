@@ -7808,32 +7808,22 @@ ${generateTipsItems(tipsItems)}
             if (!preview) return;
 
             // Make all paragraph and div text content editable
-            const textElements = preview.querySelectorAll('p, div[style*="font-size"]');
+            const textElements = preview.querySelectorAll('p, div[style*="font-size"], h2, h3, h4, h5');
             textElements.forEach(el => {
-                // Skip elements that are just containers
                 if (el.children.length > 0 && el.textContent.trim().length < 50) return;
-
                 el.setAttribute('contenteditable', 'true');
                 el.style.cursor = 'text';
                 el.style.transition = 'background-color 0.2s';
-
-                // Visual feedback on focus
                 el.addEventListener('focus', () => {
                     el.style.backgroundColor = '#fef3c7';
                     el.style.outline = '2px solid #f59e0b';
                 });
-
                 el.addEventListener('blur', () => {
                     el.style.backgroundColor = '';
                     el.style.outline = '';
-
-                    // Save changes back by regenerating HTML
-                    console.log('[EDIT] Content updated, regenerating HTML...');
                     updateNewsletterHTML();
                 });
             });
-
-            console.log('[EDIT] Enabled editing on', textElements.length, 'elements');
         }
 
         // Global variable to store edited HTML
