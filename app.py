@@ -2416,12 +2416,8 @@ def generate_images():
             safe_print(f"  [{section_name.upper()}] Prompt: {prompt[:80]}...")
 
             # Determine aspect ratio based on section
-            # briteSpot/claims: larger images - use 16:9 landscape
-            # spotlight/tips: can be 1:1 square
-            if section_name in ['briteSpot', 'claims']:
-                aspect_ratio = "16:9"  # Landscape for larger images
-            else:
-                aspect_ratio = "1:1"  # Square for other images
+            # All section images are now full-width landscape (16:9)
+            aspect_ratio = "16:9"
 
             # Generate with Gemini (Nano Banana)
             print(f"  [{section_name.upper()}] Calling Nano Banana...")
@@ -2442,15 +2438,14 @@ def generate_images():
                     image_bytes = base64.b64decode(image_data)
                     pil_image = Image.open(BytesIO(image_bytes))
 
-                    # Section-specific image sizes
-                    if section_name == 'spotlight':
-                        # Full-width banner for InsureNews Spotlight (below title, 25% shorter)
-                        target_width = 490
-                        target_height = 263
-                    else:
-                        # Square images for other sections (180x180)
-                        target_width = 180
-                        target_height = 180
+                    # Section-specific image sizes - all full width
+                    IMAGE_SIZES = {
+                        'briteSpot': (570, 320),    # Full width landscape
+                        'claims': (570, 320),        # Full width landscape
+                        'spotlight': (570, 320),     # Full width landscape
+                        'tips': (570, 208),          # Full width, 35% shorter than standard
+                    }
+                    target_width, target_height = IMAGE_SIZES.get(section_name, (570, 320))
 
                     print(f"  [{section_name.upper()}] Resizing from {pil_image.size} to {target_width}x{target_height}...")
 

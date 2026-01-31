@@ -7052,29 +7052,23 @@
                 return `<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${text}</p>`;
             };
 
-            // Helper to generate bullet items with teal circles
+            // Helper to generate bullet items with checkmark images
             const generateBulletItems = (items) => {
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
-                return `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-                    <tbody>
-                    ${items.map(item => `
-                    <tr>
-                        <td style="padding-top: 6px;" valign="top" width="20">
-                            <table border="0" cellpadding="0" cellspacing="0" role="presentation">
-                                <tbody>
-                                    <tr>
-                                        <td style="width: 10px; height: 10px; background-color: #31D7CA; border-radius: 50%; font-size: 1px; line-height: 1px;">&nbsp;</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                        <td style="padding-bottom: 10px; padding-left: 10px;" valign="top">
-                            <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item}</p>
-                        </td>
-                    </tr>
-                    `).join('')}
-                    </tbody>
-                </table>`;
+                return items.map(item => `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding-right:12px;" valign="top" width="35">
+<img alt="&#10003;" src="${assets.checkmark}" style="display:block;width:23px;height:auto;" width="23" />
+</td>
+<td valign="top">
+<p class="dark-text-secondary" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${item}</p>
+</td>
+</tr>
+</tbody>
+</table>
+`).join('');
             };
 
             // Helper to generate news roundup items with checkmarks
@@ -7152,7 +7146,7 @@
 td, th, p, a, li, span { font-family: Arial, Helvetica, sans-serif !important; }
 </style>
 <![endif]-->
-<style>
+<style type="text/css">
 :root { color-scheme: light dark; supported-color-schemes: light dark; }
 html, body { margin: 0 auto !important; padding: 0 !important; height: 100% !important; width: 100% !important; }
 * { -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
@@ -7170,16 +7164,28 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
 .email-bg { background-color: #1a1a1a !important; }
 .section-bg { background-color: #2d2d2d !important; }
 .section-border { border-color: #444444 !important; }
+.header-bg { background-color: #2d2d2d !important; }
+.hero-bg { background-color: #0a4a4a !important; }
 .dark-text { color: #ffffff !important; }
 .dark-text-secondary { color: #cccccc !important; }
 .dark-text-muted { color: #999999 !important; }
+.dark-img { opacity: 0.9 !important; }
 }
+/* Outlook.com dark mode */
 [data-ogsc] .email-bg { background-color: #1a1a1a !important; }
 [data-ogsc] .section-bg { background-color: #2d2d2d !important; }
 [data-ogsc] .section-border { border-color: #444444 !important; }
+[data-ogsc] .header-bg { background-color: #2d2d2d !important; }
+[data-ogsc] .hero-bg { background-color: #0a4a4a !important; }
 [data-ogsc] .dark-text { color: #ffffff !important; }
 [data-ogsc] .dark-text-secondary { color: #cccccc !important; }
 [data-ogsc] .dark-text-muted { color: #999999 !important; }
+/* Gmail dark mode */
+u + .body .email-bg { background-color: #1a1a1a !important; }
+u + .body .section-bg { background-color: #2d2d2d !important; }
+u + .body .section-border { border-color: #444444 !important; }
+u + .body .dark-text { color: #ffffff !important; }
+u + .body .dark-text-secondary { color: #cccccc !important; }
 
 /* Mobile styles */
 @media screen and (max-width: 600px) {
@@ -7190,39 +7196,41 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
 .mobile-center { text-align: center !important; }
 .mobile-img-full { width: 100% !important; height: auto !important; max-width: 100% !important; }
 .mobile-hide { display: none !important; }
-.mobile-spacer { height: 15px !important; }
+.mobile-spacer { height: 20px !important; }
+.mobile-text-center { text-align: center !important; }
+.mobile-font-small { font-size: 14px !important; line-height: 22px !important; }
 }
 </style>
 </head>
-<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #ffffff;" class="email-bg">
+<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #DFE7F0;" class="body email-bg">
 
 <!-- Preheader -->
 <div style="display: none; max-height: 0px; overflow: hidden;">${preheader}</div>
 <div style="display: none; max-height: 0px; overflow: hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 
-<div role="article" aria-roledescription="email" aria-label="${subjectLine}" lang="en" style="font-size: 16px; font-family: Montserrat, Helvetica, Arial, sans-serif; background-color: #ffffff;">
+<div role="article" aria-roledescription="email" aria-label="${subjectLine}" lang="en" style="font-size: 16px; font-family: Montserrat, Helvetica, Arial, sans-serif; background-color: #DFE7F0;" class="email-bg">
 
 <!-- 100% width wrapper for Gmail mobile support -->
-<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color: #ffffff;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color: #DFE7F0;" class="email-bg">
 <tr>
-<td align="center" style="padding: 0 10px;">
+<td align="center" style="padding: 20px 10px;">
 <!--[if mso | IE]>
-<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="580" align="center" style="width: 580px;">
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width: 600px;">
 <tr>
 <td>
 <![endif]-->
 
 <!-- Outer Container -->
-<table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="580" style="width: 100%; max-width: 580px;" class="mobile-full">
+<table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff;" class="mobile-full section-bg">
 
 <!-- Top Spacer -->
 <tr><td style="height: 20px; font-size: 1px; line-height: 1px;">&nbsp;</td></tr>
 
 <!-- HEADER WITH LOGO -->
 <tr>
-<td style="background-color: #ffffff; padding: 25px 45px; text-align: center; border: 1px solid #282D3E; border-bottom: none;" class="mobile-padding">
+<td align="center" style="background-color: #ffffff; padding: 25px 45px; text-align: center; border: 1px solid #282D3E; border-bottom: none;" class="mobile-padding section-bg section-border">
 <a href="https://brite.co" target="_blank">
-<img src="${assets.logo}" width="140" alt="BriteCo" style="width: 140px; max-width: 140px; height: auto; display: block; margin: 0 auto;">
+<img alt="BriteCo" src="${assets.logo}" width="140" style="width: 140px; max-width: 140px; height: auto; display: block; margin: 0 auto;">
 </a>
 </td>
 </tr>
@@ -7230,11 +7238,11 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
 <!-- HERO SECTION - Light background with geometric pattern -->
 <tr>
 <td style="border: 1px solid #282D3E; border-top: none;" class="section-border">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #EDF5F5; background-image: url('${assets.heroBg}'); background-repeat: repeat; background-position: center;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #EDF5F5; background-image: url('${assets.heroBg}'); background-repeat: repeat; background-position: center;" class="hero-bg">
 <tr>
 <td style="padding: 50px 45px; text-align: center;" class="mobile-padding">
-<h1 style="margin: 0 0 20px 0; font-family: Georgia, serif; font-size: 32px; line-height: 38px; font-weight: 700; color: #008181; font-style: italic;">The BriteCo Brief</h1>
-${introText ? `<p style="margin: 0 0 28px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #555555;">${introText}</p>` : ''}
+<h1 class="dark-text" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 32px; line-height: 38px; font-weight: 700; color: #008181;">The BriteCo Brief</h1>
+${introText ? `<p class="dark-text-secondary" style="margin: 0 0 28px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #555555;">${introText}</p>` : ''}
 <!--[if mso]>
 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${introCTAUrl}" style="height:46px;v-text-anchor:middle;width:200px;" arcsize="50%" strokecolor="#FE8916" fillcolor="#FE8916">
 <w:anchorlock/>
@@ -7250,95 +7258,173 @@ ${introText ? `<p style="margin: 0 0 28px 0; font-family: Montserrat, Helvetica,
 </td>
 </tr>
 
-<!-- 25px Spacer -->
-<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+<!-- 40px Spacer -->
+<tr><td height="40" style="font-size: 1px; line-height: 1px; background-color: #DFE7F0;">&nbsp;</td></tr>
 
-<!-- SECTION: BRITE SPOT - Image on RIGHT -->
+<!-- SECTION: THE BRITE SPOT -->
 <tr>
-<td style="border: 1px solid #282D3E;" class="section-border">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Section Banner -->
+<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
+<img alt="The Brite Spot" src="${assets.briteSpotBanner}" style="width:100%;display:block;" width="600" />
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td>
-<img src="${assets.briteSpotBanner}" width="580" alt="The Brite Spot" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
+<td height="25" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Title -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#282D3E;">${data.briteSpotTitle || 'The Brite Spot'}</h2>
 </td>
 </tr>
-<!-- Section Content - Full-width image layout -->
+</tbody>
+</table>
+
+<!-- Image -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td style="background-color: #ffffff; padding: 20px 45px 10px;" class="mobile-padding section-bg">
-<img src="${briteSpotImage || assets.blankImage}" width="368" alt="Brite Spot" style="width: 100%; max-width: 368px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<td style="padding:0 15px;">
+<img alt="" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td style="background-color: #ffffff; padding: 15px 45px 35px;" class="mobile-padding section-bg">
-${briteSpotText ? `<p class="dark-text-secondary" style="margin: 0 0 18px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${briteSpotText}</p>` : ''}
+<td height="20" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Copy -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
+${briteSpotText ? `<p class="dark-text-secondary" style="margin:0 0 18px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${briteSpotText}</p>` : ''}
+</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Bullet points -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
 ${generateBulletItems(briteSpotBullets)}
 </td>
 </tr>
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="25" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
 </table>
 </td>
 </tr>
 
-<!-- 25px Spacer -->
-<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+<!-- 40px Spacer -->
+<tr><td height="40" style="font-size: 1px; line-height: 1px; background-color: #DFE7F0;">&nbsp;</td></tr>
 
-<!-- SECTION: CURIOUS CLAIMS - Full width image layout -->
+<!-- SECTION: CURIOUS CLAIMS -->
 <tr>
-<td style="border: 1px solid #282D3E;" class="section-border">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Section Banner -->
+<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
+<img alt="Curious Claims" src="${assets.curiousClaimsBanner}" style="width:100%;display:block;" width="600" />
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td>
-<img src="${assets.curiousClaimsBanner}" width="580" alt="Curious Claims" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
-</td>
+<td height="25" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
-<!-- Section Content - Full width image above text -->
-<tr>
-<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Article Title/Header -->
+</tbody>
+</table>
+
+<!-- Title -->
 ${claimsTitle ? `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td>
-<h3 class="dark-text" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 700; color: #282D3E;">${claimsTitle}</h3>
+<td style="padding:0 15px;">
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#282D3E;">${claimsTitle}</h2>
 </td>
 </tr>
-` : ''}
-<!-- Full-width Image -->
-<tr>
-<td style="padding-bottom: 25px;">
-<img src="${claimsImage || assets.blankImage}" width="320" alt="Curious Claims" style="width: 100%; max-width: 320px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
-</td>
-</tr>
-<!-- Full width story content -->
-<tr>
-<td>
-<div class="dark-text-secondary claims-content" style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${formatClaimsText(claimsText)}</div>
-</td>
-</tr>
+</tbody>
 </table>
+` : ''}
+
+<!-- Image -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
+<img alt="" src="${claimsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="20" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Copy -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
+<div class="dark-text-secondary claims-content" style="font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${formatClaimsText(claimsText)}</div>
+</td>
+</tr>
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="30" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
 </table>
 </td>
 </tr>
 
-<!-- 25px Spacer -->
-<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+<!-- 40px Spacer -->
+<tr><td height="40" style="font-size: 1px; line-height: 1px; background-color: #DFE7F0;">&nbsp;</td></tr>
 
 <!-- SECTION: NEWS ROUNDUP -->
 <tr>
-<td style="border: 1px solid #282D3E;" class="section-border">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Section Banner -->
+<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
+<img alt="News Roundup" src="${assets.newsRoundupBanner}" style="width:100%;display:block;" width="600" />
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td>
-<img src="${assets.newsRoundupBanner}" width="580" alt="News Roundup" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
-</td>
+<td height="30" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
-<!-- Section Content -->
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
+<td style="padding:0 15px;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tbody>
 ${generateRoundupItems(roundupItems)}
@@ -7346,93 +7432,165 @@ ${generateRoundupItems(roundupItems)}
 </table>
 </td>
 </tr>
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="34" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
 </table>
 </td>
 </tr>
 
-<!-- 25px Spacer -->
-<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+<!-- 40px Spacer -->
+<tr><td height="40" style="font-size: 1px; line-height: 1px; background-color: #DFE7F0;">&nbsp;</td></tr>
 
-<!-- SECTION: INSURNEWS SPOTLIGHT - Full width image layout -->
+<!-- SECTION: INSURNEWS SPOTLIGHT -->
 <tr>
-<td style="border: 1px solid #282D3E;" class="section-border">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Section Banner -->
+<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
+<img alt="InsurNews Spotlight" src="${assets.spotlightBanner}" style="width:100%;display:block;" width="600" />
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td>
-<img src="${assets.spotlightBanner}" width="580" alt="InsurNews Spotlight" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
-</td>
+<td height="25" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
-<!-- Section Content -->
-<tr>
-<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Subheader/Title -->
+</tbody>
+</table>
+
+<!-- Title -->
 ${spotlightSubheader ? `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td>
-<h3 class="dark-text" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 700; color: #282D3E;">${spotlightSubheader}</h3>
+<td style="padding:0 15px;">
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#282D3E;">${spotlightSubheader}</h2>
 </td>
 </tr>
+</tbody>
+</table>
 ` : ''}
-<!-- Full-width Image -->
+
+<!-- Image -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td style="padding-bottom: 25px;">
-<img src="${spotlightImage || assets.blankImage}" width="490" alt="Spotlight" style="width: 100%; max-width: 490px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<td style="padding:0 15px;">
+<img alt="" src="${spotlightImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
-<!-- Full width story content -->
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td>
-${spotlightText ? `<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${spotlightText}</p>` : ''}
+<td height="20" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Copy -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
+${spotlightText ? `<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${spotlightText}</p>` : ''}
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const title = (section.h3 || section.title || '').replace(/^#{1,3}\s*/, '').trim();
     return !spotlightSubheader || title.toLowerCase() !== spotlightSubheader.toLowerCase();
 }).map((section, idx, arr) => `
-<h3 class="dark-text" style="margin: 20px 0 12px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 600; color: #282D3E;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
-<p class="dark-text-secondary" style="margin: 0${idx < arr.length - 1 ? ' 0 20px 0' : ''}; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
+<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#3B3B3B;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
+<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${section.body || section.content || ''}</p>
 `).join('') : ''}
 </td>
 </tr>
+</tbody>
 </table>
-</td>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="30" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
+</tbody>
 </table>
 </td>
 </tr>
 
-<!-- 25px Spacer -->
-<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+<!-- 40px Spacer -->
+<tr><td height="40" style="font-size: 1px; line-height: 1px; background-color: #DFE7F0;">&nbsp;</td></tr>
 
-<!-- SECTION: AGENT ADVANTAGE - Two column intro + full width tips -->
+<!-- SECTION: AGENT ADVANTAGE -->
 <tr>
-<td style="border: 1px solid #282D3E;" class="section-border">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Section Banner -->
+<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
+<img alt="Agent Advantage" src="${assets.agentAdvantageBanner}" style="width:100%;display:block;" width="600" />
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td>
-<img src="${assets.agentAdvantageBanner}" width="580" alt="Agent Advantage" style="width: 100%; max-width: 580px; height: auto; display: block;" class="mobile-img-full">
+<td height="20" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Subheader -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#282D3E;">${data.tipsSubheader || ''}</h2>
 </td>
 </tr>
-<!-- Section Content -->
+</tbody>
+</table>
+
+<!-- Intro -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Intro paragraph -->
-<tr>
-<td>
-${tipsIntro ? `<p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${tipsIntro}</p>` : ''}
+<td style="padding:0 15px;">
+${tipsIntro ? `<p class="dark-text-secondary" style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${tipsIntro}</p>` : ''}
 </td>
 </tr>
-<!-- Full-width image below intro -->
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td style="padding: 20px 0;">
-<img src="${tipsImage || assets.blankImage}" width="490" alt="Agent Advantage" style="width: 100%; max-width: 490px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<td height="20" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Full-width image -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
+<img alt="" src="${tipsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
-<!-- Tips with checkmarks -->
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
 <tr>
-<td style="padding-top: 5px;">
+<td height="25" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Tips with tick images -->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tbody>
 ${generateTipsItems(tipsItems)}
@@ -7440,30 +7598,30 @@ ${generateTipsItems(tipsItems)}
 </table>
 </td>
 </tr>
+</tbody>
 </table>
-</td>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="34" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
+</tbody>
 </table>
 </td>
 </tr>
 
-<!-- 25px Spacer -->
-<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+<!-- 40px Spacer -->
+<tr><td height="40" style="font-size: 1px; line-height: 1px; background-color: #DFE7F0;">&nbsp;</td></tr>
 
-<!-- CTA SECTION - "Wait Before You Go..." with teal background + pattern -->
+<!-- 30px Spacer -->
+<tr><td height="30" style="background-color:#DFE7F0;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+
+<!-- CTA Section -->
 <tr>
-<td align="center" style="border: 1px solid #282D3E;" class="section-border">
-<!--[if mso]>
-<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:580px;">
-<v:fill type="tile" src="${assets.ctaBg}" color="#008181"/>
-<v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
-<![endif]-->
-<div style="background-color: #008181; background-image: url('${assets.ctaBg}'); background-repeat: repeat; background-position: center;">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<tr>
-<td style="padding: 45px 45px; text-align: center;" class="mobile-padding">
-<h2 style="margin: 0 0 12px 0; font-family: Georgia, serif; font-size: 26px; line-height: 32px; font-weight: 700; color: #ffffff; font-style: italic;">Wait Before You Go...</h2>
-<p style="margin: 0 0 24px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 28px; font-weight: 400; color: #ffffff;">Earn 12% recurring commissions on every policy</p>
+<td align="center" style="padding:120px 20px;background-color:#0d5c5c;background-image:url('${assets.ctaBg}');background-repeat:no-repeat;background-position:center;background-size:cover;">
+<h2 style="margin: 0 0 15px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 32px; line-height: 38px; font-weight: 600; color: #ffffff;">Wait Before You Go...</h2>
+<p style="color:#ffffff;font-size:18px;margin:0 0 30px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;">Earn 12% recurring commissions on every policy</p>
 <!--[if mso]>
 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:46px;v-text-anchor:middle;width:200px;" arcsize="50%" strokecolor="#FE8916" fillcolor="#FE8916">
 <w:anchorlock/>
@@ -7471,39 +7629,27 @@ ${generateTipsItems(tipsItems)}
 </v:roundrect>
 <![endif]-->
 <!--[if !mso]><!-->
-<a href="${ctaUrl}" style="display: inline-block; background-color: #FE8916; color: #ffffff; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; padding: 11px 29px; text-decoration: none; border-radius: 10px; text-transform: uppercase;" class="button-link">${ctaText}</a>
+<a href="${ctaUrl}" style="display:inline-block;padding:11px 29px;background-color:#FE8916;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;text-transform:uppercase;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;">${ctaText}</a>
 <!--<![endif]-->
 </td>
 </tr>
-</table>
-</div>
-<!--[if mso]>
-</v:textbox>
-</v:rect>
-<![endif]-->
-</td>
-</tr>
 
-<!-- 25px Spacer -->
-<tr><td style="height: 25px; font-size: 1px; line-height: 1px;" class="mobile-spacer">&nbsp;</td></tr>
+<!-- CTA to Footer transition -->
+<tr><td height="25" style="background-color:#DFE7F0;font-size:1px;line-height:1px;">&nbsp;</td></tr>
 
-<!-- FOOTER - White background -->
+<!-- Footer -->
 <tr>
-<td style="background-color: #ffffff; padding: 30px 45px; text-align: center; border: 1px solid #282D3E;" class="mobile-padding">
+<td align="center" style="background-color: #ffffff; padding: 30px 45px; text-align: center; border: 1px solid #282D3E;" class="mobile-padding section-bg section-border">
 <a href="https://brite.co" target="_blank">
-<img src="${assets.logoFooter}" width="80" alt="BriteCo" style="width: 80px; max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto;">
+<img alt="BriteCo" src="${assets.logoFooter}" width="80" style="width: 80px; max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto;" />
 </a>
-<p style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; color: #555555;">
-805 Greenwood St Evanston IL 60201
-</p>
-<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; font-weight: 400;">
-<a href="https://brite.co" style="color: #008181; text-decoration: none;">Brite.Co</a>
-</p>
+<p class="dark-text-secondary" style="margin: 0 0 8px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 24px; font-weight: 400; color: #444444;">805 Greenwood St Evanston IL 60201</p>
+<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 24px; font-weight: 400;"><a href="https://brite.co/" style="color: #008382; text-decoration: none;">Brite.Co</a></p>
 </td>
 </tr>
 
 <!-- Bottom Spacer -->
-<tr><td style="height: 20px; font-size: 1px; line-height: 1px;">&nbsp;</td></tr>
+<tr><td height="20" style="font-size: 1px; line-height: 1px; background-color: #DFE7F0;" class="email-bg">&nbsp;</td></tr>
 
 </table>
 
