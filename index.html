@@ -47,11 +47,30 @@
             color: white;
             padding: 40px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
             font-size: 32px;
             margin-bottom: 10px;
+        }
+
+        .start-over-btn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: #FE8916;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .start-over-btn:hover {
+            background: #e57a0e;
         }
 
         .header p {
@@ -454,10 +473,10 @@
         }
 
         .research-card-description {
-            font-size: 12px;
+            font-size: 13px;
             color: #6b7280;
-            line-height: 1.4;
-            margin: 0 0 12px 0;
+            line-height: 1.5;
+            margin: 0 0 16px 0;
             padding: 0;
         }
 
@@ -472,8 +491,9 @@
             color: white;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
+            text-transform: uppercase;
         }
 
         .research-card-badge.coming-soon {
@@ -484,7 +504,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .research-card-filters select,
@@ -766,10 +786,20 @@
 
         /* Link Toolbar (inline per-section) */
         .link-toolbar {
-            display: flex;
+            display: none;
             align-items: center;
             gap: 4px;
-            margin-bottom: 4px;
+            position: absolute;
+            z-index: 10001;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 4px 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .link-toolbar.visible {
+            display: flex;
         }
 
         .link-toolbar-btn {
@@ -802,6 +832,12 @@
 
         .link-popover.show {
             display: block;
+        }
+
+        .link-popover.visible {
+            display: block;
+            position: absolute;
+            z-index: 10001;
         }
 
         .link-popover input {
@@ -1228,6 +1264,7 @@
     <div class="container">
         <div class="header">
             <h1>BriteCo Brief Generator</h1>
+            <button class="start-over-btn" onclick="startOver()">↺ Start Over</button>
         </div>
 
         <div class="progress-container">
@@ -2160,7 +2197,13 @@
                 </div>
                 <button class="btn-secondary btn" onclick="regenerateImage('briteSpot')" style="margin-right: 10px;">🔄 Regenerate</button>
                 <button class="btn-secondary btn" onclick="exportImage('briteSpot')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('briteSpot')">🔍 Resize</button>
+                <button class="btn-secondary btn" onclick="resizeImage('briteSpot')" style="margin-right: 10px;">🔍 Resize</button>
+                <input type="file" id="briteSpotUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpot', this)">
+                <button class="btn-secondary btn" onclick="document.getElementById('briteSpotUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
+                <div id="briteSpotResizeControls" style="display:none;align-items:center;gap:10px;margin-top:12px;">
+                    <label style="font-size:13px;font-weight:600;white-space:nowrap;">Resize: <span id="briteSpotResizeVal">100</span>%</label>
+                    <input type="range" id="briteSpotResizeSlider" min="25" max="100" value="100" oninput="resizeUploadedImage('briteSpot', this.value)" style="flex:1;">
+                </div>
             </div>
 
             <!-- Claims Image -->
@@ -2181,7 +2224,13 @@
                 </div>
                 <button class="btn-secondary btn" onclick="regenerateImage('claims')" style="margin-right: 10px;">🔄 Regenerate</button>
                 <button class="btn-secondary btn" onclick="exportImage('claims')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('claims')">🔍 Resize</button>
+                <button class="btn-secondary btn" onclick="resizeImage('claims')" style="margin-right: 10px;">🔍 Resize</button>
+                <input type="file" id="claimsUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('claims', this)">
+                <button class="btn-secondary btn" onclick="document.getElementById('claimsUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
+                <div id="claimsResizeControls" style="display:none;align-items:center;gap:10px;margin-top:12px;">
+                    <label style="font-size:13px;font-weight:600;white-space:nowrap;">Resize: <span id="claimsResizeVal">100</span>%</label>
+                    <input type="range" id="claimsResizeSlider" min="25" max="100" value="100" oninput="resizeUploadedImage('claims', this.value)" style="flex:1;">
+                </div>
             </div>
 
             <!-- Spotlight Image -->
@@ -2202,7 +2251,13 @@
                 </div>
                 <button class="btn-secondary btn" onclick="regenerateImage('spotlight')" style="margin-right: 10px;">🔄 Regenerate</button>
                 <button class="btn-secondary btn" onclick="exportImage('spotlight')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('spotlight')">🔍 Resize</button>
+                <button class="btn-secondary btn" onclick="resizeImage('spotlight')" style="margin-right: 10px;">🔍 Resize</button>
+                <input type="file" id="spotlightUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('spotlight', this)">
+                <button class="btn-secondary btn" onclick="document.getElementById('spotlightUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
+                <div id="spotlightResizeControls" style="display:none;align-items:center;gap:10px;margin-top:12px;">
+                    <label style="font-size:13px;font-weight:600;white-space:nowrap;">Resize: <span id="spotlightResizeVal">100</span>%</label>
+                    <input type="range" id="spotlightResizeSlider" min="25" max="100" value="100" oninput="resizeUploadedImage('spotlight', this.value)" style="flex:1;">
+                </div>
             </div>
 
             <!-- Tips Image -->
@@ -2223,7 +2278,13 @@
                 </div>
                 <button class="btn-secondary btn" onclick="regenerateImage('tips')" style="margin-right: 10px;">🔄 Regenerate</button>
                 <button class="btn-secondary btn" onclick="exportImage('tips')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('tips')">🔍 Resize</button>
+                <button class="btn-secondary btn" onclick="resizeImage('tips')" style="margin-right: 10px;">🔍 Resize</button>
+                <input type="file" id="tipsUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('tips', this)">
+                <button class="btn-secondary btn" onclick="document.getElementById('tipsUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
+                <div id="tipsResizeControls" style="display:none;align-items:center;gap:10px;margin-top:12px;">
+                    <label style="font-size:13px;font-weight:600;white-space:nowrap;">Resize: <span id="tipsResizeVal">100</span>%</label>
+                    <input type="range" id="tipsResizeSlider" min="25" max="100" value="100" oninput="resizeUploadedImage('tips', this.value)" style="flex:1;">
+                </div>
             </div>
 
             <div class="buttons">
@@ -2937,6 +2998,10 @@
                 <div class="dots-menu-item notfit" onclick="event.stopPropagation(); doNotGoodFit(${articleIdx}); this.closest('.dots-menu').remove();">
                     <span class="icon">👎</span> Not a Good Fit
                 </div>
+                <div class="dots-menu-divider"></div>
+                <div class="dots-menu-item remove" onclick="event.stopPropagation(); doRemoveFromResults(${articleIdx}); this.closest('.dots-menu').remove();" style="color:#dc2626;">
+                    <span class="icon">✕</span> Remove from Results
+                </div>
             `;
             card.appendChild(menu);
             setTimeout(() => {
@@ -2998,6 +3063,19 @@
                 });
             } catch (e) { console.error('[NotGoodFit] Error:', e); }
             showCardToast('Marked as not a good fit');
+        }
+
+        function doRemoveFromResults(articleIdx) {
+            const article = window._displayedArticles[articleIdx];
+            if (!article) return;
+            const cards = document.querySelectorAll(`.research-result-item[data-article-idx="${articleIdx}"]`);
+            cards.forEach(card => {
+                if (card.classList.contains('selected')) {
+                    handleItemClick(card);
+                }
+                card.remove();
+            });
+            showCardToast('Removed from results');
         }
 
         function showCardToast(text) {
@@ -6338,6 +6416,55 @@
             document.body.removeChild(link);
         }
 
+        // Upload custom image for a section
+        function handleImageUpload(section, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                if (!generatedImages[section]) generatedImages[section] = {};
+                generatedImages[section].url = dataUrl;
+
+                const previewDiv = document.getElementById(section + 'ImagePreview');
+                if (previewDiv) {
+                    previewDiv.innerHTML = `<img id="${section}UploadedImg" src="${dataUrl}" style="max-width:100%;border-radius:8px;" alt="${section} image">`;
+                }
+
+                const resizeDiv = document.getElementById(section + 'ResizeControls');
+                if (resizeDiv) {
+                    resizeDiv.style.display = 'flex';
+                    const slider = document.getElementById(section + 'ResizeSlider');
+                    if (slider) slider.value = 100;
+                    const valSpan = document.getElementById(section + 'ResizeVal');
+                    if (valSpan) valSpan.textContent = '100';
+                }
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        }
+
+        function resizeUploadedImage(section, pct) {
+            const valSpan = document.getElementById(section + 'ResizeVal');
+            if (valSpan) valSpan.textContent = pct;
+            const imgEl = document.querySelector(`#${section}ImagePreview img`);
+            if (!imgEl) return;
+            const img = new Image();
+            img.onload = function() {
+                const scale = pct / 100;
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(img.naturalWidth * scale);
+                canvas.height = Math.round(img.naturalHeight * scale);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const resized = canvas.toDataURL('image/png');
+                if (!generatedImages[section]) generatedImages[section] = {};
+                generatedImages[section].url = resized;
+                imgEl.src = resized;
+            };
+            img.src = imgEl.src;
+        }
+
         // Resize image with quality options
         async function resizeImage(imageType) {
             const imageData = generatedImages[imageType];
@@ -7136,7 +7263,7 @@ ${introText ? `<p style="margin: 0 0 28px 0; font-family: Montserrat, Helvetica,
 <!-- Section Content - Full-width image layout -->
 <tr>
 <td style="background-color: #ffffff; padding: 20px 45px 10px;" class="mobile-padding section-bg">
-<img src="${briteSpotImage || assets.blankImage}" width="490" alt="Brite Spot" style="width: 100%; max-width: 490px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<img src="${briteSpotImage || assets.blankImage}" width="368" alt="Brite Spot" style="width: 100%; max-width: 368px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
 </td>
 </tr>
 <tr>
@@ -7177,7 +7304,7 @@ ${claimsTitle ? `
 <!-- Full-width Image -->
 <tr>
 <td style="padding-bottom: 25px;">
-<img src="${claimsImage || assets.blankImage}" width="490" alt="Curious Claims" style="width: 100%; max-width: 490px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
+<img src="${claimsImage || assets.blankImage}" width="320" alt="Curious Claims" style="width: 100%; max-width: 320px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
 </td>
 </tr>
 <!-- Full width story content -->
@@ -7255,9 +7382,12 @@ ${spotlightSubheader ? `
 <tr>
 <td>
 ${spotlightText ? `<p class="dark-text-secondary" style="margin: 0 0 20px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${spotlightText}</p>` : ''}
-${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.map((section, idx) => `
+${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
+    const title = (section.h3 || section.title || '').replace(/^#{1,3}\s*/, '').trim();
+    return !spotlightSubheader || title.toLowerCase() !== spotlightSubheader.toLowerCase();
+}).map((section, idx, arr) => `
 <h3 class="dark-text" style="margin: 20px 0 12px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 600; color: #282D3E;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
-<p class="dark-text-secondary" style="margin: 0${idx < spotlightH2s.length - 1 ? ' 0 20px 0' : ''}; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
+<p class="dark-text-secondary" style="margin: 0${idx < arr.length - 1 ? ' 0 20px 0' : ''}; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
 `).join('') : ''}
 </td>
 </tr>
@@ -7285,18 +7415,21 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.map((section, idx) => `
 <tr>
 <td style="background-color: #ffffff; padding: 35px 45px;" class="mobile-padding section-bg">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-<!-- Two column intro: Text LEFT, Image RIGHT -->
+<!-- Intro paragraph -->
 <tr>
-<td valign="top" class="mobile-stack mobile-stack-padding" style="padding-right: 25px;">
+<td>
 ${tipsIntro ? `<p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${tipsIntro}</p>` : ''}
 </td>
-<td width="180" valign="top" class="mobile-stack">
-<img src="${tipsImage || assets.blankImage}" width="180" alt="Agent Advantage" style="width: 180px; max-width: 180px; height: auto; display: block; border-radius: 4px; margin-bottom: 15px;" class="mobile-img-full">
+</tr>
+<!-- Full-width image below intro -->
+<tr>
+<td style="padding: 20px 0;">
+<img src="${tipsImage || assets.blankImage}" width="490" alt="Agent Advantage" style="width: 100%; max-width: 490px; height: auto; display: block; border-radius: 4px;" class="mobile-img-full">
 </td>
 </tr>
 <!-- Tips with checkmarks -->
 <tr>
-<td colspan="2" style="padding-top: 25px;">
+<td style="padding-top: 5px;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tbody>
 ${generateTipsItems(tipsItems)}
@@ -9284,6 +9417,12 @@ ${generateTipsItems(tipsItems)}
         // =============================================================================
         // END 4-CARD RESEARCH DASHBOARD FUNCTIONS
         // =============================================================================
+
+        function startOver() {
+            if (confirm('Start over? This will return to the first step.')) {
+                showStep(1);
+            }
+        }
 
         function showStep(stepNum) {
             // Auto-save draft at key transitions
