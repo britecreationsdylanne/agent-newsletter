@@ -2463,9 +2463,7 @@
 
             <!-- Editing Instructions -->
             <div style="background: #e0f2fe; border: 2px solid #0284c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="margin: 0 0 10px 0; font-size: 14px; color: #0c4a6e;"><strong>✏️ Live Editing:</strong> Click any text in the preview below to edit it directly.</p>
-                <button class="btn" onclick="savePreviewEdits()" style="background: #0284c7; padding: 10px 20px; font-size: 14px;">💾 Save Changes to HTML</button>
-                <span id="saveStatus" style="margin-left: 10px; font-size: 14px; color: #166534; display: none;">✓ Changes saved!</span>
+                <p style="margin: 0; font-size: 14px; color: #0c4a6e;"><strong>✏️ Live Editing:</strong> Click any text in the preview below to edit it directly.</p>
             </div>
 
             <!-- Subject Line & Preheader Display -->
@@ -2487,6 +2485,11 @@
 
             <div id="htmlCodeView" style="display: none; background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; margin: 20px 0; max-height: 500px; overflow-y: auto;">
                 <pre id="htmlCode" style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 12px;"></pre>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="btn" onclick="savePreviewEdits()" style="background: #0284c7; padding: 12px 28px; font-size: 15px;">💾 Save Changes to HTML</button>
+                <span id="saveStatus" style="margin-left: 10px; font-size: 14px; color: #166534; display: none;">✓ Changes saved!</span>
             </div>
 
             <div class="buttons">
