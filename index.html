@@ -58,7 +58,7 @@
         .start-over-btn {
             position: absolute;
             top: 16px;
-            right: 20px;
+            left: 20px;
             background: #FE8916;
             color: white;
             border: none;
@@ -71,6 +71,126 @@
         }
         .start-over-btn:hover {
             background: #e57a0e;
+        }
+
+        /* User Profile Dropdown */
+        .user-profile-container {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .user-avatar-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #FE8916;
+            cursor: pointer;
+            overflow: hidden;
+            background: #018181;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .user-avatar-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(254, 137, 22, 0.4);
+        }
+
+        .user-avatar-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-avatar-btn .avatar-initials {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-width: 220px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+        }
+
+        .user-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-dropdown-content {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .user-dropdown-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            overflow: hidden;
+            background: #018181;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-dropdown-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-dropdown-avatar .avatar-initials {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .user-dropdown-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #272d3f;
+            margin-bottom: 4px;
+        }
+
+        .user-dropdown-email {
+            font-size: 14px;
+            color: #018181;
+            margin-bottom: 16px;
+        }
+
+        .user-dropdown-divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 0 -20px 12px;
+        }
+
+        .sign-out-link {
+            display: block;
+            color: #666;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .sign-out-link:hover {
+            color: #272d3f;
         }
 
         .header p {
@@ -1183,9 +1303,34 @@
         // Current user from server (injected via window.AUTH_USER)
         let currentUser = window.AUTH_USER || null;
 
+        // BritePulse user identification helpers
+        function setBritePulseUser(user) {
+            function trySetUser() {
+                const instance = window.BritePulse?.getInstance();
+                if (instance) {
+                    instance.setUser({
+                        id: user.id || user.email,
+                        email: user.email,
+                        name: user.name || user.email
+                    });
+                    console.log('BritePulse user set:', user.email);
+                } else {
+                    // SDK not ready yet, retry
+                    setTimeout(trySetUser, 100);
+                }
+            }
+            trySetUser();
+        }
+
+        function clearBritePulseUser() {
+            window.BritePulse?.getInstance()?.setUser(undefined);
+        }
+
         // Initialize auth on page load
         function initAuth() {
             if (currentUser) {
+                // Set BritePulse user FIRST, before any UI updates
+                setBritePulseUser(currentUser);
                 console.log('User authenticated:', currentUser.email);
                 updateUserDisplay(currentUser);
             }
@@ -1196,26 +1341,65 @@
 
         // Sign out - redirect to server logout
         function signOut() {
+            clearBritePulseUser();
             window.location.href = '/auth/logout';
         }
 
-        // Update user display in header
+        // Update user display in header with dropdown
         function updateUserDisplay(user) {
             const header = document.querySelector('.header');
             // Remove existing user info if present
             const existingUserInfo = document.getElementById('userInfo');
             if (existingUserInfo) existingUserInfo.remove();
 
-            // Add user info
+            // Get user initials for fallback avatar
+            const initials = (user.name || user.email || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+            // Create avatar content (image or initials)
+            const avatarContent = user.picture
+                ? `<img src="${user.picture}" alt="${user.name || 'User'}" referrerpolicy="no-referrer">`
+                : `<span class="avatar-initials">${initials}</span>`;
+
+            // Add user profile container with dropdown
             const userInfo = document.createElement('div');
             userInfo.id = 'userInfo';
-            userInfo.style.cssText = 'display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem;';
+            userInfo.className = 'user-profile-container';
             userInfo.innerHTML = `
-                <span style="color: #a0aec0; font-size: 0.9rem;">${user.email}</span>
-                <button onclick="signOut()" style="background: transparent; border: 1px solid #667eea; color: #667eea; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">Sign Out</button>
+                <button class="user-avatar-btn" onclick="toggleUserDropdown(event)" aria-label="User menu">
+                    ${avatarContent}
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="user-dropdown-content">
+                        <div class="user-dropdown-avatar">
+                            ${avatarContent}
+                        </div>
+                        <div class="user-dropdown-name">${user.name || 'User'}</div>
+                        <div class="user-dropdown-email">${user.email}</div>
+                        <div class="user-dropdown-divider"></div>
+                        <a class="sign-out-link" onclick="signOut()">Sign out</a>
+                    </div>
+                </div>
             `;
             header.appendChild(userInfo);
         }
+
+        // Toggle user dropdown visibility
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('active');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const avatarBtn = document.querySelector('.user-avatar-btn');
+            if (dropdown && !dropdown.contains(event.target) && event.target !== avatarBtn) {
+                dropdown.classList.remove('active');
+            }
+        });
     </script>
 
     <div class="modal-overlay" id="savedArticlesModal">
