@@ -2416,10 +2416,6 @@
                 <button class="btn-secondary btn" onclick="resizeImage('briteSpot')" style="margin-right: 10px;">🔍 Resize</button>
                 <input type="file" id="briteSpotUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpot', this)">
                 <button class="btn-secondary btn" onclick="document.getElementById('briteSpotUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
-                <div id="briteSpotResizeControls" style="display:none;align-items:center;gap:10px;margin-top:12px;">
-                    <label style="font-size:13px;font-weight:600;white-space:nowrap;">Resize: <span id="briteSpotResizeVal">100</span>%</label>
-                    <input type="range" id="briteSpotResizeSlider" min="25" max="100" value="100" oninput="resizeUploadedImage('briteSpot', this.value)" style="flex:1;">
-                </div>
             </div>
 
             <!-- Claims Image -->
@@ -2443,10 +2439,6 @@
                 <button class="btn-secondary btn" onclick="resizeImage('claims')" style="margin-right: 10px;">🔍 Resize</button>
                 <input type="file" id="claimsUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('claims', this)">
                 <button class="btn-secondary btn" onclick="document.getElementById('claimsUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
-                <div id="claimsResizeControls" style="display:none;align-items:center;gap:10px;margin-top:12px;">
-                    <label style="font-size:13px;font-weight:600;white-space:nowrap;">Resize: <span id="claimsResizeVal">100</span>%</label>
-                    <input type="range" id="claimsResizeSlider" min="25" max="100" value="100" oninput="resizeUploadedImage('claims', this.value)" style="flex:1;">
-                </div>
             </div>
 
             <!-- Spotlight Image -->
@@ -2470,10 +2462,6 @@
                 <button class="btn-secondary btn" onclick="resizeImage('spotlight')" style="margin-right: 10px;">🔍 Resize</button>
                 <input type="file" id="spotlightUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('spotlight', this)">
                 <button class="btn-secondary btn" onclick="document.getElementById('spotlightUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
-                <div id="spotlightResizeControls" style="display:none;align-items:center;gap:10px;margin-top:12px;">
-                    <label style="font-size:13px;font-weight:600;white-space:nowrap;">Resize: <span id="spotlightResizeVal">100</span>%</label>
-                    <input type="range" id="spotlightResizeSlider" min="25" max="100" value="100" oninput="resizeUploadedImage('spotlight', this.value)" style="flex:1;">
-                </div>
             </div>
 
             <!-- Tips Image -->
@@ -2497,10 +2485,6 @@
                 <button class="btn-secondary btn" onclick="resizeImage('tips')" style="margin-right: 10px;">🔍 Resize</button>
                 <input type="file" id="tipsUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('tips', this)">
                 <button class="btn-secondary btn" onclick="document.getElementById('tipsUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
-                <div id="tipsResizeControls" style="display:none;align-items:center;gap:10px;margin-top:12px;">
-                    <label style="font-size:13px;font-weight:600;white-space:nowrap;">Resize: <span id="tipsResizeVal">100</span>%</label>
-                    <input type="range" id="tipsResizeSlider" min="25" max="100" value="100" oninput="resizeUploadedImage('tips', this.value)" style="flex:1;">
-                </div>
             </div>
 
             <div class="buttons">
@@ -4289,14 +4273,14 @@
                 if (!text) return '';
                 // Convert markdown headers ## and ### to bold - handle all positions
                 // First handle ### (more specific)
-                text = text.replace(/^###\s*(.+)$/gm, '<strong style="display: block; font-size: 16px; color: #282D3E; margin: 16px 0 8px 0;">$1</strong>');
-                text = text.replace(/(?:>|\n)###\s*([^\n<]+)/g, '$&'.replace(/###\s*([^\n<]+)/, '<strong style="display: block; font-size: 16px; color: #282D3E; margin: 16px 0 8px 0;">$1</strong>'));
+                text = text.replace(/^###\s*(.+)$/gm, '<strong style="display: block; font-size: 16px; color: #272D3F; margin: 16px 0 8px 0;">$1</strong>');
+                text = text.replace(/(?:>|\n)###\s*([^\n<]+)/g, '$&'.replace(/###\s*([^\n<]+)/, '<strong style="display: block; font-size: 16px; color: #272D3F; margin: 16px 0 8px 0;">$1</strong>'));
                 // Then handle ## headers - at line start
-                text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
                 // Handle ## after newlines
-                text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
                 // Handle ## after closing HTML tags like </p>## or ><p>##
-                text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="display: block; font-size: 17px; color: #282D3E; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
                 // Convert markdown bold **text** to <strong> (must have content between)
                 text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
                 // Clean up any stray ** that weren't part of a proper pair
@@ -4814,10 +4798,10 @@
                     contentStr = '<p style="color: #999;">Content could not be parsed.</p>';
                 }
                 contentStr = contentStr.replace(/color:\s*#ffffff;?/gi, 'color: #1f2937;');
-                contentStr = contentStr.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
-                contentStr = contentStr.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
-                contentStr = contentStr.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
-                contentStr = contentStr.replace(/>##\s*([^<\n]+)/g, '><strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+                contentStr = contentStr.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #272D3F;">$1</strong>');
+                contentStr = contentStr.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #272D3F;">$1</strong>');
+                contentStr = contentStr.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #272D3F;">$1</strong>');
+                contentStr = contentStr.replace(/>##\s*([^<\n]+)/g, '><strong style="font-size: 17px; color: #272D3F;">$1</strong>');
                 contentStr = contentStr.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
                 contentStr = contentStr.replace(/\*\*/g, '');
                 contentStr = contentStr.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
@@ -6767,27 +6751,6 @@
         }
 
         // Legacy resize fallback (kept for slider controls if needed)
-        function resizeUploadedImage(section, pct) {
-            const valSpan = document.getElementById(section + 'ResizeVal');
-            if (valSpan) valSpan.textContent = pct;
-            const imgEl = document.querySelector('#' + section + 'ImagePreview img');
-            if (!imgEl) return;
-            const img = new Image();
-            img.onload = function() {
-                const scale = pct / 100;
-                const canvas = document.createElement('canvas');
-                canvas.width = Math.round(img.naturalWidth * scale);
-                canvas.height = Math.round(img.naturalHeight * scale);
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const resized = canvas.toDataURL('image/png');
-                if (!generatedImages[section]) generatedImages[section] = {};
-                generatedImages[section].url = resized;
-                imgEl.src = resized;
-            };
-            img.src = imgEl.src;
-        }
-
         // Resize image with quality options
         async function resizeImage(imageType) {
             const imageData = generatedImages[imageType];
@@ -7370,9 +7333,7 @@
                 return `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 ${items.map((item, index) => `<tr>
-<td style="padding-right:12px;padding-top:2px;" valign="top" width="32">
-<img alt="&#10003;" src="${assets.checkmark}" style="display:block;width:24px;height:auto;" width="24" />
-</td>
+<td style="padding-right:8px;font-family:Arial,sans-serif;font-size:20px;line-height:28px;color:#008182;" valign="top" width="30">&#10004;</td>
 <td style="padding-bottom:${index === items.length - 1 ? '0' : '16px'};" valign="top">
 <p class="dark-text-secondary" style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${item}</p>
 </td>
@@ -7386,9 +7347,7 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right: 12px; padding-top: 2px;" valign="top" width="32">
-                            <img alt="" src="${assets.checkmark}" style="display: block; width: 24px; height: auto;" width="24" />
-                        </td>
+                        <td style="padding-right:8px;font-family:Arial,sans-serif;font-size:20px;line-height:28px;color:#008182;" valign="top" width="30">&#10004;</td>
                         <td style="padding-bottom: ${index === items.length - 1 ? '0' : '16px'};" valign="top">
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.summary || item}</p>
                         </td>
@@ -7408,7 +7367,7 @@ ${items.map((item, index) => `<tr>
                 return h2s.map(section => `
                     <tr>
                         <td style="padding-top: 20px;">
-                            <h3 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 600; color: #282D3E;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
+                            <h3 class="dark-text" style="margin: 0 0 10px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; line-height: 26px; font-weight: 600; color: #272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${section.body || section.content || ''}</p>
                         </td>
                     </tr>
@@ -7420,11 +7379,9 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right: 12px; padding-top: 2px;" valign="top" width="32">
-                            <img alt="" src="${assets.checkmark}" style="display: block; width: 24px; height: auto;" width="24" />
-                        </td>
+                        <td style="padding-right:8px;font-family:Arial,sans-serif;font-size:20px;line-height:28px;color:#008182;" valign="top" width="30">&#10004;</td>
                         <td style="padding-bottom: ${index === items.length - 1 ? '0' : '18px'};" valign="top">
-                            <p class="dark-text" style="margin: 0 0 4px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 22px; font-weight: 600; color: #008181;">${item.title || ''}</p>
+                            <p class="dark-text" style="margin: 0 0 4px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 22px; font-weight: 600; color: #008182;">${item.title || ''}</p>
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
                         </td>
                     </tr>
@@ -7456,11 +7413,17 @@ ${items.map((item, index) => `<tr>
 td, th, p, a, li, span { font-family: Arial, Helvetica, sans-serif !important; }
 </style>
 <![endif]-->
+<!--[if !mso]><!-->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<!--<![endif]-->
 <style>
 :root { color-scheme: light dark; supported-color-schemes: light dark; }
 body { margin: 0; padding: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; background-color: #DFE7F0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-table { border-spacing: 0; border-collapse: collapse; }
+table { border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
 img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+.ExternalClass { width: 100%; }
+.ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+.ReadMsgBody { width: 100%; }
 a { color: #008182; text-decoration: none; }
 a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
 @media (prefers-color-scheme: dark) {
@@ -7486,6 +7449,7 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
     h1 { font-size: 28px !important; line-height: 34px !important; }
     h2 { font-size: 20px !important; line-height: 26px !important; }
     h3 { font-size: 18px !important; line-height: 26px !important; }
+    .cta-padding { padding-top: 60px !important; padding-bottom: 60px !important; }
 }
 </style>
 </head>
@@ -7502,7 +7466,9 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
 <!-- HEADER WITH LOGO -->
 <tr>
 <td align="center" style="padding:35px 20px;background-color:#DFE7F0;">
+<table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation"><tr><td class="logo-bg" style="background-color:#ffffff;padding:12px 20px;">
 <img alt="BriteCo Logo" src="${assets.logo}" style="display:block;max-width:301px;width:100%;height:auto;" width="301" />
+</td></tr></table>
 </td>
 </tr>
 
@@ -7533,8 +7499,8 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 
 <!-- SECTION: THE BRITE SPOT -->
 <tr>
-<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
-<img alt="The Brite Spot" src="${assets.briteSpotBanner}" style="width:100%;display:block;" width="600" />
+<td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">The Brite Spot</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7549,7 +7515,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<img alt="" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
+<img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
 </tbody>
@@ -7600,8 +7566,8 @@ ${generateBulletItems(briteSpotBullets)}
 
 <!-- SECTION: CURIOUS CLAIMS -->
 <tr>
-<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
-<img alt="Curious Claims" src="${assets.curiousClaimsBanner}" style="width:100%;display:block;" width="600" />
+<td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">Curious Claims</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7617,7 +7583,7 @@ ${claimsTitle ? `
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#282D3E;">${claimsTitle}</h2>
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#272D3F;">${claimsTitle}</h2>
 </td>
 </tr>
 </tbody>
@@ -7629,7 +7595,7 @@ ${claimsTitle ? `
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<img alt="" src="${claimsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
+<img alt="Curious Claims" src="${claimsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
 </tbody>
@@ -7669,8 +7635,8 @@ ${claimsTitle ? `
 
 <!-- SECTION: NEWS ROUNDUP -->
 <tr>
-<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
-<img alt="News Roundup" src="${assets.newsRoundupBanner}" style="width:100%;display:block;" width="600" />
+<td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">News Roundup</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7709,8 +7675,8 @@ ${generateRoundupItems(roundupItems)}
 
 <!-- SECTION: INSURNEWS SPOTLIGHT -->
 <tr>
-<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
-<img alt="InsurNews Spotlight" src="${assets.spotlightBanner}" style="width:100%;display:block;" width="600" />
+<td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">InsurNews Spotlight</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7726,7 +7692,7 @@ ${spotlightSubheader ? `
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#282D3E;">${spotlightSubheader}</h2>
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#272D3F;">${spotlightSubheader}</h2>
 </td>
 </tr>
 </tbody>
@@ -7738,7 +7704,7 @@ ${spotlightSubheader ? `
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<img alt="" src="${spotlightImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
+<img alt="InsurNews Spotlight" src="${spotlightImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
 </tbody>
@@ -7780,7 +7746,7 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const b = spotlightSubheader.replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim().toLowerCase();
     return a !== b;
 }).map((section, idx, arr) => `
-<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#282D3E;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
+<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
 <p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${section.body || section.content || ''}</p>
 `).join('') : ''}
 </td>
@@ -7803,8 +7769,8 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
 
 <!-- SECTION: AGENT ADVANTAGE -->
 <tr>
-<td style="padding:0;border:1px solid #282D3E;background-color:#ffffff;" class="section-bg section-border">
-<img alt="Agent Advantage" src="${assets.agentAdvantageBanner}" style="width:100%;display:block;" width="600" />
+<td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">The Agent Advantage</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7819,7 +7785,7 @@ ${data.tipsSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#282D3E;">${data.tipsSubheader}</h2>
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#272D3F;">${data.tipsSubheader}</h2>
 </td>
 </tr>
 </tbody>
@@ -7849,7 +7815,7 @@ ${tipsIntro ? `<p class="dark-text-secondary" style="margin:0;font-family:Montse
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<img alt="" src="${tipsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
+<img alt="The Agent Advantage" src="${tipsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
 </tbody>
@@ -7892,10 +7858,26 @@ ${generateTipsItems(tipsItems)}
 <tr><td style="background-color:#DFE7F0;font-size:1px;line-height:1px;" height="40">&nbsp;</td></tr>
 
 <!-- CTA Section -->
-<tr><td align="center" style="padding:120px 20px;background-color:#FC883A;background-image:url('${assets.ctaBg}');background-repeat:no-repeat;background-position:center;background-size:cover;">
+<tr><td align="center" background="${assets.ctaBg}" style="padding:0;background-color:#008182;background-image:url('${assets.ctaBg}');background-repeat:no-repeat;background-position:center;background-size:cover;">
+<!--[if mso]>
+<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;">
+<v:fill type="frame" src="${assets.ctaBg}" color="#008182"/>
+<v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
+<![endif]-->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="cta-padding" style="padding:120px 20px;">
 <h2 style="color:#ffffff;font-size:32px;margin:0 0 15px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-weight:600;">Wait Before You Go...</h2>
 <p style="color:#ffffff;font-size:18px;margin:0 0 30px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;">Earn 12% recurring commissions on every policy</p>
-<a href="${ctaUrl}" style="display:inline-block;padding:11px 29px;background-color:#008182;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;text-transform:uppercase;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;">${ctaText.toUpperCase()}</a>
+<!--[if mso]>
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:48px;v-text-anchor:middle;width:250px;" arcsize="20%" strokecolor="#FE8916" fillcolor="#FE8916">
+<w:anchorlock/><center style="color:#ffffff;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;">${ctaText.toUpperCase()}</center>
+</v:roundrect><![endif]-->
+<!--[if !mso]><!-->
+<a href="${ctaUrl}" style="display:inline-block;padding:11px 29px;background-color:#FE8916;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;text-transform:uppercase;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;">${ctaText.toUpperCase()}</a>
+<!--<![endif]-->
+</td></tr></table>
+<!--[if mso]>
+</v:textbox></v:rect>
+<![endif]-->
 </td></tr>
 
 <!-- Spacer -->
@@ -7903,7 +7885,8 @@ ${generateTipsItems(tipsItems)}
 
 <!-- Footer -->
 <tr><td align="center" style="padding:0 15px 50px 15px;background-color:#DFE7F0;">
-<img src="${assets.logoFooter}" alt="BriteCo" width="80" style="width:80px;margin-bottom:10px;">
+<img src="${assets.logoFooter}" alt="BriteCo" width="80" style="display:block;width:80px;">
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></table>
 <p style="color:#3B3B3B;font-size:14px;margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;">805 Greenwood St Evanston IL 60201</p>
 <p style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:14px;"><a href="https://brite.co/" style="color:#008182;">Brite.Co</a></p>
 </td></tr>
@@ -7925,18 +7908,18 @@ ${generateTipsItems(tipsItems)}
         function convertMarkdownLinksToHTML(text) {
             if (!text) return text;
             // Convert markdown headers ## and ### to bold - handle line start
-            text = text.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #282D3E;">$1</strong>');
-            text = text.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+            text = text.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #272D3F;">$1</strong>');
+            text = text.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #272D3F;">$1</strong>');
             // Also handle ## after newlines (not just line start)
-            text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+            text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #272D3F;">$1</strong>');
             // Handle ## after closing HTML tags like </p>## or >##
-            text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="font-size: 17px; color: #282D3E;">$1</strong>');
+            text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="font-size: 17px; color: #272D3F;">$1</strong>');
             // Convert markdown bold **text** to <strong>
             text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
             // Clean up any stray ** that weren't part of a proper pair
             text = text.replace(/\*\*/g, '');
             // Convert [text](url) to <a href="url">text</a>
-            return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #008181; text-decoration: underline;">$1</a>');
+            return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #008182; text-decoration: underline;">$1</a>');
         }
 
         function generateNewsletterHTML() {
