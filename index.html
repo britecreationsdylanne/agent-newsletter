@@ -1336,8 +1336,12 @@
             }
         }
 
-        // Initialize on page load
-        initAuth();
+        // Initialize on page load (wait for DOM to be ready)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAuth);
+        } else {
+            initAuth();
+        }
 
         // Sign out - redirect to server logout
         function signOut() {
