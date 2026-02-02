@@ -7333,7 +7333,7 @@
                 return `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 ${items.map((item, index) => `<tr>
-<td style="padding-right:12px;" valign="top" width="30"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:24px;height:auto;" width="24" /></td>
+<td style="padding-right:12px;" valign="top" width="40"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:36px;height:auto;" width="36" /></td>
 <td style="padding-bottom:${index === items.length - 1 ? '0' : '16px'};" valign="top">
 <p class="dark-text-secondary" style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${item}</p>
 </td>
@@ -7347,7 +7347,7 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right:12px;" valign="top" width="30"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:24px;height:auto;" width="24" /></td>
+                        <td style="padding-right:12px;" valign="top" width="40"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:36px;height:auto;" width="36" /></td>
                         <td style="padding-bottom: ${index === items.length - 1 ? '0' : '16px'};" valign="top">
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.summary || item}</p>
                         </td>
@@ -7379,7 +7379,7 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right:12px;" valign="top" width="30"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:24px;height:auto;" width="24" /></td>
+                        <td style="padding-right:12px;" valign="top" width="40"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:36px;height:auto;" width="36" /></td>
                         <td style="padding-bottom: ${index === items.length - 1 ? '0' : '18px'};" valign="top">
                             <p class="dark-text" style="margin: 0 0 4px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 22px; font-weight: 600; color: #008182;">${item.title || ''}</p>
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
@@ -7472,7 +7472,7 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
 
 <!-- HERO SECTION -->
 <tr>
-<td align="center" background="${assets.heroBg}" style="padding:0;background-color:#008182;background-image:url('${assets.heroBg}');background-repeat:repeat;background-position:center top;background-size:100% auto;">
+<td align="center" background="${assets.ctaBg}" style="padding:0;background-color:#008182;background-image:url('${assets.ctaBg}');background-repeat:no-repeat;background-position:center center;background-size:cover;">
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
@@ -7498,7 +7498,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <!-- SECTION: THE BRITE SPOT -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;background-image:url('${assets.briteSpotBanner}');background-repeat:no-repeat;background-position:center;background-size:cover;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">The Brite Spot</h2></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">The Brite Spot</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7565,7 +7565,7 @@ ${generateBulletItems(briteSpotBullets)}
 <!-- SECTION: CURIOUS CLAIMS -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;background-image:url('${assets.curiousClaimsBanner}');background-repeat:no-repeat;background-position:center;background-size:cover;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">Curious Claims</h2></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">Curious Claims</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7634,7 +7634,7 @@ ${claimsTitle ? `
 <!-- SECTION: NEWS ROUNDUP -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;background-image:url('${assets.newsRoundupBanner}');background-repeat:no-repeat;background-position:center;background-size:cover;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">News Roundup</h2></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">News Roundup</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7674,7 +7674,7 @@ ${generateRoundupItems(roundupItems)}
 <!-- SECTION: INSURNEWS SPOTLIGHT -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;background-image:url('${assets.spotlightBanner}');background-repeat:no-repeat;background-position:center;background-size:cover;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">InsurNews Spotlight</h2></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">InsurNews Spotlight</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7768,7 +7768,7 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
 <!-- SECTION: AGENT ADVANTAGE -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;background-image:url('${assets.agentAdvantageBanner}');background-repeat:no-repeat;background-position:center;background-size:cover;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">The Agent Advantage</h2></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="padding:24px 20px;background-color:#272D3F;"><h2 style="margin:0;font-family:Montserrat,Georgia,serif;font-size:26px;line-height:32px;font-weight:700;color:#ffffff;font-style:italic;">The Agent Advantage</h2></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
