@@ -7724,14 +7724,11 @@ ${spotlightSubheader ? `
 ${(() => {
     let t = spotlightText || '';
     if (spotlightSubheader && t) {
-        // Robust dedup: strip tags from both, normalize whitespace, compare
-        const normalize = (s) => s.replace(/<[^>]+>/g, '').replace(/[\\s\\n]+/g, ' ').trim().toLowerCase();
-        const normalSub = normalize(spotlightSubheader);
-        // Remove the subheader if it appears at the start of the text
-        const normalT = normalize(t);
-        if (normalT.startsWith(normalSub)) {
-            // Strip from original HTML - try multiple patterns
-            t = t.replace(new RegExp('^\\\\s*(<[^>]+>)*\\\\s*' + spotlightSubheader.replace(/[.*+?^${}()|[\\\\]\\\\\\\\]/g, '\\\\\\\\$&') + '\\\\s*(<\\\\/[^>]+>)*\\\\s*', 'i'), '');
+        const strip = s => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const normalSub = strip(spotlightSubheader);
+        const normalT = strip(t);
+        if (normalT.startsWith(normalSub) || normalT === normalSub) {
+            t = t.replace(new RegExp('^\\s*(<[^>]+>)*\\s*' + spotlightSubheader.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(<\\/[^>]+>)*\\s*', 'i'), '');
         }
     }
     return t.trim() ? '<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">' + t.trim() + '</p>' : '';
@@ -7739,10 +7736,10 @@ ${(() => {
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const title = stripMarkdownHeaders(section.h3 || section.title || '').trim();
     if (!spotlightSubheader || !title) return true;
-    // Robust: normalize both for comparison
-    const a = title.replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim().toLowerCase();
-    const b = spotlightSubheader.replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim().toLowerCase();
-    return a !== b;
+    const strip = s => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const a = strip(title);
+    const b = strip(spotlightSubheader);
+    return a !== b && !a.includes(b) && !b.includes(a);
 }).map((section, idx, arr) => `
 <h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
 <p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${section.body || section.content || ''}</p>
