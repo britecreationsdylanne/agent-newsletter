@@ -7237,6 +7237,7 @@
                 const preheader = document.getElementById('finalPreheader')?.value || 'Latest insights inside';
 
                 // Generate HTML and populate preview
+                savedEditedHTML = null; // Clear old saved edits so fresh template is used
                 console.log('[PREVIEW] Generating newsletter HTML...');
                 const html = generateNewsletterHTML();
                 console.log('[PREVIEW] HTML generated, length:', html.length);
@@ -7738,7 +7739,7 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 ${(() => {
     let t = spotlightText || '';
     if (spotlightSubheader && t) {
-        const strip = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/[\u2018\u2019\u2032]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase();
+        const strip = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/[\u2018\u2019\u2032]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\*{1,3}/g, '').replace(/_{1,3}/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
         const normalSub = strip(spotlightSubheader);
         const normalT = strip(t);
         if (normalT.startsWith(normalSub) || normalT === normalSub) {
@@ -7751,7 +7752,7 @@ ${(() => {
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const title = stripMarkdownHeaders(section.h3 || section.title || '').trim();
     if (!spotlightSubheader || !title) return true;
-    const strip = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/[\u2018\u2019\u2032]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase();
+    const strip = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/[\u2018\u2019\u2032]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\*{1,3}/g, '').replace(/_{1,3}/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
     const a = strip(title);
     const b = strip(spotlightSubheader);
     return a !== b && !a.includes(b) && !b.includes(a);
@@ -8189,6 +8190,29 @@ ${generateTipsItems(tipsItems)}
                 html = html.replace(/\s*contenteditable="[^"]*"/gi, '');
                 html = html.replace(/cursor:\s*text;?\s*/gi, '');
                 html = html.replace(/transition:\s*background-color[^;]*;?\s*/gi, '');
+
+                // Gmail mobile fix: clean body tag (savedEditedHTML may reintroduce attributes)
+                html = html.replace(/<body[^>]*>/, '<body>');
+
+                // Strip border="0" and role="presentation" from outer wrapper table
+                html = html.replace(/<table([^>]*style="[^"]*background-color:\s*#DFE7F0[^"]*"[^>]*)>/i, (match, attrs) => {
+                    attrs = attrs.replace(/\s*border="0"/gi, '');
+                    attrs = attrs.replace(/\s*role="presentation"/gi, '');
+                    return '<table' + attrs + '>';
+                });
+
+                // Strip border="0" and role="presentation" from email-container table
+                html = html.replace(/<table([^>]*class="email-container"[^>]*)>/i, (match, attrs) => {
+                    attrs = attrs.replace(/\s*border="0"/gi, '');
+                    attrs = attrs.replace(/\s*role="presentation"/gi, '');
+                    return '<table' + attrs + '>';
+                });
+
+                // Remove MSO conditional table wrapper around email-container
+                html = html.replace(/<!--\[if mso\]><table[^>]*width="600"[^>]*align="center"[^>]*>[\s\S]*?<!\[endif\]-->/gi, '');
+
+                // Remove closing MSO conditional wrapper (the </td></tr></table> one, NOT VML)
+                html = html.replace(/<!--\[if mso\]><\/td><\/tr><\/table><!\[endif\]-->/gi, '');
 
                 // Ensure email-container table has width="600" for Gmail mobile
                 html = html.replace(/<table([^>]*class="email-container"[^>]*)>/i, (match, attrs) => {
