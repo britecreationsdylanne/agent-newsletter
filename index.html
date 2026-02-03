@@ -7437,22 +7437,18 @@ ${items.map((item, index) => `<tr>
 </o:OfficeDocumentSettings>
 </xml>
 </noscript>
-<style>
-td, th, p, a, li, span { font-family: Arial, Helvetica, sans-serif !important; }
-</style>
 <![endif]-->
 <!--[if !mso]><!-->
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 <!--<![endif]-->
 <style>
-:root { color-scheme: light only; supported-color-schemes: light only; }
 body { margin: 0; padding: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; background-color: #DFE7F0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
 table { border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
 img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
 .ExternalClass { width: 100%; }
 .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
 .ReadMsgBody { width: 100%; }
-a { color: #008182; text-decoration: none; }
+a { color: #008182; }
 a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
 .section-header, .section-header font, .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
 @media (prefers-color-scheme: dark) {
@@ -7530,7 +7526,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;max-height:370px;height:auto;object-fit:cover;border-radius:4px;" width="570" />
+<img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
 </tbody>
@@ -7610,7 +7606,7 @@ ${claimsTitle ? `
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<img alt="Curious Claims" src="${claimsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;max-height:370px;height:auto;object-fit:cover;border-radius:4px;" width="570" />
+<img alt="Curious Claims" src="${claimsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
 </tbody>
@@ -7812,7 +7808,7 @@ ${tipsIntro ? `<p class="dark-text-secondary" style="margin:0;font-family:Montse
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<img alt="The Agent Advantage" src="${tipsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;max-height:370px;height:auto;object-fit:cover;border-radius:4px;" width="570" />
+<img alt="The Agent Advantage" src="${tipsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" width="570" />
 </td>
 </tr>
 </tbody>
@@ -8180,39 +8176,33 @@ ${generateTipsItems(tipsItems)}
                 console.log('[ONTRAPORT] Getting final newsletter HTML...');
                 let html = getFinalNewsletterHTML();
 
-                // Strip contenteditable attributes and editing artifacts before sending
+                // ── Editing artifact cleanup ──
                 html = html.replace(/\s*contenteditable="[^"]*"/gi, '');
                 html = html.replace(/cursor:\s*text;?\s*/gi, '');
                 html = html.replace(/transition:\s*background-color[^;]*;?\s*/gi, '');
 
-                // Gmail mobile fix: clean body tag (savedEditedHTML may reintroduce attributes)
-                html = html.replace(/<body[^>]*>/i, '<body>');
-
-                // Strip border="0" and role="presentation" from outer wrapper table
+                // ── Outer structure cleanup (savedEditedHTML bypass) ──
                 html = html.replace(/<table([^>]*style="[^"]*background-color:\s*#DFE7F0[^"]*"[^>]*)>/i, (match, attrs) => {
                     attrs = attrs.replace(/\s*border="0"/gi, '');
                     attrs = attrs.replace(/\s*role="presentation"/gi, '');
                     return '<table' + attrs + '>';
                 });
-
-                // Strip border="0" and role="presentation" from email-container table
                 html = html.replace(/<table([^>]*class="email-container"[^>]*)>/i, (match, attrs) => {
                     attrs = attrs.replace(/\s*border="0"/gi, '');
                     attrs = attrs.replace(/\s*role="presentation"/gi, '');
                     return '<table' + attrs + '>';
                 });
-
-                // Remove MSO conditional table wrapper around email-container
                 html = html.replace(/<!--\[if mso\]><table[^>]*width="600"[^>]*align="center"[^>]*>[\s\S]*?<!\[endif\]-->/gi, '');
-
-                // Remove closing MSO conditional wrapper (the </td></tr></table> one, NOT VML)
                 html = html.replace(/<!--\[if mso\]><\/td><\/tr><\/table><!\[endif\]-->/gi, '');
+                html = html.replace(/<body[^>]*>/i, '<body>');
 
-                // Ensure email-container table has width="600" for Gmail mobile
-                html = html.replace(/<table([^>]*class="email-container"[^>]*)>/i, (match, attrs) => {
-                    if (attrs.includes('width=')) return match;
-                    return '<table width="600"' + attrs + '>';
-                });
+                // ── Gmail half-page fixes (match jeweler) ──
+                html = html.replace(/<style>[^<]*font-family:\s*Arial[^<]*<\/style>\s*/gi, '');
+                html = html.replace(/:root\s*\{[^}]*color-scheme[^}]*\}\s*/gi, '');
+                html = html.replace(/max-height:\s*\d+px;?\s*/gi, '');
+                html = html.replace(/object-fit:\s*[^;]+;?\s*/gi, '');
+                html = html.replace(/<div\s+style="outline:\s*none;?">\s*/gi, '');
+                html = html.replace(/<\/div>(\s*<\/td>)/gi, '$1');
 
                 // Fix content tags missing font-family (from preview editing)
                 html = html.replace(/<p\b([^>]*)>/gi, (match, attrs) => {
