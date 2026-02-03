@@ -7304,6 +7304,11 @@
                 blankImage: 'https://brite.co/wp-content/uploads/2025/09/blank-image.png'
             };
 
+            // Shared helper: restyle all <p> tags with full inline styles, stripping any existing style/class attrs
+            const restyleParagraphs = (html) => {
+                return html.replace(/<p[^>]*>/gi, '<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">');
+            };
+
             // Helper to format claims text with proper paragraph spacing
             const formatClaimsText = (text) => {
                 if (!text) return '';
@@ -7311,20 +7316,19 @@
                 if (claimsTitle) {
                     text = text.replace(new RegExp('^\\s*(<p[^>]*>)?\\s*(<strong>|<b>|<h[1-4][^>]*>)?' + claimsTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(<\\/strong>|<\\/b>|<\\/h[1-4]>)?\\s*(<\\/p>)?\\s*', 'i'), '');
                 }
-                // If text already has <p> tags, ensure they have proper margins
+                // If text already has <p> tags, restyle them with full inline styles
                 if (text.includes('<p')) {
-                    // Replace existing <p> tags with properly styled ones
-                    return text.replace(/<p([^>]*)>/gi, '<p$1 style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">');
+                    return restyleParagraphs(text);
                 }
                 // If plain text, split by double newlines and wrap in paragraphs
                 const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
                 if (paragraphs.length > 1) {
                     return paragraphs.map(p =>
-                        `<p style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${p.trim()}</p>`
+                        `<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
                     ).join('');
                 }
                 // Single paragraph
-                return `<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${text}</p>`;
+                return `<p style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
             };
 
             // Helper to format brite spot text with proper paragraph styling
@@ -7333,18 +7337,18 @@
                 // Strip list elements (bullets handled separately)
                 text = text.replace(/<ul[^>]*>[\s\S]*?<\/ul>/gi, '').replace(/<ol[^>]*>[\s\S]*?<\/ol>/gi, '').replace(/<li[^>]*>[\s\S]*?<\/li>/gi, '').replace(/^\s+|\s+$/g, '');
                 if (!text.trim()) return '';
-                // If text has <p> tags, restyle them with proper line-height
+                // If text has <p> tags, restyle them with full inline styles
                 if (text.includes('<p')) {
-                    return text.replace(/<p([^>]*)>/gi, '<p$1 style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">');
+                    return restyleParagraphs(text);
                 }
                 // If plain text with double newlines, split into paragraphs
                 const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
                 if (paragraphs.length > 1) {
                     return paragraphs.map(p =>
-                        `<p style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${p.trim()}</p>`
+                        `<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
                     ).join('');
                 }
-                return `<p style="margin: 0 0 6px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${text}</p>`;
+                return `<p style="margin:0 0 6px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
             };
 
             // Helper to generate bullet items with checkmark images
@@ -7417,8 +7421,8 @@ ${items.map((item, index) => `<tr>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="x-apple-disable-message-reformatting">
 <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
 <title>The BriteCo Brief</title>
 <!--[if mso]>
 <noscript>
@@ -7437,7 +7441,7 @@ td, th, p, a, li, span { font-family: Arial, Helvetica, sans-serif !important; }
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 <!--<![endif]-->
 <style>
-:root { color-scheme: light dark; supported-color-schemes: light dark; }
+:root { color-scheme: light only; supported-color-schemes: light only; }
 body { margin: 0; padding: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; background-color: #DFE7F0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
 table { border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
 img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
@@ -7446,16 +7450,12 @@ img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration
 .ReadMsgBody { width: 100%; }
 a { color: #008182; text-decoration: none; }
 a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
-.section-header, .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+.section-header, .section-header font, .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
 @media (prefers-color-scheme: dark) {
-    .section-header, .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+    .section-header, .section-header font, .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
 }
-[data-ogsc] .section-header, [data-ogsc] .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
-u + .body .section-header, u + .body .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
-u + .body .email-container { width: 100% !important; max-width: 100% !important; }
-u + .body .mobile-padding { padding-left: 16px !important; padding-right: 16px !important; }
-u + .body .mobile-full-width { width: 100% !important; max-width: 100% !important; }
-u + .body img { max-width: 100% !important; height: auto !important; }
+[data-ogsc] .section-header, [data-ogsc] .section-header font, [data-ogsc] .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+u + .body .section-header, u + .body .section-header font, u + .body .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
 @media only screen and (max-width: 600px) {
     .email-container { width: 100% !important; max-width: 100% !important; }
     .mobile-padding { padding-left: 16px !important; padding-right: 16px !important; }
@@ -7471,7 +7471,6 @@ u + .body img { max-width: 100% !important; height: auto !important; }
 <div style="display:none;max-height:0;overflow:hidden;">${preheader}</div>
 <div style="display:none;max-height:0;overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 
-<div role="article" aria-roledescription="email" aria-label="${subjectLine}" lang="en" style="font-size:16px;font-family:Montserrat,Helvetica,Arial,sans-serif;background-color:#DFE7F0;">
 <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#DFE7F0;">
 <tr><td align="center" style="padding:20px 10px;">
 <!--[if mso]><table cellpadding="0" cellspacing="0" border="0" width="600" align="center"><tr><td><![endif]-->
@@ -7487,6 +7486,11 @@ u + .body img { max-width: 100% !important; height: auto !important; }
 <!-- HERO SECTION -->
 <tr>
 <td align="center" background="${assets.ctaBg}" style="padding:0;background-color:#008182;background-image:url('${assets.ctaBg}');background-repeat:no-repeat;background-position:center center;background-size:cover;">
+<!--[if mso]>
+<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;">
+<v:fill type="tile" src="${assets.ctaBg}" color="#008182"/>
+<v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
+<![endif]-->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
@@ -7503,6 +7507,10 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 </tr>
 </tbody>
 </table>
+<!--[if mso]>
+</v:textbox>
+</v:rect>
+<![endif]-->
 </td>
 </tr>
 
@@ -7512,7 +7520,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <!-- SECTION: THE BRITE SPOT -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">The Brite Spot</font></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">The Brite Spot</span></font></td></tr></table>
 
 <!-- Image -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
@@ -7538,7 +7546,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-${briteSpotText ? `<div class="dark-text-secondary" style="font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${formatBriteSpotText(briteSpotText)}</div>` : ''}
+${briteSpotText ? formatBriteSpotText(briteSpotText) : ''}
 </td>
 </tr>
 </tbody>
@@ -7571,7 +7579,7 @@ ${generateBulletItems(briteSpotBullets)}
 <!-- SECTION: CURIOUS CLAIMS -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">Curious Claims</font></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">Curious Claims</span></font></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7618,7 +7626,7 @@ ${claimsTitle ? `
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<div class="dark-text-secondary claims-content" style="font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${formatClaimsText(claimsText)}</div>
+${formatClaimsText(claimsText)}
 </td>
 </tr>
 </tbody>
@@ -7640,7 +7648,7 @@ ${claimsTitle ? `
 <!-- SECTION: NEWS ROUNDUP -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">News Roundup</font></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">News Roundup</span></font></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7680,7 +7688,7 @@ ${generateRoundupItems(roundupItems)}
 <!-- SECTION: INSURNEWS SPOTLIGHT -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">InsurNews Spotlight</font></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">InsurNews Spotlight</span></font></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7761,7 +7769,7 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
 <!-- SECTION: AGENT ADVANTAGE -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">The Agent Advantage</font></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">The Agent Advantage</span></font></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7886,7 +7894,6 @@ ${generateTipsItems(tipsItems)}
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr>
 </table>
-</div>
 </body>
 </html>
 `;
@@ -8175,6 +8182,17 @@ ${generateTipsItems(tipsItems)}
 
                 console.log('[ONTRAPORT] Getting final newsletter HTML...');
                 let html = getFinalNewsletterHTML();
+
+                // Strip contenteditable attributes and editing artifacts before sending
+                html = html.replace(/\s*contenteditable="true"/gi, '');
+                html = html.replace(/\s*contenteditable="false"/gi, '');
+                html = html.replace(/\s*style="[^"]*cursor:\s*text[^"]*transition:\s*background-color[^"]*"/gi, (match) => {
+                    // Remove only cursor and transition properties, keep other styles
+                    return match.replace(/cursor:\s*text;?\s*/gi, '').replace(/transition:\s*background-color[^;]*;?\s*/gi, '');
+                });
+
+                // Strip contenteditable attributes (added by preview editing UI)
+                html = html.replace(/\s*contenteditable="[^"]*"/gi, '');
 
                 // Replace base64 data URIs with GCS URLs
                 if (Object.keys(gcsUrls).length > 0) {
