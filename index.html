@@ -7327,6 +7327,26 @@
                 return `<p style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${text}</p>`;
             };
 
+            // Helper to format brite spot text with proper paragraph styling
+            const formatBriteSpotText = (text) => {
+                if (!text) return '';
+                // Strip list elements (bullets handled separately)
+                text = text.replace(/<ul[^>]*>[\s\S]*?<\/ul>/gi, '').replace(/<ol[^>]*>[\s\S]*?<\/ol>/gi, '').replace(/<li[^>]*>[\s\S]*?<\/li>/gi, '').replace(/^\s+|\s+$/g, '');
+                if (!text.trim()) return '';
+                // If text has <p> tags, restyle them with proper line-height
+                if (text.includes('<p')) {
+                    return text.replace(/<p([^>]*)>/gi, '<p$1 style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">');
+                }
+                // If plain text with double newlines, split into paragraphs
+                const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
+                if (paragraphs.length > 1) {
+                    return paragraphs.map(p =>
+                        `<p style="margin: 0 0 16px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${p.trim()}</p>`
+                    ).join('');
+                }
+                return `<p style="margin: 0 0 6px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${text}</p>`;
+            };
+
             // Helper to generate bullet items with checkmark images
             const generateBulletItems = (items) => {
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
@@ -7518,7 +7538,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-${briteSpotText ? `<p class="dark-text-secondary" style="margin:0 0 6px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${briteSpotText.replace(/<ul[^>]*>[\s\S]*?<\/ul>/gi, '').replace(/<ol[^>]*>[\s\S]*?<\/ol>/gi, '').replace(/<li[^>]*>[\s\S]*?<\/li>/gi, '').replace(/^\s+|\s+$/g, '')}</p>` : ''}
+${briteSpotText ? `<div class="dark-text-secondary" style="font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${formatBriteSpotText(briteSpotText)}</div>` : ''}
 </td>
 </tr>
 </tbody>
