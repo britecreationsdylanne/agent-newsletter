@@ -8203,8 +8203,9 @@ ${generateTipsItems(tipsItems)}
                 html = html.replace(/object-fit:\s*[^;]+;?\s*/gi, '');
                 html = html.replace(/<div\s+style="outline:\s*none;?">\s*/gi, '');
                 html = html.replace(/<\/div>(\s*<\/td>)/gi, '$1');
-                // Strip width="570" from content images (forces Gmail mobile to zoom out)
-                html = html.replace(/(<img\b[^>]*max-width:\s*570px[^>]*)\s*width="570"/gi, '$1');
+                // Strip DOM-added width/height from content images (570x320, 570x208)
+                html = html.replace(/(<img\b[^>]*)\s*width="570"([^>]*>)/gi, '$1$2');
+                html = html.replace(/(<img\b[^>]*)\s*height="\d+"([^>]*max-width:\s*570px[^>]*>)/gi, '$1$2');
 
                 // Fix content tags missing font-family (from preview editing)
                 html = html.replace(/<p\b([^>]*)>/gi, (match, attrs) => {
