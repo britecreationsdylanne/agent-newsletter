@@ -7304,9 +7304,12 @@
                 blankImage: 'https://brite.co/wp-content/uploads/2025/09/blank-image.png'
             };
 
-            // Shared helper: restyle all <p> tags with full inline styles, stripping any existing style/class attrs
+            // Shared helper: restyle all <p>, <h3>, <h4> tags with full inline styles, stripping any existing style/class attrs
             const restyleParagraphs = (html) => {
-                return html.replace(/<p[^>]*>/gi, '<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">');
+                html = html.replace(/<p[^>]*>/gi, '<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">');
+                html = html.replace(/<h3[^>]*>/gi, '<h3 style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">');
+                html = html.replace(/<h4[^>]*>/gi, '<h4 style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;font-weight:600;color:#272D3F;">');
+                return html;
             };
 
             // Helper to format claims text with proper paragraph spacing
@@ -7474,7 +7477,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
 <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#DFE7F0;">
 <tr><td align="center" style="padding:20px 10px;">
 <!--[if mso]><table cellpadding="0" cellspacing="0" border="0" width="600" align="center"><tr><td><![endif]-->
-<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:600px;width:100%;background-color:#ffffff;" class="email-container">
+<table width="600" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width:600px;width:100%;background-color:#ffffff;" class="email-container">
 
 <!-- HEADER WITH LOGO -->
 <tr>
@@ -7736,19 +7739,20 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 ${(() => {
     let t = spotlightText || '';
     if (spotlightSubheader && t) {
-        const strip = s => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const strip = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/[\u2018\u2019\u2032]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase();
         const normalSub = strip(spotlightSubheader);
         const normalT = strip(t);
         if (normalT.startsWith(normalSub) || normalT === normalSub) {
             t = t.replace(new RegExp('^\\s*(<[^>]+>)*\\s*' + spotlightSubheader.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(<\\/[^>]+>)*\\s*', 'i'), '');
         }
     }
-    return t.trim() ? '<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">' + t.trim() + '</p>' : '';
+    if (!t.trim()) return '';
+    return restyleParagraphs(t.includes('<p') ? t : '<p>' + t.trim() + '</p>');
 })()}
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const title = stripMarkdownHeaders(section.h3 || section.title || '').trim();
     if (!spotlightSubheader || !title) return true;
-    const strip = s => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const strip = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/[\u2018\u2019\u2032]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase();
     const a = strip(title);
     const b = strip(spotlightSubheader);
     return a !== b && !a.includes(b) && !b.includes(a);
@@ -8184,15 +8188,29 @@ ${generateTipsItems(tipsItems)}
                 let html = getFinalNewsletterHTML();
 
                 // Strip contenteditable attributes and editing artifacts before sending
-                html = html.replace(/\s*contenteditable="true"/gi, '');
-                html = html.replace(/\s*contenteditable="false"/gi, '');
-                html = html.replace(/\s*style="[^"]*cursor:\s*text[^"]*transition:\s*background-color[^"]*"/gi, (match) => {
-                    // Remove only cursor and transition properties, keep other styles
-                    return match.replace(/cursor:\s*text;?\s*/gi, '').replace(/transition:\s*background-color[^;]*;?\s*/gi, '');
+                html = html.replace(/\s*contenteditable="[^"]*"/gi, '');
+                html = html.replace(/cursor:\s*text;?\s*/gi, '');
+                html = html.replace(/transition:\s*background-color[^;]*;?\s*/gi, '');
+
+                // Ensure email-container table has width="600" for Gmail mobile
+                html = html.replace(/<table([^>]*class="email-container"[^>]*)>/i, (match, attrs) => {
+                    if (attrs.includes('width=')) return match;
+                    return '<table width="600"' + attrs + '>';
                 });
 
-                // Strip contenteditable attributes (added by preview editing UI)
-                html = html.replace(/\s*contenteditable="[^"]*"/gi, '');
+                // Fix content tags missing font-family (from preview editing)
+                html = html.replace(/<p\b([^>]*)>/gi, (match, attrs) => {
+                    if (match.includes('font-family')) return match;
+                    return '<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">';
+                });
+                html = html.replace(/<h3\b([^>]*)>/gi, (match, attrs) => {
+                    if (match.includes('font-family')) return match;
+                    return '<h3 style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">';
+                });
+                html = html.replace(/<h4\b([^>]*)>/gi, (match, attrs) => {
+                    if (match.includes('font-family')) return match;
+                    return '<h4 style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;font-weight:600;color:#272D3F;">';
+                });
 
                 // Replace base64 data URIs with GCS URLs
                 if (Object.keys(gcsUrls).length > 0) {
