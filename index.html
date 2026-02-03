@@ -7738,14 +7738,8 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 <td style="padding:0 15px;">
 ${(() => {
     let t = spotlightText || '';
-    if (spotlightSubheader && t) {
-        const strip = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/[\u2018\u2019\u2032]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\*{1,3}/g, '').replace(/_{1,3}/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
-        const normalSub = strip(spotlightSubheader);
-        const normalT = strip(t);
-        if (normalT.startsWith(normalSub) || normalT === normalSub) {
-            t = t.replace(new RegExp('^\\s*(<[^>]+>)*\\s*' + spotlightSubheader.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(<\\/[^>]+>)*\\s*', 'i'), '');
-        }
-    }
+    // Always strip leading h4 from spotlight copy (headline already shown above image)
+    t = t.replace(/^\s*<h4[^>]*>[\s\S]*?<\/h4>\s*/i, '');
     if (!t.trim()) return '';
     return restyleParagraphs(t.includes('<p') ? t : '<p>' + t.trim() + '</p>');
 })()}
@@ -8192,7 +8186,7 @@ ${generateTipsItems(tipsItems)}
                 html = html.replace(/transition:\s*background-color[^;]*;?\s*/gi, '');
 
                 // Gmail mobile fix: clean body tag (savedEditedHTML may reintroduce attributes)
-                html = html.replace(/<body[^>]*>/, '<body>');
+                html = html.replace(/<body[^>]*>/i, '<body>');
 
                 // Strip border="0" and role="presentation" from outer wrapper table
                 html = html.replace(/<table([^>]*style="[^"]*background-color:\s*#DFE7F0[^"]*"[^>]*)>/i, (match, attrs) => {
