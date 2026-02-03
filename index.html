@@ -7442,6 +7442,16 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
 [data-ogsc] .dark-text { color: #ffffff !important; }
 [data-ogsc] .dark-text-secondary { color: #cccccc !important; }
 [data-ogsc] .dark-text-muted { color: #999999 !important; }
+.section-header, .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+@media (prefers-color-scheme: dark) {
+    .section-header, .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+}
+[data-ogsc] .section-header, [data-ogsc] .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+u + .body .section-header, u + .body .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+u + .body .email-container { width: 100% !important; max-width: 100% !important; }
+u + .body .mobile-padding { padding-left: 16px !important; padding-right: 16px !important; }
+u + .body .mobile-full-width { width: 100% !important; max-width: 100% !important; }
+u + .body img { max-width: 100% !important; height: auto !important; }
 @media only screen and (max-width: 600px) {
     .email-container { width: 100% !important; max-width: 100% !important; }
     .mobile-padding { padding-left: 16px !important; padding-right: 16px !important; }
@@ -7453,7 +7463,7 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
 }
 </style>
 </head>
-<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #DFE7F0;" class="email-bg">
+<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #DFE7F0;" class="body email-bg">
 <div style="display:none;max-height:0;overflow:hidden;">${preheader}</div>
 <div style="display:none;max-height:0;overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 
@@ -7498,15 +7508,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <!-- SECTION: THE BRITE SPOT -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;">The Brite Spot</td></tr></table>
-
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
-</tr>
-</tbody>
-</table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">The Brite Spot</font></td></tr></table>
 
 <!-- Image -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
@@ -7522,7 +7524,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
+<td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -7532,7 +7534,7 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-${briteSpotText ? `<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:32px;font-weight:400;color:#3B3B3B;">${briteSpotText.replace(/<ul[^>]*>[\s\S]*?<\/ul>/gi, '').replace(/<ol[^>]*>[\s\S]*?<\/ol>/gi, '').replace(/<li[^>]*>[\s\S]*?<\/li>/gi, '').replace(/^\s+|\s+$/g, '')}</p>` : ''}
+${briteSpotText ? `<p class="dark-text-secondary" style="margin:0 0 6px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${briteSpotText.replace(/<ul[^>]*>[\s\S]*?<\/ul>/gi, '').replace(/<ol[^>]*>[\s\S]*?<\/ol>/gi, '').replace(/<li[^>]*>[\s\S]*?<\/li>/gi, '').replace(/^\s+|\s+$/g, '')}</p>` : ''}
 </td>
 </tr>
 </tbody>
@@ -7552,7 +7554,7 @@ ${generateBulletItems(briteSpotBullets)}
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
+<td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -7565,7 +7567,7 @@ ${generateBulletItems(briteSpotBullets)}
 <!-- SECTION: CURIOUS CLAIMS -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;">Curious Claims</td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">Curious Claims</font></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7634,7 +7636,7 @@ ${claimsTitle ? `
 <!-- SECTION: NEWS ROUNDUP -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;">News Roundup</td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">News Roundup</font></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7674,15 +7676,7 @@ ${generateRoundupItems(roundupItems)}
 <!-- SECTION: INSURNEWS SPOTLIGHT -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;">InsurNews Spotlight</td></tr></table>
-
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
-</tr>
-</tbody>
-</table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">InsurNews Spotlight</font></td></tr></table>
 
 <!-- Image -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
@@ -7698,7 +7692,7 @@ ${generateRoundupItems(roundupItems)}
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
+<td height="8" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -7752,7 +7746,7 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
 <!-- SECTION: AGENT ADVANTAGE -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;">The Agent Advantage</td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">The Agent Advantage</font></td></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
