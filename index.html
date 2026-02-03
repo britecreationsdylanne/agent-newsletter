@@ -7426,22 +7426,6 @@ img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration
 .ReadMsgBody { width: 100%; }
 a { color: #008182; text-decoration: none; }
 a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
-@media (prefers-color-scheme: dark) {
-    .email-bg { background-color: #1a1a1a !important; }
-    .section-bg { background-color: #2d2d2d !important; }
-    .section-border { border-color: #444444 !important; }
-    .dark-text { color: #ffffff !important; }
-    .dark-text-secondary { color: #cccccc !important; }
-    .dark-text-muted { color: #999999 !important; }
-    .header-bg { background-color: #1a1a1a !important; }
-    .footer-bg { background-color: #1a1a1a !important; }
-}
-[data-ogsc] .email-bg { background-color: #1a1a1a !important; }
-[data-ogsc] .section-bg { background-color: #2d2d2d !important; }
-[data-ogsc] .section-border { border-color: #444444 !important; }
-[data-ogsc] .dark-text { color: #ffffff !important; }
-[data-ogsc] .dark-text-secondary { color: #cccccc !important; }
-[data-ogsc] .dark-text-muted { color: #999999 !important; }
 .section-header, .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
 @media (prefers-color-scheme: dark) {
     .section-header, .section-header font { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
@@ -7463,7 +7447,7 @@ u + .body img { max-width: 100% !important; height: auto !important; }
 }
 </style>
 </head>
-<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #DFE7F0;" class="body email-bg">
+<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #DFE7F0;" class="body">
 <div style="display:none;max-height:0;overflow:hidden;">${preheader}</div>
 <div style="display:none;max-height:0;overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 
@@ -7678,6 +7662,25 @@ ${generateRoundupItems(roundupItems)}
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="section-header" style="background-color:#008182;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;background-image:url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png');background-repeat:repeat;background-size:400px auto;"><font color="#ffffff">InsurNews Spotlight</font></td></tr></table>
 
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Headline -->
+${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td style="padding:0 15px;">
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#272D3F;">${spotlightSubheader}</h2>
+</td>
+</tr>
+</tbody>
+</table>` : ''}
+
 <!-- Image -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -7726,14 +7729,6 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
 <p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${section.body || section.content || ''}</p>
 `).join('') : ''}
 </td>
-</tr>
-</tbody>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
-<td height="5" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
