@@ -2438,12 +2438,13 @@ def generate_images():
                     image_bytes = base64.b64decode(image_data)
                     pil_image = Image.open(BytesIO(image_bytes))
 
-                    # Section-specific image sizes - all full width
+                    # Section-specific image sizes - reduced from 570px to avoid
+                    # Gmail mobile using intrinsic dimensions for layout calculation
                     IMAGE_SIZES = {
-                        'briteSpot': (570, 320),    # Full width landscape
-                        'claims': (570, 320),        # Full width landscape
-                        'spotlight': (570, 320),     # Full width landscape
-                        'tips': (570, 208),          # Full width, 35% shorter than standard
+                        'briteSpot': (480, 270),    # Full width landscape
+                        'claims': (480, 270),        # Full width landscape
+                        'spotlight': (480, 270),     # Full width landscape
+                        'tips': (480, 175),          # Full width, shorter than standard
                     }
                     target_width, target_height = IMAGE_SIZES.get(section_name, (570, 320))
 
