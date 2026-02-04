@@ -2079,9 +2079,113 @@
                 <div class="editable" contenteditable="true" id="review-tips"></div>
             </div>
 
+            <!-- Special Section Toggle -->
+            <div style="margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e5e7eb;">
+                <label style="display: flex; align-items: center; cursor: pointer; font-size: 16px; font-weight: 600; color: #272d3f;">
+                    <input type="checkbox" id="specialSectionToggle" onchange="toggleSpecialSection()" style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;">
+                    Add Special Section
+                </label>
+                <p style="margin: 8px 0 0 36px; font-size: 13px; color: #666;">Add a custom section with your own content, image, and/or CTA</p>
+            </div>
+
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep('2-research')">← Back</button>
-                <button class="btn" onclick="checkBrandGuidelines()">Check Brand Guidelines →</button>
+                <button class="btn" id="step5NextBtn" onclick="checkBrandGuidelines()">Check Brand Guidelines →</button>
+            </div>
+        </div>
+
+        <!-- Step 5b: Special Section Design -->
+        <div class="step" id="step5b">
+            <h2>✨ Special Section</h2>
+            <p class="step-description">Design your custom newsletter section. Add a title, body text, image, and optional CTA.</p>
+
+            <!-- Title -->
+            <div class="content-section">
+                <h3>Section Title</h3>
+                <input type="text" id="specialSectionTitle" placeholder="e.g. Valentine's Day Sale, Partner Spotlight, Holiday Reminder" style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #e5e7eb; border-radius: 6px; font-family: Montserrat, sans-serif; box-sizing: border-box;">
+            </div>
+
+            <!-- Color Scheme -->
+            <div class="content-section">
+                <h3>Color Scheme</h3>
+                <div id="colorSchemeSwatches" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button onclick="selectColorScheme('white')" id="swatch-white" class="color-swatch active-swatch" style="width: 120px; padding: 16px 12px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 12px; font-weight: 600; font-family: Montserrat, sans-serif; background: #ffffff; color: #282e40; border: 3px solid #008182;">White</button>
+                    <button onclick="selectColorScheme('slate_blue')" id="swatch-slate_blue" class="color-swatch" style="width: 120px; padding: 16px 12px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 12px; font-weight: 600; font-family: Montserrat, sans-serif; background: #466f88; color: #ffffff; border: 3px solid transparent;">Slate Blue</button>
+                    <button onclick="selectColorScheme('teal')" id="swatch-teal" class="color-swatch" style="width: 120px; padding: 16px 12px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 12px; font-weight: 600; font-family: Montserrat, sans-serif; background: #008182; color: #ffffff; border: 3px solid transparent;">Teal</button>
+                    <button onclick="selectColorScheme('dark_navy')" id="swatch-dark_navy" class="color-swatch" style="width: 120px; padding: 16px 12px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 12px; font-weight: 600; font-family: Montserrat, sans-serif; background: #272d3f; color: #ffffff; border: 3px solid transparent;">Dark Navy</button>
+                </div>
+            </div>
+
+            <!-- Body Text -->
+            <div class="content-section">
+                <h3>Body Text <span style="font-weight: 400; font-size: 13px; color: #999;">(optional — leave blank for image-only)</span></h3>
+                <div style="margin-bottom: 10px; display: flex; gap: 8px;">
+                    <input type="text" id="specialSectionNotes" placeholder="Topic or notes for AI generation (e.g. 'Valentine's Day jewelry insurance promo')" style="flex: 1; padding: 8px 12px; font-size: 13px; border: 2px solid #e5e7eb; border-radius: 6px; font-family: Montserrat, sans-serif;">
+                    <button class="btn" onclick="aiGenerateSpecialBody()" id="aiGenSpecialBtn" style="padding: 8px 16px; font-size: 13px; white-space: nowrap;">AI Generate</button>
+                </div>
+                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('specialSectionBody')" type="button">🔗 Insert Link</button></div>
+                <div class="link-popover" id="lp-specialSectionBody">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('specialSectionBody')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('specialSectionBody')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="specialSectionBody" style="min-height: 100px;"></div>
+                <div style="margin-top: 8px;">
+                    <button class="btn-secondary btn" onclick="aiRewriteSpecialBody()" id="aiRewriteSpecialBtn" style="padding: 6px 14px; font-size: 13px;">AI Rewrite</button>
+                </div>
+            </div>
+
+            <!-- Image -->
+            <div class="content-section">
+                <h3>Image <span style="font-weight: 400; font-size: 13px; color: #999;">(optional)</span></h3>
+                <div id="specialSectionImagePreview" style="min-height: 80px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; overflow: hidden;">
+                    <p style="color: #999; font-size: 14px;">No image selected</p>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn" onclick="generateSpecialImage()" id="genSpecialImgBtn" style="padding: 8px 16px; font-size: 13px;">Generate Image</button>
+                    <button class="btn-secondary btn" onclick="document.getElementById('specialSectionUpload').click()" style="padding: 8px 16px; font-size: 13px;">Upload Image</button>
+                    <button class="btn-secondary btn" onclick="clearSpecialImage()" style="padding: 8px 16px; font-size: 13px;">Clear Image</button>
+                    <input type="file" id="specialSectionUpload" accept="image/*" onchange="handleSpecialImageUpload(event)" style="display: none;">
+                </div>
+                <div style="margin-top: 8px;">
+                    <label style="font-size: 13px; font-weight: 600;">Image Prompt:</label>
+                    <textarea id="specialSectionImagePrompt" rows="2" placeholder="Describe the image you want to generate..." style="width: 100%; padding: 8px; font-size: 13px; border: 2px solid #e5e7eb; border-radius: 6px; font-family: Montserrat, sans-serif; box-sizing: border-box; margin-top: 4px;"></textarea>
+                </div>
+            </div>
+
+            <!-- CTA Button (optional) -->
+            <div class="content-section">
+                <h3>CTA Button <span style="font-weight: 400; font-size: 13px; color: #999;">(optional)</span></h3>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">Button Text</label>
+                        <input type="text" id="specialSectionCtaText" placeholder="e.g. Learn More" style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e5e7eb; border-radius: 6px; font-family: Montserrat, sans-serif; box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 2; min-width: 300px;">
+                        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">Button URL</label>
+                        <input type="text" id="specialSectionCtaUrl" placeholder="https://..." style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e5e7eb; border-radius: 6px; font-family: Montserrat, sans-serif; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Position -->
+            <div class="content-section">
+                <h3>Position in Newsletter</h3>
+                <select id="specialSectionPosition" style="width: 100%; max-width: 400px; padding: 10px; font-size: 14px; border: 2px solid #e5e7eb; border-radius: 6px; font-family: Montserrat, sans-serif;">
+                    <option value="after-britespot">After The Brite Spot</option>
+                    <option value="after-claims">After Curious Claims</option>
+                    <option value="after-roundup">After News Roundup</option>
+                    <option value="after-spotlight">After InsurNews Spotlight</option>
+                    <option value="after-tips" selected>After Agent Advantage (before CTA)</option>
+                </select>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-secondary btn" onclick="showStep(5)">← Back</button>
+                <button class="btn" onclick="saveSpecialSection(); checkBrandGuidelines();">Check Brand Guidelines →</button>
             </div>
         </div>
 
@@ -2261,6 +2365,23 @@
                     </div>
                 </div>
                 <div class="editable" contenteditable="true" id="fc-tips"></div>
+            </div>
+
+            <!-- Special Section Copy (shown only when specialSection.enabled && specialSection.body) -->
+            <div class="content-section" id="fc-specialSection-wrapper" style="display:none;">
+                <h3>✨ Special Section</h3>
+                <div class="link-toolbar">
+                    <button type="button" onclick="showLinkPopover('fc-specialSection')" style="font-size: 12px; padding: 4px 10px; background: #008182; color: white; border: none; border-radius: 4px; cursor: pointer;">🔗 Insert Link</button>
+                </div>
+                <div class="link-popover" id="lp-fc-specialSection" style="display:none; background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+                    <input type="text" placeholder="Display text" class="lp-text">
+                    <input type="text" placeholder="https://..." class="lp-url">
+                    <div class="link-popover-actions">
+                        <button type="button" onclick="hideLinkPopover('fc-specialSection')">Cancel</button>
+                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-specialSection')">Insert</button>
+                    </div>
+                </div>
+                <div class="editable" contenteditable="true" id="fc-specialSection"></div>
             </div>
 
             <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 8px; text-align: center;">
@@ -2664,6 +2785,20 @@
             <!-- Editing Instructions -->
             <div style="background: #e0f2fe; border: 2px solid #0284c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                 <p style="margin: 0; font-size: 14px; color: #0c4a6e;"><strong>✏️ Live Editing:</strong> Click any text in the preview below to edit it directly.</p>
+            </div>
+
+            <!-- Special Section Position Control (shown when special section is enabled) -->
+            <div id="specialSectionPositionControl" style="display:none; background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span style="font-weight: 600; font-size: 14px; color: #92400e;">✨ Special Section Position:</span>
+                    <select id="previewPositionSelect" onchange="moveSpecialSection(this.value)" style="padding: 8px 12px; border: 2px solid #f59e0b; border-radius: 6px; font-size: 14px; background: white; cursor: pointer;">
+                        <option value="after-britespot">After The Brite Spot</option>
+                        <option value="after-claims">After Curious Claims</option>
+                        <option value="after-roundup">After News Roundup</option>
+                        <option value="after-spotlight">After InsurNews Spotlight</option>
+                        <option value="after-tips" selected>After Agent Advantage</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Subject Line & Preheader Display -->
@@ -5084,7 +5219,8 @@
                         claims_content: claimsText,
                         roundup_content: roundupText,
                         spotlight_content: spotlightText,
-                        tips_content: tipsText
+                        tips_content: tipsText,
+                        special_section_content: (specialSection.enabled && specialSection.body) ? specialSection.body : ''
                     })
                 });
 
@@ -5396,14 +5532,207 @@
             setTimeout(() => toast.remove(), 2000);
         }
 
+        // Special Section state
+        let specialSection = {
+            enabled: false,
+            title: '',
+            body: '',
+            colorScheme: 'white',
+            ctaUrl: '',
+            ctaText: '',
+            position: 'after-tips'
+        };
+
         // Store generated images
         let generatedImages = {
             meme: null,
             briteSpot: null,
             claims: null,
             spotlight: null,
-            tips: null
+            tips: null,
+            specialSection: null
         };
+
+        // ============================================================================
+        // SPECIAL SECTION FUNCTIONS
+        // ============================================================================
+
+        function toggleSpecialSection() {
+            const checked = document.getElementById('specialSectionToggle').checked;
+            specialSection.enabled = checked;
+            const btn = document.getElementById('step5NextBtn');
+            if (checked) {
+                btn.textContent = 'Design Special Section →';
+                btn.onclick = () => { showStep('5b'); };
+            } else {
+                btn.textContent = 'Check Brand Guidelines →';
+                btn.onclick = () => { checkBrandGuidelines(); };
+            }
+        }
+
+        function selectColorScheme(scheme) {
+            specialSection.colorScheme = scheme;
+            document.querySelectorAll('.color-swatch').forEach(s => {
+                s.style.borderColor = 'transparent';
+            });
+            const active = document.getElementById('swatch-' + scheme);
+            if (active) active.style.borderColor = '#008182';
+        }
+
+        function getColorSchemeStyles(scheme) {
+            const schemes = {
+                white:      { bg: '#ffffff', text: '#282e40', headerBg: '#008182', headerText: '#ffffff', border: '1px solid #008182', ctaBg: '#FE8916' },
+                slate_blue: { bg: '#466f88', text: '#ffffff', headerBg: '#3a5f75', headerText: '#ffffff', border: 'none', ctaBg: '#FE8916' },
+                teal:       { bg: '#008182', text: '#ffffff', headerBg: '#006b6b', headerText: '#ffffff', border: 'none', ctaBg: '#FE8916' },
+                dark_navy:  { bg: '#272d3f', text: '#ffffff', headerBg: '#1a1f2e', headerText: '#ffffff', border: 'none', ctaBg: '#FE8916' }
+            };
+            return schemes[scheme] || schemes.white;
+        }
+
+        function saveSpecialSection() {
+            specialSection.title = document.getElementById('specialSectionTitle')?.value?.trim() || '';
+            specialSection.body = document.getElementById('specialSectionBody')?.innerHTML?.trim() || '';
+            specialSection.ctaText = document.getElementById('specialSectionCtaText')?.value?.trim() || '';
+            specialSection.ctaUrl = document.getElementById('specialSectionCtaUrl')?.value?.trim() || '';
+            specialSection.position = document.getElementById('specialSectionPosition')?.value || 'after-tips';
+            console.log('[SpecialSection] Saved:', specialSection);
+        }
+
+        function restoreSpecialSectionUI() {
+            const toggle = document.getElementById('specialSectionToggle');
+            if (toggle) toggle.checked = specialSection.enabled;
+            toggleSpecialSection();
+            document.getElementById('specialSectionTitle').value = specialSection.title || '';
+            document.getElementById('specialSectionBody').innerHTML = specialSection.body || '';
+            document.getElementById('specialSectionCtaText').value = specialSection.ctaText || '';
+            document.getElementById('specialSectionCtaUrl').value = specialSection.ctaUrl || '';
+            const posEl = document.getElementById('specialSectionPosition');
+            if (posEl) posEl.value = specialSection.position || 'after-tips';
+            selectColorScheme(specialSection.colorScheme || 'white');
+            if (generatedImages.specialSection?.url) {
+                document.getElementById('specialSectionImagePreview').innerHTML = `<img src="${generatedImages.specialSection.url}" style="width:100%;max-width:480px;height:auto;display:block;border-radius:4px;">`;
+            }
+            if (generatedImages.specialSection?.prompt) {
+                document.getElementById('specialSectionImagePrompt').value = generatedImages.specialSection.prompt;
+            }
+        }
+
+        async function aiGenerateSpecialBody() {
+            const title = document.getElementById('specialSectionTitle')?.value?.trim() || '';
+            const notes = document.getElementById('specialSectionNotes')?.value?.trim() || '';
+            if (!title && !notes) { alert('Enter a title or notes for AI generation.'); return; }
+            const btn = document.getElementById('aiGenSpecialBtn');
+            btn.disabled = true; btn.textContent = 'Generating...';
+            try {
+                const response = await fetch(`${API_BASE}/api/rewrite-section`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: `Write a short newsletter section (2-3 paragraphs) about: ${title}. ${notes ? 'Additional context: ' + notes : ''} Keep it engaging and professional for insurance agents.`,
+                        section: 'special_section',
+                        tone: 'professional'
+                    })
+                });
+                const data = await response.json();
+                if (data.success && data.rewritten) {
+                    document.getElementById('specialSectionBody').innerHTML = data.rewritten.replace(/\n/g, '<br>');
+                } else {
+                    alert('Generation failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+            btn.disabled = false; btn.textContent = 'AI Generate';
+        }
+
+        async function aiRewriteSpecialBody() {
+            const body = document.getElementById('specialSectionBody')?.innerText?.trim() || '';
+            if (!body) { alert('No body text to rewrite.'); return; }
+            const btn = document.getElementById('aiRewriteSpecialBtn');
+            btn.disabled = true; btn.textContent = 'Rewriting...';
+            try {
+                const response = await fetch(`${API_BASE}/api/rewrite-section`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: body,
+                        section: 'special_section',
+                        tone: 'professional'
+                    })
+                });
+                const data = await response.json();
+                if (data.success && data.rewritten) {
+                    document.getElementById('specialSectionBody').innerHTML = data.rewritten.replace(/\n/g, '<br>');
+                } else {
+                    alert('Rewrite failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+            btn.disabled = false; btn.textContent = 'AI Rewrite';
+        }
+
+        async function generateSpecialImage() {
+            const prompt = document.getElementById('specialSectionImagePrompt')?.value?.trim() || '';
+            const title = document.getElementById('specialSectionTitle')?.value?.trim() || '';
+            if (!prompt && !title) { alert('Enter an image prompt or section title.'); return; }
+            const btn = document.getElementById('genSpecialImgBtn');
+            btn.disabled = true; btn.textContent = 'Generating...';
+            const preview = document.getElementById('specialSectionImagePreview');
+            preview.innerHTML = '<div class="spinner" style="width:30px;height:30px;"></div>';
+            try {
+                const finalPrompt = prompt || `Professional, clean illustration for a newsletter section about: ${title}. Modern, corporate style.`;
+                const response = await fetch(`${API_BASE}/api/generate-images`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sections: { specialSection: finalPrompt },
+                        month: selectedMonth || 'current'
+                    })
+                });
+                const data = await response.json();
+                if (data.success && data.images?.specialSection) {
+                    const imgUrl = data.images.specialSection;
+                    generatedImages.specialSection = { url: imgUrl, prompt: finalPrompt };
+                    preview.innerHTML = `<img src="${imgUrl}" style="width:100%;max-width:480px;height:auto;display:block;border-radius:4px;">`;
+                } else {
+                    preview.innerHTML = '<p style="color:#dc2626;">Image generation failed. Try again.</p>';
+                }
+            } catch (e) {
+                preview.innerHTML = `<p style="color:#dc2626;">Error: ${e.message}</p>`;
+            }
+            btn.disabled = false; btn.textContent = 'Generate Image';
+        }
+
+        function handleSpecialImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                generatedImages.specialSection = { url: e.target.result, prompt: 'User uploaded' };
+                document.getElementById('specialSectionImagePreview').innerHTML = `<img src="${e.target.result}" style="width:100%;max-width:480px;height:auto;display:block;border-radius:4px;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearSpecialImage() {
+            generatedImages.specialSection = null;
+            document.getElementById('specialSectionImagePreview').innerHTML = '<p style="color: #999; font-size: 14px;">No image selected</p>';
+        }
+
+        // Move special section to a new position and re-render preview
+        function moveSpecialSection(newPosition) {
+            specialSection.position = newPosition;
+            // Also update the step 5b position dropdown
+            const step5bSelect = document.getElementById('specialSectionPosition');
+            if (step5bSelect) step5bSelect.value = newPosition;
+            // Re-render the preview
+            const html = generateNewsletterHTML();
+            document.getElementById('newsletterPreview').innerHTML = html;
+            // Make content editable again
+            document.querySelectorAll('#newsletterPreview td, #newsletterPreview th, #newsletterPreview p, #newsletterPreview h1, #newsletterPreview h2, #newsletterPreview h3').forEach(el => {
+                if (!el.closest('table[role="presentation"]')?.querySelector('img')) {
+                    el.contentEditable = 'true';
+                    el.style.cursor = 'text';
+                }
+            });
+        }
 
         // Helper to extract readable text from content objects
         function extractContentText(content) {
@@ -6625,7 +6954,8 @@
             claims:     { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Claims Corner' },
             spotlight:  { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Spotlight' },
             tips:       { width: 480, height: 175, aspectRatio: 480 / 175, label: 'Agent Advantage' },
-            meme:       { width: 480, height: 480, aspectRatio: 1, label: 'Meme' }
+            meme:       { width: 480, height: 480, aspectRatio: 1, label: 'Meme' },
+            specialSection: { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Special Section' }
         };
 
         let activeCropper = null;
@@ -7287,8 +7617,45 @@
                 tipsIntro = '',
                 tipsItems = [],
                 ctaUrl = 'https://brite.co/agents',
-                ctaText = 'Partner With Us'
+                ctaText = 'Partner With Us',
+                specialSection: ssData = null
             } = data;
+
+            // Build special section HTML block (defined once, placed at selected position)
+            const specialSectionHtml = ssData?.enabled ? (() => {
+                const colors = getColorSchemeStyles(ssData.colorScheme || 'white');
+                const ssImage = ssData.image || '';
+                const ssBody = ssData.body || '';
+                const ssTitle = ssData.title || 'Special Section';
+                return `
+<!-- Spacer -->
+<tr><td style="background-color:#DFE7F0;font-size:1px;line-height:1px;" height="40">&nbsp;</td></tr>
+
+<!-- SPECIAL SECTION: ${ssTitle} -->
+<tr>
+<td style="padding:0;${colors.border !== 'none' ? 'border:1px solid ' + colors.border + ';' : ''}background-color:${colors.bg};">
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><th align="center" class="section-header" style="background:${colors.headerBg};padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:${colors.headerText};-webkit-text-fill-color:${colors.headerText};letter-spacing:0.5px;"><font color="${colors.headerText}" style="color:${colors.headerText};"><span style="color:${colors.headerText} !important;-webkit-text-fill-color:${colors.headerText} !important;">${ssTitle}</span></font></th></tr></table>
+
+${ssImage ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td style="padding:0 15px;"><img alt="${ssTitle}" src="${ssImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" /></td></tr></tbody></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>` : ''}
+
+${ssBody ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td style="padding:0 15px;">
+<p style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:${colors.text};">${ssBody}</p>
+</td></tr></tbody></table>` : ''}
+
+${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
+<table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;text-align:center;"><tbody><tr>
+<td align="center" style="border-radius:10px;background:${colors.ctaBg};text-align:center;">
+<a href="${ssData.ctaUrl}" style="display:inline-block;padding:11px 29px;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:26px;font-weight:600;color:#ffffff;text-decoration:none;text-transform:uppercase;border-radius:10px;">${(ssData.ctaText || 'Learn More').toUpperCase()}</a>
+</td>
+</tr></tbody></table>` : ''}
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
+</td>
+</tr>`;
+            })() : '';
+
+            const ssPosition = ssData?.position || 'after-tips';
 
             // WordPress hosted assets - matching Ontraport template
             const assets = {
@@ -7572,6 +7939,8 @@ ${generateBulletItems(briteSpotBullets)}
 </td>
 </tr>
 
+${ssPosition === 'after-britespot' ? specialSectionHtml : ''}
+
 <!-- Spacer -->
 <tr><td style="background-color:#DFE7F0;font-size:1px;line-height:1px;" height="40">&nbsp;</td></tr>
 
@@ -7641,6 +8010,8 @@ ${formatClaimsText(claimsText)}
 </td>
 </tr>
 
+${ssPosition === 'after-claims' ? specialSectionHtml : ''}
+
 <!-- Spacer -->
 <tr><td style="background-color:#DFE7F0;font-size:1px;line-height:1px;" height="40">&nbsp;</td></tr>
 
@@ -7680,6 +8051,8 @@ ${generateRoundupItems(roundupItems)}
 </table>
 </td>
 </tr>
+
+${ssPosition === 'after-roundup' ? specialSectionHtml : ''}
 
 <!-- Spacer -->
 <tr><td style="background-color:#DFE7F0;font-size:1px;line-height:1px;" height="40">&nbsp;</td></tr>
@@ -7756,6 +8129,8 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
 </table>
 </td>
 </tr>
+
+${ssPosition === 'after-spotlight' ? specialSectionHtml : ''}
 
 <!-- Spacer -->
 <tr><td style="background-color:#DFE7F0;font-size:1px;line-height:1px;" height="40">&nbsp;</td></tr>
@@ -7846,6 +8221,8 @@ ${generateTipsItems(tipsItems)}
 </table>
 </td>
 </tr>
+
+${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
 <!-- Spacer -->
 <tr><td style="background-color:#DFE7F0;font-size:1px;line-height:1px;" height="40">&nbsp;</td></tr>
@@ -8040,7 +8417,11 @@ ${generateTipsItems(tipsItems)}
                     tip: convertMarkdownLinksToHTML(tip.tip)
                 })),
                 ctaUrl: 'https://brite.co/agents',
-                ctaText: 'Partner With Us'
+                ctaText: 'Partner With Us',
+                specialSection: specialSection.enabled ? {
+                    ...specialSection,
+                    image: generatedImages.specialSection?.url || ''
+                } : null
             };
 
             // Call template function with data object
@@ -8105,6 +8486,9 @@ ${generateTipsItems(tipsItems)}
             }
             if (generatedImages.tips?.url?.startsWith('data:image')) {
                 images.tips = generatedImages.tips.url;
+            }
+            if (generatedImages.specialSection?.url?.startsWith('data:image')) {
+                images.specialSection = generatedImages.specialSection.url;
             }
 
             if (Object.keys(images).length === 0) {
@@ -9833,7 +10217,7 @@ ${generateTipsItems(tipsItems)}
 
         function showStep(stepNum) {
             // Auto-save draft at key transitions
-            if ([5, 7, '7b', 10, 12, 13].includes(stepNum)) {
+            if ([5, '5b', 7, '7b', 10, 12, 13].includes(stepNum)) {
                 saveDraft();
             }
 
@@ -9850,11 +10234,20 @@ ${generateTipsItems(tipsItems)}
                     displayGeneratedContent();
                 }
             }
+            if (stepNum === '5b') {
+                // Restore special section UI from saved state when navigating to step 5b
+                restoreSpecialSectionUI();
+            }
             if (stepNum === '7b') {
                 const fcDiv = document.getElementById('fc-headerIntro');
                 if (fcDiv && !fcDiv.innerHTML.trim()) {
                     displayGeneratedContent();
                     populateFinalCopy();
+                }
+                // Show/hide special section final copy based on state
+                const ssWrapper = document.getElementById('fc-specialSection-wrapper');
+                if (ssWrapper) {
+                    ssWrapper.style.display = (specialSection.enabled && specialSection.body) ? 'block' : 'none';
                 }
             }
 
@@ -9863,6 +10256,18 @@ ${generateTipsItems(tipsItems)}
 
             // Don't auto-generate subject lines - wait for user to select tone
             // The tone selection UI will be shown by default
+
+            // Show/hide special section position control in preview
+            if (stepNum == 13 || stepNum === '13') {
+                const posControl = document.getElementById('specialSectionPositionControl');
+                if (posControl) {
+                    posControl.style.display = specialSection.enabled ? 'block' : 'none';
+                    if (specialSection.enabled) {
+                        const previewSelect = document.getElementById('previewPositionSelect');
+                        if (previewSelect) previewSelect.value = specialSection.position || 'after-tips';
+                    }
+                }
+            }
 
             // Pre-populate subject line for Ontraport from selected subject (Step 11)
             if (stepNum === 15) {
@@ -10112,6 +10517,7 @@ ${generateTipsItems(tipsItems)}
                             intro: generatedIntroContent
                         },
                         generatedImages: generatedImages,
+                        specialSection: specialSection,
                         subjectLine: document.getElementById('finalSubjectLine')?.value || '',
                         preheader: document.getElementById('finalPreheader')?.value || '',
                         savedBy: userEmail
@@ -10186,7 +10592,19 @@ ${generateTipsItems(tipsItems)}
                 generatedSpotlightSubheader = gc.spotlightSubheader || '';
                 generatedTipsContent = gc.tips || '';
                 generatedIntroContent = gc.intro || '';
-                generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null };
+                generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null, specialSection: null };
+
+                // Restore special section state
+                if (d.specialSection) {
+                    specialSection = d.specialSection;
+                    // Update toggle checkbox
+                    const toggle = document.getElementById('specialSectionToggle');
+                    if (toggle) toggle.checked = specialSection.enabled;
+                    if (specialSection.enabled) {
+                        toggleSpecialSection();
+                        restoreSpecialSectionUI();
+                    }
+                }
 
                 const subjectEl = document.getElementById('finalSubjectLine');
                 if (subjectEl && d.subjectLine) subjectEl.value = d.subjectLine;
@@ -10263,6 +10681,13 @@ ${generateTipsItems(tipsItems)}
                     dst.innerHTML = src.innerHTML;
                 }
             });
+            // Populate special section if enabled and has body copy
+            if (specialSection.enabled && specialSection.body) {
+                const ssDst = document.getElementById('fc-specialSection');
+                const ssWrapper = document.getElementById('fc-specialSection-wrapper');
+                if (ssDst) ssDst.innerHTML = specialSection.body;
+                if (ssWrapper) ssWrapper.style.display = 'block';
+            }
         }
 
         function saveFinalCopyToState() {
@@ -10294,6 +10719,10 @@ ${generateTipsItems(tipsItems)}
 
                 const tipsHtml = getHtml('fc-tips');
                 if (tipsHtml) generatedTipsContent = tipsHtml;
+
+                // Save special section body from final copy editable div
+                const ssHtml = getHtml('fc-specialSection');
+                if (ssHtml && specialSection.enabled) specialSection.body = ssHtml;
             } catch (e) { console.error('[FinalCopy] Save error:', e); }
         }
 
