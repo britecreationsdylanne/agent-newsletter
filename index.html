@@ -2824,6 +2824,7 @@
 
             <div style="text-align: center; margin: 20px 0;">
                 <button class="btn" onclick="savePreviewEdits()" style="background: #0284c7; padding: 12px 28px; font-size: 15px;">💾 Save Changes to HTML</button>
+                <button class="btn" id="undoEditBtn" onclick="undoPreviewEdits()" style="background: #dc2626; padding: 12px 28px; font-size: 15px; display: none;">↩ Undo</button>
                 <span id="saveStatus" style="margin-left: 10px; font-size: 14px; color: #166534; display: none;">✓ Changes saved!</span>
             </div>
 
@@ -2864,6 +2865,10 @@
                 <div style="padding: 15px; background-color: #f0fdf4; border-radius: 6px; border-left: 4px solid #22c55e; margin-bottom: 20px;">
                     <p style="margin: 0; font-weight: 600; color: #166534;">Subject Line:</p>
                     <p id="ontraportSubjectDisplay" style="margin: 5px 0 0 0; font-size: 16px; color: #272d3f;"></p>
+                </div>
+                <div style="padding: 15px; background-color: #f0f4ff; border-radius: 6px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
+                    <p style="margin: 0; font-weight: 600; color: #1e40af;">Preheader:</p>
+                    <p id="ontraportPreheaderDisplay" style="margin: 5px 0 0 0; font-size: 14px; color: #555;"></p>
                 </div>
                 <!-- Hidden input for pushToOntraport function -->
                 <input type="hidden" id="subject">
@@ -8752,6 +8757,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         // Global variable to store edited HTML
         let savedEditedHTML = null;
+        let previousEditedHTML = null;
 
         // Update the stored HTML after edits
         function updateNewsletterHTML() {
@@ -8773,9 +8779,16 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 return;
             }
 
+            // Store previous state for undo
+            previousEditedHTML = savedEditedHTML || generateNewsletterHTML();
+
             // Store the edited HTML
             savedEditedHTML = preview.innerHTML;
             document.getElementById('htmlCode').textContent = savedEditedHTML;
+
+            // Show undo button
+            const undoBtn = document.getElementById('undoEditBtn');
+            if (undoBtn) undoBtn.style.display = 'inline-block';
 
             // Show success indicator
             const status = document.getElementById('saveStatus');
@@ -8785,6 +8798,21 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             }, 3000);
 
             console.log('[SAVE] Preview edits saved to HTML, length:', savedEditedHTML.length);
+        }
+
+        function undoPreviewEdits() {
+            if (!previousEditedHTML) return;
+            savedEditedHTML = previousEditedHTML;
+            previousEditedHTML = null;
+            const preview = document.getElementById('newsletterPreview');
+            if (preview) preview.innerHTML = savedEditedHTML;
+            document.getElementById('htmlCode').textContent = savedEditedHTML;
+            const undoBtn = document.getElementById('undoEditBtn');
+            if (undoBtn) undoBtn.style.display = 'none';
+            const status = document.getElementById('saveStatus');
+            status.textContent = '\u2713 Changes undone!';
+            status.style.display = 'inline';
+            setTimeout(() => { status.style.display = 'none'; status.textContent = '\u2713 Changes saved!'; }, 3000);
         }
 
         // Get the final HTML (edited or generated)
@@ -10286,6 +10314,11 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
                 if (subjectField) subjectField.value = subjectLine;
                 if (subjectDisplay) subjectDisplay.textContent = subjectLine;
+
+                // Populate preheader
+                const preheaderDisplay = document.getElementById('ontraportPreheaderDisplay');
+                const finalPreheader = document.getElementById('finalPreheader');
+                if (preheaderDisplay) preheaderDisplay.textContent = (finalPreheader && finalPreheader.value) ? finalPreheader.value : '';
             }
         }
 
