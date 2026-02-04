@@ -2824,7 +2824,7 @@
 
             <div style="text-align: center; margin: 20px 0;">
                 <button class="btn" onclick="savePreviewEdits()" style="background: #0284c7; padding: 12px 28px; font-size: 15px;">💾 Save Changes to HTML</button>
-                <button class="btn" id="undoEditBtn" onclick="undoPreviewEdits()" style="background: #dc2626; padding: 12px 28px; font-size: 15px; display: none;">↩ Undo</button>
+                <button class="btn" id="undoEditBtn" onclick="undoPreviewEdits()" style="background: #dc2626; padding: 12px 28px; font-size: 15px;" disabled>↩ Undo</button>
                 <span id="saveStatus" style="margin-left: 10px; font-size: 14px; color: #166534; display: none;">✓ Changes saved!</span>
             </div>
 
@@ -8744,6 +8744,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 el.style.cursor = 'text';
                 el.style.transition = 'background-color 0.2s';
                 el.addEventListener('focus', () => {
+                    pushUndoSnapshot();
                     el.style.backgroundColor = '#fef3c7';
                     el.style.outline = '2px solid #f59e0b';
                 });
@@ -8753,66 +8754,78 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     updateNewsletterHTML();
                 });
             });
+            undoHistory = [];
+            updateUndoButton();
         }
 
         // Global variable to store edited HTML
         let savedEditedHTML = null;
-        let previousEditedHTML = null;
+        let undoHistory = [];
+        const MAX_UNDO = 30;
 
         // Update the stored HTML after edits
         function updateNewsletterHTML() {
             const preview = document.getElementById('newsletterPreview');
             if (!preview) return;
-
             const updatedHTML = preview.innerHTML;
             document.getElementById('htmlCode').textContent = updatedHTML;
             savedEditedHTML = updatedHTML;
+        }
 
-            console.log('[EDIT] HTML updated with edited content');
+        // Snapshot current state before an edit begins
+        function pushUndoSnapshot() {
+            const preview = document.getElementById('newsletterPreview');
+            if (!preview) return;
+            const current = preview.innerHTML;
+            if (undoHistory.length === 0 || undoHistory[undoHistory.length - 1] !== current) {
+                undoHistory.push(current);
+                if (undoHistory.length > MAX_UNDO) undoHistory.shift();
+            }
+            updateUndoButton();
+        }
+
+        // Attach focus listeners to editable elements in the preview
+        function attachUndoListeners() {
+            const preview = document.getElementById('newsletterPreview');
+            if (!preview) return;
+            const editables = preview.querySelectorAll('[contenteditable="true"], p, div[style*="font-size"], h2, h3, h4, h5, td, a');
+            editables.forEach(el => {
+                el.removeEventListener('focus', pushUndoSnapshot);
+                el.addEventListener('focus', pushUndoSnapshot);
+            });
+        }
+
+        function updateUndoButton() {
+            const undoBtn = document.getElementById('undoEditBtn');
+            if (undoBtn) undoBtn.disabled = undoHistory.length === 0;
         }
 
         // Save preview edits (called by Save Changes button)
         function savePreviewEdits() {
             const preview = document.getElementById('newsletterPreview');
-            if (!preview) {
-                alert('No preview to save!');
-                return;
-            }
-
-            // Store previous state for undo
-            previousEditedHTML = savedEditedHTML || generateNewsletterHTML();
-
-            // Store the edited HTML
+            if (!preview) { alert('No preview to save!'); return; }
             savedEditedHTML = preview.innerHTML;
             document.getElementById('htmlCode').textContent = savedEditedHTML;
-
-            // Show undo button
-            const undoBtn = document.getElementById('undoEditBtn');
-            if (undoBtn) undoBtn.style.display = 'inline-block';
-
-            // Show success indicator
             const status = document.getElementById('saveStatus');
+            status.textContent = '\u2713 Changes saved!';
             status.style.display = 'inline';
-            setTimeout(() => {
-                status.style.display = 'none';
-            }, 3000);
-
-            console.log('[SAVE] Preview edits saved to HTML, length:', savedEditedHTML.length);
+            setTimeout(() => { status.style.display = 'none'; }, 3000);
         }
 
         function undoPreviewEdits() {
-            if (!previousEditedHTML) return;
-            savedEditedHTML = previousEditedHTML;
-            previousEditedHTML = null;
+            if (undoHistory.length === 0) return;
+            const previous = undoHistory.pop();
             const preview = document.getElementById('newsletterPreview');
-            if (preview) preview.innerHTML = savedEditedHTML;
-            document.getElementById('htmlCode').textContent = savedEditedHTML;
-            const undoBtn = document.getElementById('undoEditBtn');
-            if (undoBtn) undoBtn.style.display = 'none';
+            if (preview) preview.innerHTML = previous;
+            savedEditedHTML = previous;
+            const htmlCode = document.getElementById('htmlCode');
+            if (htmlCode) htmlCode.textContent = previous;
+            attachUndoListeners();
+            updateUndoButton();
             const status = document.getElementById('saveStatus');
             status.textContent = '\u2713 Changes undone!';
             status.style.display = 'inline';
-            setTimeout(() => { status.style.display = 'none'; status.textContent = '\u2713 Changes saved!'; }, 3000);
+            setTimeout(() => { status.style.display = 'none'; }, 3000);
         }
 
         // Get the final HTML (edited or generated)
