@@ -2088,9 +2088,69 @@
                 <p style="margin: 8px 0 0 36px; font-size: 13px; color: #666;">Add a custom section with your own content, image, and/or CTA</p>
             </div>
 
+            <!-- Export to Google Docs & Email Section -->
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+                <h3 style="margin: 0 0 10px 0; color: #008181;">📄 Export to Google Docs & Email</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Hit export and once complete, you can auto email the exported link to your team.</p>
+
+                <!-- Primary Export Button -->
+                <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4;">
+                    <span id="exportDocsBtnText">📄 Export to Google Docs</span>
+                </button>
+
+                <!-- Export Result (shows after export) -->
+                <div id="exportDocsResult" style="display: none; margin-top: 20px; padding: 15px; border-radius: 6px;"></div>
+
+                <!-- Email Section (hidden until export succeeds) -->
+                <div id="emailAfterExportSection" style="display: none; margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #374151;">✉️ Email the Google Doc Link</h4>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Select recipients:</label>
+
+                        <!-- Team member checkboxes -->
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="john.ortbal@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>John Ortbal (john.ortbal@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Stef Lynn (stef.lynn@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Selena Fragassi (selena.fragassi@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Dylanne Crugnale (dylanne.crugnale@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="ben.glispie@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Ben Glispie (ben.glispie@brite.co)</span>
+                            </label>
+                        </div>
+
+                        <!-- Additional emails input -->
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Additional emails (comma-separated):</label>
+                        <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px; margin-bottom: 15px;">
+
+                        <!-- Send Email Button -->
+                        <button class="btn" onclick="sendExportEmail()" id="sendExportEmailBtn" style="background: #059669;">
+                            <span id="sendExportEmailBtnText">✉️ Send Email</span>
+                        </button>
+
+                        <div id="emailSendResult" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="draftAutoSaveStatus" style="text-align: center; font-size: 13px; color: #999; margin-bottom: 10px;"></div>
+
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep('2-research')">← Back</button>
-                <button class="btn" id="step5NextBtn" onclick="checkBrandGuidelines()">Check Brand Guidelines →</button>
+                <button class="btn" id="step5NextBtn" onclick="populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
             </div>
         </div>
 
@@ -2153,6 +2213,7 @@
                 <div style="margin-top: 8px;">
                     <label style="font-size: 13px; font-weight: 600;">Image Prompt:</label>
                     <textarea id="specialSectionImagePrompt" rows="2" placeholder="Describe the image you want to generate..." style="width: 100%; padding: 8px; font-size: 13px; border: 2px solid #e5e7eb; border-radius: 6px; font-family: Montserrat, sans-serif; box-sizing: border-box; margin-top: 4px;"></textarea>
+                    <button class="btn-secondary btn" onclick="enhanceSpecialImagePrompt()" id="enhancePromptBtn" style="padding: 6px 14px; font-size: 13px; margin-top: 6px;">Enhance Prompt</button>
                 </div>
             </div>
 
@@ -2185,99 +2246,10 @@
 
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep(5)">← Back</button>
-                <button class="btn" onclick="saveSpecialSection(); checkBrandGuidelines();">Check Brand Guidelines →</button>
+                <button class="btn" onclick="saveSpecialSection(); populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
             </div>
         </div>
 
-        <!-- Step 6: Brand Guidelines Check -->
-        <div class="step" id="step6">
-            <div class="loading">
-                <div class="spinner"></div>
-                <h3>Checking Brand Guidelines...</h3>
-                <p style="color: #666;">AI is reviewing content for tone, style, and brand consistency</p>
-            </div>
-        </div>
-
-        <!-- Step 7: Brand Guidelines Results -->
-        <div class="step" id="step7">
-            <h2>✅ Brand Guidelines Check</h2>
-            <p>Your content has been reviewed for brand consistency.</p>
-
-            <div id="brandCheckResults" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <!-- Results will be displayed here -->
-            </div>
-
-            <!-- Export to Google Docs & Email Section -->
-            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                <h3 style="margin: 0 0 10px 0; color: #008181;">📄 Export to Google Docs & Email</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Hit export and once complete, you can auto email the exported link to your team.</p>
-
-                <!-- Primary Export Button -->
-                <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4;">
-                    <span id="exportDocsBtnText">📄 Export to Google Docs</span>
-                </button>
-
-                <!-- Export Result (shows after export) -->
-                <div id="exportDocsResult" style="display: none; margin-top: 20px; padding: 15px; border-radius: 6px;"></div>
-
-                <!-- Email Section (hidden until export succeeds) -->
-                <div id="emailAfterExportSection" style="display: none; margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
-                    <h4 style="margin: 0 0 15px 0; color: #374151;">✉️ Email the Google Doc Link</h4>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Select recipients:</label>
-
-                        <!-- Team member checkboxes -->
-                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="john.ortbal@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>John Ortbal (john.ortbal@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Stef Lynn (stef.lynn@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Selena Fragassi (selena.fragassi@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Dylanne Crugnale (dylanne.crugnale@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="ben.glispie@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Ben Glispie (ben.glispie@brite.co)</span>
-                            </label>
-                        </div>
-
-                        <!-- Additional emails input -->
-                        <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Additional emails (comma-separated):</label>
-                        <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px; margin-bottom: 15px;">
-
-                        <!-- Send Email Button -->
-                        <button class="btn" onclick="sendExportEmail()" id="sendExportEmailBtn" style="background: #059669;">
-                            <span id="sendExportEmailBtnText">✉️ Send Email</span>
-                        </button>
-
-                        <div id="emailSendResult" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 8px; text-align: center;">
-                <button class="btn" onclick="saveDraft(); this.textContent='✓ Draft Saved!'; setTimeout(() => { this.textContent='💾 Save Draft'; }, 2000);" style="background: #22c55e; padding: 10px 30px;">💾 Save Draft</button>
-                <p style="margin: 8px 0 0 0; font-size: 13px; color: #666;">Save your progress to resume later</p>
-            </div>
-
-            <div class="buttons">
-                <button class="btn-secondary btn" onclick="showStep(5)">← Back to Edit</button>
-                <button class="btn-secondary btn" onclick="exportBrandCheckResults()">📋 Export Brand Check</button>
-                <button class="btn" onclick="populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
-            </div>
-        </div>
-
-        <!-- Step 8: Edit Image Prompts -->
         <!-- Step 7b: Final Copy -->
         <div class="step" id="step7b">
             <h2>📝 Final Copy</h2>
@@ -2390,7 +2362,7 @@
             </div>
 
             <div class="buttons">
-                <button class="btn btn-secondary" onclick="showStep(7)">← Back to Brand Check</button>
+                <button class="btn btn-secondary" onclick="showStep(5)">← Back to Edit</button>
                 <button class="btn" onclick="saveFinalCopyToState(); generateImages();">Continue to Image Prompts →</button>
             </div>
         </div>
@@ -2485,7 +2457,7 @@
                 </div>
 
                 <div class="buttons">
-                    <button class="btn-secondary btn" onclick="showStep(7)">← Back</button>
+                    <button class="btn-secondary btn" onclick="showStep('7b')">← Back to Final Copy</button>
                     <button class="btn-secondary btn" onclick="generateImages(true)" style="background: #f59e0b; color: white; border-color: #f59e0b;">🔄 Regenerate Prompts</button>
                     <button class="btn" onclick="generateImagesFromPrompts()">Generate Images →</button>
                 </div>
@@ -4663,8 +4635,9 @@
         }
 
         async function loadTrends() {
-            showStep(6);
-            document.getElementById('trendSeasonText').textContent = `Loading ${selectedSeason} trends...`;
+            showStep(5);
+            const trendSeasonText = document.getElementById('trendSeasonText');
+            if (trendSeasonText) trendSeasonText.textContent = `Loading ${selectedSeason} trends...`;
 
             try {
                 const response = await fetch(`${API_BASE}/api/get-trends`, {
@@ -4687,17 +4660,21 @@
                         }
                     });
                     selectedSeason = data.season; // Update from server
-                    document.getElementById('trendSeasonLabel').textContent = `Seasonal trends for ${selectedSeason}`;
+                    const label = document.getElementById('trendSeasonLabel');
+                    if (label) label.textContent = `Seasonal trends for ${selectedSeason}`;
                     displayTrends();
-                    showStep(7);
+                    showStep(5);
                 } else {
                     throw new Error(data.error || 'Failed to load trends');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('trendError').textContent = `Error: ${error.message}`;
-                document.getElementById('trendError').style.display = 'block';
-                showStep(7);
+                const trendErr = document.getElementById('trendError');
+                if (trendErr) {
+                    trendErr.textContent = `Error: ${error.message}`;
+                    trendErr.style.display = 'block';
+                }
+                showStep(5);
             }
         }
 
@@ -5570,10 +5547,34 @@
                 btn.textContent = 'Design Special Section →';
                 btn.onclick = () => { showStep('5b'); };
             } else {
-                btn.textContent = 'Check Brand Guidelines →';
-                btn.onclick = () => { checkBrandGuidelines(); };
+                btn.textContent = 'Continue to Final Copy →';
+                btn.onclick = () => { populateFinalCopy(); showStep('7b'); };
             }
         }
+
+        // Auto-save on Step 5 (Review & Export) - debounced
+        let draftAutoSaveTimer = null;
+        function setupDraftAutoSave() {
+            const step5 = document.getElementById('step5');
+            if (!step5) return;
+            const editables = step5.querySelectorAll('[contenteditable="true"]');
+            editables.forEach(el => {
+                el.addEventListener('input', () => {
+                    clearTimeout(draftAutoSaveTimer);
+                    const statusEl = document.getElementById('draftAutoSaveStatus');
+                    if (statusEl) statusEl.textContent = 'Saving...';
+                    draftAutoSaveTimer = setTimeout(async () => {
+                        await saveDraft();
+                        if (statusEl) {
+                            statusEl.textContent = '✓ Auto-saved';
+                            setTimeout(() => { statusEl.textContent = ''; }, 3000);
+                        }
+                    }, 2000);
+                });
+            });
+        }
+        // Initialize auto-save listeners after DOM is ready
+        document.addEventListener('DOMContentLoaded', setupDraftAutoSave);
 
         function selectColorScheme(scheme) {
             specialSection.colorScheme = scheme;
@@ -5686,14 +5687,13 @@
                 const response = await fetch(`${API_BASE}/api/generate-images`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sections: { specialSection: finalPrompt },
-                        month: selectedMonth || 'current'
-                    })
+                    body: JSON.stringify({ prompt: finalPrompt, section: 'special_section' })
                 });
                 const data = await response.json();
-                if (data.success && data.images?.specialSection) {
-                    const imgUrl = data.images.specialSection;
+                if (data.success && (data.image_data || data.images?.special_section)) {
+                    const imgUrl = data.image_data
+                        ? `data:image/png;base64,${data.image_data}`
+                        : data.images.special_section;
                     generatedImages.specialSection = { url: imgUrl, prompt: finalPrompt };
                     preview.innerHTML = `<img src="${imgUrl}" style="width:100%;max-width:480px;height:auto;display:block;border-radius:4px;">`;
                 } else {
@@ -5703,6 +5703,30 @@
                 preview.innerHTML = `<p style="color:#dc2626;">Error: ${e.message}</p>`;
             }
             btn.disabled = false; btn.textContent = 'Generate Image';
+        }
+
+        async function enhanceSpecialImagePrompt() {
+            const textarea = document.getElementById('specialSectionImagePrompt');
+            const prompt = textarea?.value?.trim() || '';
+            const title = document.getElementById('specialSectionTitle')?.value?.trim() || '';
+            if (!prompt && !title) { alert('Enter a prompt or section title to enhance.'); return; }
+            const btn = document.getElementById('enhancePromptBtn');
+            btn.disabled = true; btn.textContent = 'Enhancing...';
+            try {
+                const inputPrompt = prompt || `Newsletter image about: ${title}`;
+                const response = await fetch(`${API_BASE}/api/enhance-image-prompt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: inputPrompt })
+                });
+                const data = await response.json();
+                if (data.success && data.enhanced_prompt) {
+                    textarea.value = data.enhanced_prompt;
+                } else {
+                    alert('Enhance failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+            btn.disabled = false; btn.textContent = 'Enhance Prompt';
         }
 
         function handleSpecialImageUpload(event) {
@@ -5892,6 +5916,14 @@
                     spotlight: spotlightExport,
                     agent_tips: generatedTipsContent || ''
                 };
+
+                // Include special section if enabled
+                if (specialSection.enabled) {
+                    content.special_section = {
+                        title: specialSection.title || document.getElementById('specialSectionTitle')?.value || '',
+                        body: specialSection.body || document.getElementById('specialSectionBody')?.innerHTML || ''
+                    };
+                }
 
                 // Format month for title: "2026 January - Agent Newsletter"
                 const monthCapitalized = selectedMonth ? selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1) : '';
@@ -6222,7 +6254,7 @@
 
                 if (!data.success) {
                     alert('Error generating image prompts: ' + (data.error || 'Unknown error'));
-                    showStep(7); // Back to Check Results
+                    showStep('7b'); // Back to Final Copy
                     return;
                 }
 
@@ -6265,7 +6297,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error generating prompts: ' + error.message);
-                showStep(7); // Back to Check Results
+                showStep('7b'); // Back to Final Copy
             }
         }
 
@@ -10258,7 +10290,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         function showStep(stepNum) {
             // Auto-save draft at key transitions
-            if ([5, '5b', 7, '7b', 10, 12, 13].includes(stepNum)) {
+            if ([5, '5b', '7b', 10, 12, 13].includes(stepNum)) {
                 saveDraft();
             }
 
@@ -10363,9 +10395,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 2: 'Research Dashboard',
                 3: 'Researching',
                 4: 'Writing',
-                5: 'Review Content',
-                6: 'Brand Check',
-                7: 'Check Results',
+                5: 'Review & Export',
                 '7b': 'Final Copy',
                 8: 'Edit Prompts',
                 9: 'Generating Images',
@@ -10657,9 +10687,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 const preheaderEl = document.getElementById('finalPreheader');
                 if (preheaderEl && d.preheader) preheaderEl.value = d.preheader;
 
-                // Navigate to the saved step
+                // Navigate to the saved step (redirect removed brand check steps to edit)
                 const savedStep = d.currentStep || 'step1';
-                const stepId = savedStep.replace('step', '');
+                let stepId = savedStep.replace('step', '');
+                if (stepId === '6' || stepId === '7') stepId = '5';
                 showStep(stepId || 1);
                 alert('Draft loaded! You can continue where you left off.');
             } catch (e) {
