@@ -956,30 +956,36 @@ def rewrite_britespot():
             'professional': 'Use formal business language and tone'
         }
 
-        prompt = f"""Rewrite this BriteCo company update for our agent newsletter "The Brite Spot" section.
-
-ORIGINAL CONTENT:
-{content}
+        rewrite_bs_system = """You rewrite BriteCo company updates for the agent newsletter "The Brite Spot" section.
 
 EXAMPLES FROM PAST ISSUES (match this warm, specific voice):
 - "We are happy to announce the winners of our yearly independent agent survey. Three agents won $200 gift cards just for completing the form."
 - "BriteCo will be at three insurance industry trade shows this month -- we'd love to see you and say hello!"
 - "As 2025 winds down, we wanted to wish you and yours a very happy holiday season and thank you for another great year of partnership."
 
+VOICE:
+- Sound warm and genuine -- like writing to a colleague
+- Use contractions naturally (we're, you'll, don't)
+- Include specific details (names, numbers, dates) when available
+- AVOID: "leverage", "robust", "comprehensive", "cutting-edge", "innovative"
+"""
+
+        rewrite_bs_prompt = f"""Rewrite this content for "The Brite Spot" section.
+
+ORIGINAL CONTENT:
+{content}
+
 REQUIREMENTS:
 - Maximum 100 words
 - {tone_instructions.get(tone, 'Professional but approachable')}
 - Focus on value to independent insurance agents
 - Include a subtle call to action
-- Sound warm and genuine -- like writing to a colleague
-- Use contractions naturally (we're, you'll, don't)
-- Include specific details (names, numbers, dates) when available
-- AVOID: "leverage", "robust", "comprehensive", "cutting-edge", "innovative"
 
 Output ONLY the rewritten content, no labels or explanations."""
 
         result = claude_client.generate_content(
-            prompt=prompt,
+            prompt=rewrite_bs_prompt,
+            system_prompt=rewrite_bs_system,
             model="claude-opus-4-5-20251101",
             temperature=0.6,
             max_tokens=200
@@ -1027,65 +1033,55 @@ def rewrite_section():
         if not claude_client:
             return jsonify({'success': False, 'error': 'Claude client not available'}), 500
 
-        # Section-specific prompts based on BriteCo Brief Style Guide
-        section_prompts = {
-            'header_intro': f"""Rewrite this newsletter header intro for "The BriteCo Brief" monthly newsletter.
-
-ORIGINAL CONTENT:
-{content}
-
-STYLE GUIDE REQUIREMENTS:
-- Length: 2-4 sentences (50-80 words)
-- Tone: Warm but professional greeting
-- Reference the current month: {month.capitalize()}
-- Tease 2-3 key topics that would be in the issue
-- Can include a call-to-action if there's a priority item{tone_line}
+        # Shared system prompt for all section rewrites
+        rewrite_system = """You are a professional newsletter copywriter for BriteCo Brief, a monthly newsletter for independent P&C insurance agents.
 
 EXAMPLES FROM PAST ISSUES (match this voice exactly):
 - "Thank you to everyone who completed our annual independent agent survey and vied for the chance to win a $200 gift card. We have now picked our winners. Keep reading to find out if you are a recipient and get the latest on the homeowners insurance crisis that's still wreaking havoc on the industry."
-- "It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history and had an astronomical impact on insurance. We look at how the industry is better prepared today, provide tips on retaining small business customers, and examine the curious world of alien abduction insurance."
+- "It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history and had an astronomical impact on insurance."
 - "From all of us at BriteCo, we are wishing you a very happy holiday season! As you make your list and check it twice, we wanted to remind you of one important item to not forget: filling out our brief Independent Agent Survey."
-- "We want to hear from you about how the homeowners insurance crisis is impacting your business. Fill out our brief Independent Agent Survey and you could be one of three winners to get a $200 gift card."
-- "According to a new J.D. Power study, 47% of homeowners saw premium increases in the past year, the highest jump in over a decade. However, you can protect clients from spikes by switching them to stand-alone policies."
+- "A new J.D. Power study has found that 47% of homeowners saw premium increases in the past year, the highest jump in over a decade. You can protect your clients from a jewelry claim that sparks a higher homeowners premium or non-renewal by switching them from an HO rider/floater to a BriteCo stand-alone policy."
+- "As the homeowners crisis continues to loom, and agencies and consumers are faced with skyrocketing premiums and the risk of non-renewals, we want to know how this directly affects you and your clients."
 
 VOICE:
 - Use contractions naturally (it's, we're, you'll)
 - Be warm and collegial, not stiff
-- Avoid AI-sounding phrases like "In today's ever-evolving landscape"
-- Start with something specific, not generic
+- Sound like a real person writing to colleagues
+- Include specific details (names, numbers, percentages) when available
+- AVOID: "leverage", "robust", "comprehensive", "cutting-edge", "innovative", "in today's ever-evolving landscape", "excited to announce"
 
-Output ONLY the rewritten content, no labels or explanations.""",
-
-            'brite_spot_intro': f"""Rewrite this intro paragraph for "The Brite Spot" section of our agent newsletter.
-
-ORIGINAL CONTENT:
-{content}
-
-EXAMPLES FROM PAST ISSUES (match this warm, direct voice):
-- "We are happy to announce the winners of our yearly independent agent survey. Three agents won $200 gift cards just for completing the form."
-- "A new J.D. Power study has found that 47% of homeowners saw premium increases in the past year, the highest jump in over a decade. You can protect your clients from a jewelry claim that sparks a higher homeowners premium or non-renewal by switching them from an HO rider/floater to a BriteCo stand-alone policy."
-- "As 2025 winds down, we wanted to wish you and yours a very happy holiday season and thank you for another great year of partnership. We value your contributions towards our mission of helping clients protect their jewelry and events."
-- "As the homeowners crisis continues to loom, and agencies and consumers are faced with skyrocketing premiums and the risk of non-renewals, we want to know how this directly affects you and your clients."
-
-STYLE GUIDE REQUIREMENTS:
-- Length: 2-4 sentences
-- Purpose: BriteCo company news, product updates, or promotions
-- Tone: Warm, supportive, promotional (but not pushy)
-- Highlight agent benefits (commissions, ease of use, client value)
-- This appears before bullet points listing specific features/updates{tone_line}
-
-KEY MESSAGING TO EMPHASIZE (if relevant):
+KEY MESSAGING (use when relevant):
 - No claims reporting to CLUE or A-Plus (doesn't impact HO premium)
 - Premium savings of 20-40% over HO riders/floaters
 - AM Best A+ rated carrier
 - 12% recurring commissions
-- 4,500+ agents already appointed
+- 4,500+ agents already appointed"""
 
-VOICE:
-- Use contractions naturally
-- Sound enthusiastic but genuine -- like writing to a colleague
-- Lead with the benefit or a specific fact/stat
-- Avoid corporate-speak like "leverage," "solution," "optimize", "excited to announce"
+        # Section-specific user prompts
+        section_prompts = {
+            'header_intro': f"""Rewrite this newsletter header intro for the {month.capitalize()} edition.
+
+ORIGINAL CONTENT:
+{content}
+
+REQUIREMENTS:
+- Length: 2-4 sentences (50-80 words)
+- Warm but professional greeting
+- Reference the current month or tease key topics
+- Start with something specific, not generic{tone_line}
+
+Output ONLY the rewritten content, no labels or explanations.""",
+
+            'brite_spot_intro': f"""Rewrite this intro paragraph for "The Brite Spot" section.
+
+ORIGINAL CONTENT:
+{content}
+
+REQUIREMENTS:
+- Length: 2-4 sentences
+- Warm, supportive, promotional (but not pushy)
+- Highlight agent benefits (commissions, ease of use, client value)
+- Lead with the benefit or a specific fact/stat{tone_line}
 
 Output ONLY the rewritten content, no labels or explanations.""",
 
@@ -1094,31 +1090,23 @@ Output ONLY the rewritten content, no labels or explanations.""",
 ORIGINAL CONTENT:
 {content}
 
-STYLE GUIDE REQUIREMENTS:
-- Keep as bullet points (one per line, starting with •)
+REQUIREMENTS:
+- Keep as bullet points (one per line, starting with bullet)
 - Each bullet: 1-2 concise sentences
 - Focus on value to independent insurance agents
 - Action-oriented when possible
 - Total: 3-5 bullets{tone_line}
 
-VOICE:
-- Clear and direct
-- Highlight benefits, not just features
-- Use active verbs
-- Avoid jargon
+Output ONLY the rewritten bullets, no labels or explanations.""",
 
-Output ONLY the rewritten bullets (one per line starting with •), no labels or explanations.""",
-
-            'special_section': f"""You are a professional newsletter copywriter for BriteCo, a jewelry and valuables insurance company focused on independent P&C insurance agents.
+            'special_section': f"""Rewrite this special section content.
 
 {content}
 
-GUIDELINES:
+REQUIREMENTS:
 - Keep it concise: 2-3 short paragraphs, under 100 words total
-- Tone: professional, warm, and engaging{tone_line}
+- Professional, warm, and engaging{tone_line}
 - Focus on value to independent insurance agents
-- Use contractions naturally (it's, we're, you'll)
-- Avoid AI-sounding phrases like "In today's ever-evolving landscape"
 - No markdown formatting — output plain text only
 
 Output ONLY the content, no labels or explanations."""
@@ -1130,6 +1118,7 @@ Output ONLY the content, no labels or explanations."""
 
         result = claude_client.generate_content(
             prompt=prompt,
+            system_prompt=rewrite_system,
             model="claude-opus-4-5-20251101",
             temperature=0.6,
             max_tokens=400
@@ -1301,13 +1290,9 @@ Summary: {article.get('snippet', article.get('industry_data', ''))}
         from config.brand_guidelines import get_humanization_guidelines
         humanization_guide = get_humanization_guidelines('spotlight')
 
-        prompt = f"""You are writing the "InsurNews Spotlight" section for BriteCo Brief, a newsletter for independent insurance agents.
+        spotlight_system = f"""You are writing the "InsurNews Spotlight" section for BriteCo Brief, a newsletter for independent insurance agents.
 
 {humanization_guide}
-
-Analyze these {len(articles)} related articles and create a comprehensive, in-depth feature story:
-
-{article_summaries}
 
 === REAL EXAMPLES FROM PAST ISSUES (match this structure, voice, and depth) ===
 
@@ -1338,13 +1323,6 @@ EXAMPLE 2 (structure only) - "20 Years After Hurricane Katrina: The Ongoing Impa
 
 === END EXAMPLES ===
 
-Write a detailed spotlight article with:
-- First line: A compelling headline/subheader (max 15 words) -- make it specific and descriptive, not generic
-- Then 4-5 paragraphs with H3 subheadings that break the story into clear subtopics
-- Each paragraph should be 3-5 sentences with SPECIFIC data, statistics, and DIRECT QUOTES from sources (with attribution)
-- Include hyperlinks to source articles using markdown format [link text](URL)
-- End with "AGENT TAKEAWAY:" followed by 3-4 bullet points of actionable insights
-
 WRITING STYLE (match the examples above):
 - Use active voice and contractions (don't, won't, it's)
 - Include DIRECT QUOTES from named people with their titles (e.g., "Ann Modica, director of credit rating criteria at AM Best, shared...")
@@ -1352,14 +1330,26 @@ WRITING STYLE (match the examples above):
 - Vary sentence length -- mix short punchy sentences with longer explanatory ones
 - Give each subsection an H3 heading that's descriptive and engaging
 - AVOID: "landscape", "navigate", "leverage", "robust", "comprehensive", "various factors", "in today's ever-evolving"
-- Start some sentences with "And" or "But" for natural flow
+- Start some sentences with "And" or "But" for natural flow"""
+
+        spotlight_prompt = f"""Analyze these {len(articles)} related articles and create a comprehensive, in-depth feature story:
+
+{article_summaries}
+
+Write a detailed spotlight article with:
+- First line: A compelling headline/subheader (max 15 words) -- make it specific and descriptive, not generic
+- Then 4-5 paragraphs with H3 subheadings that break the story into clear subtopics
+- Each paragraph should be 3-5 sentences with SPECIFIC data, statistics, and DIRECT QUOTES from sources (with attribution)
+- Include hyperlinks to source articles using markdown format [link text](URL)
+- End with "AGENT TAKEAWAY:" followed by 3-4 bullet points of actionable insights
 
 Target: 500-600 words. Be thorough and factual. Include at least 3-5 hyperlinks to source articles throughout the text.
 
 Output as plain text - headline on first line, then paragraphs separated by blank lines (with H3 subheadings), then agent takeaway section at the end."""
 
         result = claude_client.generate_content(
-            prompt=prompt,
+            prompt=spotlight_prompt,
+            system_prompt=spotlight_system,
             model="claude-opus-4-5-20251101",
             temperature=0.5,
             max_tokens=2000
@@ -1933,43 +1923,17 @@ def research_articles():
         if curious_claims_topic:
             safe_print(f"  - Researching Curious Claims: {curious_claims_topic.get('title', 'Unknown')}")
             claims_style = get_humanization_guidelines('curious_claims')
-            claims_prompt = f"""You are a master storyteller writing for BriteCo Brief, an insurance newsletter for independent agents.
-
-Article: {curious_claims_topic.get('title', 'Unknown')}
-Source: {curious_claims_topic.get('url', 'N/A')}
-Initial Summary: {curious_claims_topic.get('description', '')}
+            claims_system = f"""You are a master storyteller writing the "Curious Claims" section for BriteCo Brief, an insurance newsletter for independent agents.
 
 {claims_style}
 
-Write an engaging STORY about this claims case using this structure:
-
-1. HOOK (1-2 sentences)
-Start with an attention-grabbing opening that draws readers in. Make it dramatic or intriguing.
-
-2. THE SETUP (2-3 sentences)
-Set the scene. Who was involved? What was the situation before the claim?
-
-3. THE INCIDENT (3-4 sentences)
-What happened? Describe the unusual claim event with vivid details. Paint a picture.
-
-4. THE TWIST OR COMPLICATION (2-3 sentences)
-What made this claim interesting or challenging? Was there something unexpected?
-
-5. THE RESOLUTION (2-3 sentences)
-How was it resolved? What did the insurance cover or not cover?
-
-6. AGENT TAKEAWAY (2-3 sentences)
-End with a clear lesson for insurance agents. How can they use this story with clients?
-
-STYLE REQUIREMENTS:
+VOICE & STYLE RULES:
 - Write in a conversational, engaging tone (playful, lightest touch)
 - Use short paragraphs (2-3 sentences each)
 - Make it feel like a story, not a report
-- Include a memorable detail or quote if possible
-- Use SPECIFIC names, places, and dollar amounts (not "a driver" but "Melissa Schlarb")
-- Target: 350-400 words total
-- AVOID: "In an interesting development...", "unique situation", "diverse nature of cases"
 - Include direct quotes from sources when available
+- Use SPECIFIC names, places, and dollar amounts (not "a driver" but "Melissa Schlarb")
+- AVOID: "In an interesting development...", "unique situation", "diverse nature of cases"
 - End with a practical insurance takeaway agents can use
 
 === REAL EXAMPLES FROM PAST ISSUES (match this voice and quality) ===
@@ -1977,28 +1941,37 @@ STYLE REQUIREMENTS:
 EXAMPLE 1 - "It Was Raining Cats & Dogs (Sort Of)":
 A driver in western North Carolina recently got the surprise of her life when she found a surprise guest in her passenger seat. As Melissa Schlarb traversed Route 74 near the Great Smoky Mountains National Park in November, a dead cat came crashing through her windshield. It was the work of a bald eagle flying overhead that either lost its grip or discarded its kill. The driver thankfully escaped injury, but her windshield -- not so much.
 When Schlarb opened the repair claim with her insurance company, it was met with understandable shock and awe. "The first insurance person I spoke to said, 'You're going to be the talk of the whole division. We never hear stories like this,'" she told local ABC affiliate WLOS. Though, at this point, it's still unclear if her claim will be approved due to such a unique scenario.
-According to AAA, "Wildlife doesn't generally carry liability coverage, so any damages will be your responsibility. If you hit an animal, only comprehensive insurance may cover your loss." Yet even while a comprehensive policy may cover an incident like hitting a deer in the road, an animal falling from the sky is whole new territory. "I'm trying to get [insurance] to help me out," Schlarb told WLOS. "So far, I've had to spend quite a bit of money on this."
+According to AAA, "Wildlife doesn't generally carry liability coverage, so any damages will be your responsibility. If you hit an animal, only comprehensive insurance may cover your loss." Yet even while a comprehensive policy may cover an incident like hitting a deer in the road, an animal falling from the sky is whole new territory.
 
 EXAMPLE 2 - "Believe It Or Not: Alien Abduction Insurance Exists":
 The truth is out there, and it comes in the form of this novelty insurance policy. As reported by PropertyCasualty360.com, companies like the St. Lawrence Agency in Florida offer extra-terrestrial coverage, and people are buying it.
-The boutique provider, nicknamed the "UFO Abduction Insurance Agency," has offered this unique coverage since 1987, selling 6,000 policies since 2019 alone. Although the terms are a bit, well, out of this world. For a one-time fee of $20 ($5 more if you want a paper certificate), a customer is protected by $10 million in coverage limits for services such as psychiatric care and double identity. If you can prove you were taken by aliens (with strict documentation guidelines), St. Lawrence Agency will pay $1 a year ... for 10 million years.
-It may sound totally sci-fi, but the firm has completed two successful payouts. According to Axios' UFO heat map, those living in the West and Southwest might want to consider signing up.
+The boutique provider, nicknamed the "UFO Abduction Insurance Agency," has offered this unique coverage since 1987, selling 6,000 policies since 2019 alone. For a one-time fee of $20, a customer is protected by $10 million in coverage limits. If you can prove you were taken by aliens, St. Lawrence Agency will pay $1 a year ... for 10 million years.
 
 EXAMPLE 3 - "Recording Studio Claim Goes Up in Smoke":
-A court has found a musician will receive $2 million for losses incurred during a fire at a Memphis recording studio back in 2015. The ruling comes after a years-long investigation that determined the owner of the studio committed arson in order to get a lucrative payout from the same provider.
-In 2014, a year before the blaze, businessman Christopher Brown and his firm, Tattooed Millionaire, acquired the House of Blues recording studio and took out a policy with Hanover for $10 million. As part of its initial settlement, Brown was paid $2.2 million for losses due to the fire.
-However, in the years since, Brown has been convicted of insurance fraud for forging receipts and filing other erroneous claims and is currently serving a 27-month sentence. The insurer originally tried to use the fraud case as a rationale to recoup payouts -- even from other insured parties like musician John Falls, who were not implicated in the misconduct.
-A federal appeals court wasn't of the same opinion. It affirmed that just because one insured party commits fraud doesn't mean every claimant under the same policy gets penalized, per Claims Journal's report.
-This case serves as a big reminder for agents: If a policy covers multiple interests (owners, tenants, leaseholders), misconduct by one insured may not undo coverage for all.
+A court has found a musician will receive $2 million for losses incurred during a fire at a Memphis recording studio back in 2015. In 2014, businessman Christopher Brown and his firm, Tattooed Millionaire, acquired the House of Blues recording studio and took out a policy with Hanover for $10 million. Brown has since been convicted of insurance fraud and is currently serving a 27-month sentence.
+A federal appeals court affirmed that just because one insured party commits fraud doesn't mean every claimant under the same policy gets penalized. This case serves as a big reminder for agents: If a policy covers multiple interests, misconduct by one insured may not undo coverage for all.
 
-=== END EXAMPLES ===
+=== END EXAMPLES ==="""
 
-CRITICAL: Your output MUST match the conversational, specific, detail-rich storytelling voice shown in these examples. Use real names, real dollar amounts, real quotes, and tell a STORY, not a summary.
+            claims_prompt = f"""Write an engaging STORY about this claims case. Target: 350-400 words.
+
+Article: {curious_claims_topic.get('title', 'Unknown')}
+Source: {curious_claims_topic.get('url', 'N/A')}
+Initial Summary: {curious_claims_topic.get('description', '')}
+
+Structure your story as:
+1. HOOK (1-2 sentences) - attention-grabbing opening
+2. THE SETUP (2-3 sentences) - who, what, where
+3. THE INCIDENT (3-4 sentences) - vivid details
+4. THE TWIST (2-3 sentences) - what made it interesting
+5. THE RESOLUTION (2-3 sentences) - insurance outcome
+6. AGENT TAKEAWAY (2-3 sentences) - lesson for agents
 
 Output the complete story as flowing prose, not as labeled sections."""
 
             claims_research = claude_client.generate_content(
                 prompt=claims_prompt,
+                system_prompt=claims_system,
                 model="claude-opus-4-5-20251101",
                 temperature=0.7,
                 max_tokens=800
@@ -2015,41 +1988,30 @@ Output the complete story as flowing prose, not as labeled sections."""
                 source_name = topic.get('publisher', 'Source')
                 url = topic.get('url', '#')
 
-                roundup_prompt = f"""Create a headline-style news bullet for this insurance story.
+                roundup_system = """You write headline-style news bullets for BriteCo Brief, an insurance newsletter for independent agents.
+
+STYLE: Title Case throughout, one punchy sentence, with specific stats/numbers. Naturally embed a hyperlink.
+
+REAL EXAMPLES (match this exact style):
+"According to a New Survey, 83% of Americans Say They Would Drop Their Insurance Company After One Bad Claims Experience"
+"Auto Insurance Rates Are Falling Due to Fewer Claims, with the National Average Down By 2% and Even Up to 6.6% in Some Markets"
+"Insured Losses for Natural Disasters Hit $108 Billion Globally in 2025, Down from $147 Billion in 2024 Due to Less US Hurricane Landfalls"
+"Most Property Owners Are Now Paying 7% of Their Total Monthly Costs Towards Home Insurance, While Some Areas Like Miami Are Paying 13.1%"
+"As Driverless Cars Become More Common & Human Error Decreases, Expect Fewer Auto Claims -- About 30-40% Less"
+"Small Hail Stones Are Leading to More Home Insurance Claims; Stones Measuring Even 1 Inch Can Cause Damage and Premature Aging of Roofs"
+
+RULES: Title Case. ONE sentence. Include specific numbers/percentages/dollar amounts. Never generic. Embed hyperlink as [Source Name](URL)."""
+
+                roundup_prompt = f"""Write a headline-style news bullet for this article. Embed a hyperlink to [{source_name}]({url}).
 
 Article: {topic.get('title', 'Unknown')}
 Summary: {topic.get('description', '')}
-Source: {source_name}
 
-FORMAT: One sentence, headline-style, with the key stat or detail CAPITALIZED for emphasis and a hyperlink embedded naturally.
-
-=== REAL EXAMPLES FROM PAST ISSUES (match this exact style) ===
-
-"According to a New Survey, 83% of Americans Say They Would Drop Their Insurance Company After One Bad Claims Experience"
-
-"Auto Insurance Rates Are Falling Due to Fewer Claims, with the National Average Down By 2% and Even Up to 6.6% in Some Markets"
-
-"Insured Losses for Natural Disasters Hit $108 Billion Globally in 2025, Down from $147 Billion in 2024 Due to Less US Hurricane Landfalls"
-
-"Most Property Owners Are Now Paying 7% of Their Total Monthly Costs Towards Home Insurance, While Some Areas Like Miami Are Paying 13.1%"
-
-"As Driverless Cars Become More Common & Human Error Decreases, Expect Fewer Auto Claims -- About 30-40% Less"
-
-"Small Hail Stones Are Leading to More Home Insurance Claims; Stones Measuring Even 1 Inch Can Cause Damage and Premature Aging of Roofs"
-
-=== END EXAMPLES ===
-
-CRITICAL RULES:
-- Write in the SAME headline-capitalized style as the examples above (Title Case with Key Stats)
-- Include SPECIFIC numbers, percentages, dollar amounts from the article
-- Keep it to ONE punchy sentence
-- Make it attention-grabbing and specific -- never generic
-- Naturally embed a hyperlink: [Source Name]({url})
-
-Output ONLY the bullet text with the embedded hyperlink, nothing else."""
+Output ONLY the bullet text, nothing else."""
 
                 roundup_result = claude_client.generate_content(
                     prompt=roundup_prompt,
+                    system_prompt=roundup_system,
                     model="claude-opus-4-5-20251101",
                     temperature=0.5,
                     max_tokens=150
@@ -2082,89 +2044,65 @@ Output ONLY the bullet text with the embedded hyperlink, nothing else."""
                 safe_print(f"  - Generating Agent Advantage from: {topic.get('title', 'Unknown')[:50]}...")
 
                 tips_style = get_humanization_guidelines('agent_advantage')
-                tips_prompt = f"""Create the "Agent Advantage" section for an insurance agent newsletter based on this article.
-
-ARTICLE TO DRAW FROM:
-Title: {topic.get('title', 'Unknown')}
-Summary: {topic.get('description', topic.get('snippet', ''))}
-Source: {topic.get('publisher', 'Industry Source')}
+                tips_system = f"""You write the "Agent Advantage" section for BriteCo Brief, an insurance newsletter for independent agents. This section provides practical, actionable tips based on industry articles.
 
 {tips_style}
 
-=== REAL EXAMPLES FROM PAST ISSUES (match this voice and quality exactly) ===
+VOICE & STYLE:
+- Lead the intro with a SPECIFIC statistic or finding, name the source
+- Use direct quotes from sources (with attribution)
+- Use contractions naturally (don't, won't, you'll)
+- Keep tips practical -- something an agent can DO TODAY
+- Include real numbers, percentages, and dollar amounts
+- Sound like a knowledgeable colleague giving advice, not a textbook
+- AVOID: "It is important to maintain...", "Leverage your relationships...", "Navigate the landscape...", "In today's evolving..."
+
+=== REAL EXAMPLES (match this voice exactly) ===
 
 EXAMPLE 1 - "3 Tips for Staying in Business with Small Business":
 [INTRO]
-When J.D. Power released its 2025 U.S. Small Commercial Insurance Study, one big statistic stood out: Only 55% of small business owners said they "definitely will" renew insurance policies with their current provider. Just a year ago, that threshold was 61%. Why the change? Higher premiums may be to blame, but there are other key factors insurers need to consider to retain small business clients. Here are three tips from Insurance Journal.
+When J.D. Power released its 2025 U.S. Small Commercial Insurance Study, one big statistic stood out: Only 55% of small business owners said they "definitely will" renew insurance policies with their current provider. Just a year ago, that threshold was 61%.
 
 [TIPS]
-1. **Good service is key.** "Insurers that communicate well and provide a higher level of service can make huge inroads toward keeping customers," J.D. Power's Stephen Crewdson shared with the publication. Their report shows that 16% of respondents noted customer service as more important than premium quotes, coverage options, and reputation.
+1. **Good service is key.** "Insurers that communicate well and provide a higher level of service can make huge inroads toward keeping customers," J.D. Power's Stephen Crewdson shared. Their report shows that 16% of respondents noted customer service as more important than premium quotes.
 
-2. **Communication is a must.** Crewdson also suggested "a huge onus on insurers to bolster their outreach around rate increases." Clients want to "completely understand" why prices went up, and agents who can explain it well will retain their business.
+2. **Communication is a must.** Crewdson also suggested "a huge onus on insurers to bolster their outreach around rate increases." Clients want to "completely understand" why prices went up.
 
-3. **Individualized attention is a game-changer.** The report also indicates that insurers who know the nuances of a customer's specific business or industry have a significant advantage, leading to a 37% year-over-year renewal rate.
+3. **Individualized attention is a game-changer.** Insurers who know the nuances of a customer's specific business have a significant advantage, leading to a 37% year-over-year renewal rate.
 
 EXAMPLE 2 - "Making the Right Call: 5 Ways to Better Connect with Clients":
 [INTRO]
 Policyholders often feel blindsided when a claim is denied, especially if the first notice is a formal letter they didn't anticipate receiving. Claims Journal says a simple phone call before the letter goes out can dramatically reduce misunderstandings, mistrust, and even lawsuits.
 
 [TIPS]
-1. **Advocate for Pre-Letter Calls.** Encourage claims partners to call insureds before sending formal denial or non-renewal letters. This helps manage expectations and avoid surprises.
-
+1. **Advocate for Pre-Letter Calls.** Encourage claims partners to call insureds before sending formal denial or non-renewal letters.
 2. **Prepare Clients.** Let clients know a call may be coming. Encourage them to stay calm, ask questions, and share any new facts.
+3. **Anticipate Common Objections.** Help insureds understand decisions by addressing typical concerns like "Why isn't this covered?"
 
-3. **Coach Adjusters (When Possible).** Suggest they speak clearly, show empathy, avoid jargon, and document the call thoroughly.
+=== END EXAMPLES ==="""
 
-4. **Anticipate Common Objections.** Help insureds understand decisions by addressing typical concerns like "Why isn't this covered?" or "This isn't fair."
+                tips_prompt = f"""Create the "Agent Advantage" section based on this article.
 
-5. **Stay Involved.** Ask to be included or kept in the loop during these key communications to help preserve trust.
+ARTICLE:
+Title: {topic.get('title', 'Unknown')}
+Summary: {topic.get('description', topic.get('snippet', ''))}
+Source: {topic.get('publisher', 'Industry Source')}
 
-EXAMPLE 3 - "Put out the Welcome Mat: 3 Tips for Insuring Landlords":
+OUTPUT FORMAT:
 [INTRO]
-As rental properties continue to take a stronghold in the American housing market -- now accounting for more than 45 million dwellings -- insuring landlords will become a necessary and lucrative part of the business. However, the reality is that many landlords are not fully knowledgeable about their distinct coverage needs. Here's how you can edge ahead and keep these clients happy, courtesy of Property Casualty 360.
+2-4 sentences with a specific stat hook from the article.
 
 [TIPS]
-1. **Provide guidance on full coverage needs.** Many landlords assume their homeowners policy covers their rental properties or will under-insure the building to reduce costs, which leaves them exposed to risk. Give them the full picture of what protections they really need and how you may be able to help them save money.
-
-2. **Promote your insights.** You can become a trusted ally by showing your knowledge of the space in marketing materials. For example, provide case studies and real examples on social media.
-
-3. **Check in around high-volume times.** Unlike more stable homeowners, landlords deal with more transient tenants and may need to make more policy changes throughout the year. Two key times to check in are around Memorial Day and Labor Day, which are busy moving seasons.
-
-=== END EXAMPLES ===
-
-FORMAT REQUIREMENTS:
-1. Start with an INTRO PARAGRAPH (2-4 sentences) that hooks with a specific stat or finding from the article, names the source, and sets up why this matters
-2. Then provide 3-5 numbered tips, each with:
-   - A BOLD MINI-TITLE (short, punchy, action-oriented)
-   - 1-3 supporting sentences with SPECIFIC stats, quotes, and practical advice
-3. Focus on sales, retention, or operations improvements
-
-WRITING STYLE (match the examples above):
-- Lead the intro with a SPECIFIC statistic or finding from the article
-- Use direct quotes from sources (with attribution)
-- Use contractions naturally (don't, won't, you'll)
-- Keep tips practical -- something an agent can DO TODAY
-- Include real numbers, percentages, and dollar amounts
-- AVOID: "It is important to maintain...", "Leverage your relationships...", "Navigate the landscape...", "In today's evolving..."
-- Sound like a knowledgeable colleague giving advice, not a textbook
-
-OUTPUT FORMAT (use this exact structure):
-[INTRO]
-Your intro paragraph here (2-4 sentences with a specific stat hook).
-
-[TIPS]
-1. **Bold Mini-Title Here.**
+1. **Bold Mini-Title.**
 Supporting sentences with specifics and quotes.
 
-2. **Another Bold Mini-Title.**
-More supporting detail for this actionable advice.
-
-(continue for 3-5 tips total)
+(3-5 tips total)
 
 Output ONLY the intro and tips in this format, nothing else."""
 
                 tips_result = claude_client.generate_content(
                     prompt=tips_prompt,
+                    system_prompt=tips_system,
                     model="claude-opus-4-5-20251101",
                     temperature=0.6,
                     max_tokens=800
@@ -2262,9 +2200,7 @@ def generate_content():
             sections['introduction'] = intro_content
         else:
             print("  - Generating Introduction...")
-            intro_prompt = f"""You are the copywriter for BriteCo Brief, a newsletter for independent insurance agents.
-
-Write a brief, welcoming introduction for the {month.capitalize()} edition.
+            intro_system = f"""You are the copywriter for BriteCo Brief, a newsletter for independent insurance agents.
 
 === REAL EXAMPLES FROM PAST ISSUES (match this conversational voice) ===
 
@@ -2278,20 +2214,26 @@ Write a brief, welcoming introduction for the {month.capitalize()} edition.
 
 === END EXAMPLES ===
 
-Requirements:
-- 2-4 sentences, maximum 75 words
+VOICE:
 - Conversational and warm -- like writing to a colleague
-- Reference something specific happening this month or tease specific content inside
 - Use contractions naturally (it's, we're, you'll)
 - AVOID generic openings like "Welcome to another edition" or "In this month's newsletter"
 - Start with something SPECIFIC -- a stat, a question, a timely reference, or a direct address
+- AVOID: "landscape", "navigate", "leverage", "robust", "comprehensive", "in today's ever-evolving"
 
-{style_guide}
+{style_guide}"""
+
+            intro_prompt = f"""Write a brief, welcoming introduction for the {month.capitalize()} edition.
+
+Requirements:
+- 2-4 sentences, maximum 75 words
+- Reference something specific happening this month or tease specific content inside
 
 Output ONLY the introduction text, no labels or formatting."""
 
             intro_result = claude_client.generate_content(
                 prompt=intro_prompt,
+                system_prompt=intro_system,
                 model="claude-opus-4-5-20251101",
                 temperature=0.7,
                 max_tokens=150
@@ -2302,9 +2244,7 @@ Output ONLY the introduction text, no labels or formatting."""
         if brite_spot_topic:
             print("  - Generating Brite Spot...")
             brite_spot_style = get_humanization_guidelines('brite_spot')
-            brite_spot_prompt = f"""You are the copywriter for BriteCo Brief newsletter.
-
-Write the "Brite Spot" section about: {brite_spot_topic}
+            brite_spot_system = f"""You are the copywriter for BriteCo Brief newsletter, writing the "Brite Spot" section.
 
 === REAL EXAMPLES FROM PAST ISSUES (match this warm, direct voice) ===
 
@@ -2322,27 +2262,30 @@ EXAMPLE 4 - HO Crisis + BriteCo Benefits:
 
 === END EXAMPLES ===
 
-Requirements:
-- Maximum 100 words
-- Warm, supportive, genuine tone -- not corporate or salesy
-- Lead with the benefit to agents or a specific fact/stat
-- Include a clear call to action
-- Use "we" and "you" frequently
-- Be SPECIFIC about benefits (exact percentages, features, names)
-
 {brite_spot_style}
 
-WRITING STYLE:
+VOICE:
+- Warm, supportive, genuine tone -- not corporate or salesy
 - Use contractions naturally (we're, you'll, don't)
 - Sound like a real person writing to colleagues -- warm but professional
+- Use "we" and "you" frequently
 - AVOID: "leverage", "robust", "comprehensive", "cutting-edge", "innovative", "excited to announce"
 
-{style_guide}
+{style_guide}"""
+
+            brite_spot_prompt = f"""Write the "Brite Spot" section about: {brite_spot_topic}
+
+Requirements:
+- Maximum 100 words
+- Lead with the benefit to agents or a specific fact/stat
+- Include a clear call to action
+- Be SPECIFIC about benefits (exact percentages, features, names)
 
 Output ONLY the Brite Spot text, no title or labels."""
 
             brite_spot_result = claude_client.generate_content(
                 prompt=brite_spot_prompt,
+                system_prompt=brite_spot_system,
                 model="claude-opus-4-5-20251101",
                 temperature=0.6,
                 max_tokens=200
@@ -2353,29 +2296,12 @@ Output ONLY the Brite Spot text, no title or labels."""
         if research.get('curious_claims'):
             print("  - Writing Curious Claims section...")
             claims_style = get_humanization_guidelines('curious_claims')
-            claims_prompt = f"""You are the copywriter for BriteCo Brief newsletter.
-
-## RESEARCH BRIEFING
-{research['curious_claims']}
-
-Write the "Curious Claims" section based on this research.
-
-Requirements:
-- EXACTLY 2-3 distinct paragraphs (each wrapped in <p> tags)
-- Each paragraph should be 2-4 sentences
-- Maximum 200 words total
-- Playful, storytelling tone (puns and wordplay welcome)
-- Use vivid, specific details (names, places, dollar amounts)
-- End with a practical takeaway for agents
-
-PARAGRAPH STRUCTURE:
-- Paragraph 1: The hook and main story setup (who, what, where)
-- Paragraph 2: The twist/absurdity/resolution (what happened, why it's memorable)
-- Paragraph 3 (optional): Brief agent takeaway or amusing insight
+            claims_gen_system = f"""You are the copywriter for BriteCo Brief newsletter, writing the "Curious Claims" section.
 
 {claims_style}
 
-WRITING STYLE:
+VOICE:
+- Playful, storytelling tone (puns and wordplay welcome)
 - Open with an attention-grabbing hook
 - Use specific details: "Melissa Schlarb traversed Route 74..." not "A driver was traveling..."
 - Include telling details that make the story memorable
@@ -2397,7 +2323,24 @@ EXAMPLE 2:
 
 CRITICAL: Write like the examples above -- specific names, dollar amounts, quotes from real sources, and a storytelling voice. NEVER write generic summaries.
 
-{style_guide}
+{style_guide}"""
+
+            claims_gen_prompt = f"""## RESEARCH BRIEFING
+{research['curious_claims']}
+
+Write the "Curious Claims" section based on this research.
+
+Requirements:
+- EXACTLY 2-3 distinct paragraphs (each wrapped in <p> tags)
+- Each paragraph should be 2-4 sentences
+- Maximum 200 words total
+- Use vivid, specific details (names, places, dollar amounts)
+- End with a practical takeaway for agents
+
+PARAGRAPH STRUCTURE:
+- Paragraph 1: The hook and main story setup (who, what, where)
+- Paragraph 2: The twist/absurdity/resolution (what happened, why it's memorable)
+- Paragraph 3 (optional): Brief agent takeaway or amusing insight
 
 OUTPUT FORMAT:
 <p>First paragraph content here...</p>
@@ -2407,7 +2350,8 @@ OUTPUT FORMAT:
 Output ONLY the paragraphs in <p> tags, no title or labels."""
 
             claims_result = claude_client.generate_content(
-                prompt=claims_prompt,
+                prompt=claims_gen_prompt,
+                system_prompt=claims_gen_system,
                 model="claude-opus-4-5-20251101",
                 temperature=0.65,
                 max_tokens=400
