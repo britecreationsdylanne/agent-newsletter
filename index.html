@@ -10807,6 +10807,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 const preheaderEl = document.getElementById('finalPreheader');
                 if (preheaderEl && d.preheader) preheaderEl.value = d.preheader;
 
+                // Populate UI with stored content so it doesn't need to be regenerated
+                displayGeneratedContent();  // Populate review step divs
+                populateFinalCopy();         // Populate final copy divs
+
                 // Navigate to the saved step (redirect removed brand check steps to edit)
                 const savedStep = d.currentStep || 'step1';
                 let stepId = savedStep.replace('step', '');
