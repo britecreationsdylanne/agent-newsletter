@@ -2240,7 +2240,55 @@ Output ONLY the introduction text, no labels or formatting."""
             )
             sections['introduction'] = intro_result['content'].strip()
 
-        # Generate Brite Spot (max 100 words)
+        # Generate Brite Spot (max 100 words) - auto-generate if no topic provided
+        if not brite_spot_topic:
+            print("  - Auto-generating Brite Spot (no topic provided)...")
+            brite_spot_style = get_humanization_guidelines('brite_spot')
+            auto_bs_system = f"""You are the copywriter for BriteCo Brief newsletter, writing the "Brite Spot" section.
+
+=== REAL EXAMPLES FROM PAST ISSUES (match this warm, direct voice) ===
+
+"As 2025 winds down, we wanted to wish you and yours a very happy holiday season and thank you for another great year of partnership. We value your contributions towards our mission of helping clients protect their jewelry and events. Here's to another great year working together in 2026!"
+
+"We want to prioritize the next wave of POS integrations and need your help to do so. Please fill out our quick and easy form and tell us your preferred point-of-sale system. When you do, you'll be entered to win a $50 gift card!"
+
+"A new J.D. Power study has found that 47% of homeowners saw premium increases in the past year, the highest jump in over a decade. You can protect your clients from a jewelry claim that sparks a higher homeowners premium or non-renewal by switching them from an HO rider/floater to a BriteCo stand-alone policy."
+
+=== END EXAMPLES ===
+
+{brite_spot_style}
+
+VOICE:
+- Warm, genuine, not corporate or salesy
+- Use "we" and "you" frequently
+- AVOID: "leverage", "robust", "innovative", "excited to announce"
+
+{style_guide}"""
+
+            auto_bs_prompt = f"""Write a brief "Brite Spot" section for the {month.capitalize()} edition thanking agents for their partnership and highlighting BriteCo's value.
+
+Requirements:
+- Maximum 75 words
+- Warm, genuine tone
+- Mention partnership and supporting clients
+- Include a subtle call to action
+
+Output ONLY the text, no title or labels."""
+
+            try:
+                auto_bs_result = claude_client.generate_content(
+                    prompt=auto_bs_prompt,
+                    system_prompt=auto_bs_system,
+                    model="claude-opus-4-5-20251101",
+                    temperature=0.6,
+                    max_tokens=150
+                )
+                sections['brite_spot'] = auto_bs_result['content'].strip()
+                print(f"    Auto-generated Brite Spot: {len(sections['brite_spot'].split())} words")
+            except Exception as e:
+                print(f"    Error auto-generating Brite Spot: {e}")
+                sections['brite_spot'] = f"Thank you for your continued partnership with BriteCo. We're committed to helping you and your clients protect what matters most. Reach out to your BriteCo rep anytime — we're here to help."
+
         if brite_spot_topic:
             print("  - Generating Brite Spot...")
             brite_spot_style = get_humanization_guidelines('brite_spot')
