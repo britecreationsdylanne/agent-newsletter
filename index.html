@@ -4858,6 +4858,10 @@
                     // Display content
                     displayGeneratedContent();
 
+                    // Auto-save immediately after content generation
+                    await saveDraft();
+                    console.log('[Draft] Auto-saved after content generation');
+
                     // Move to review step
                     showStep(5); // Review Content step
                 } else {
@@ -10712,6 +10716,12 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                             tips: generatedTipsContent,
                             intro: generatedIntroContent
                         },
+                        selectedArticles: {
+                            claims: selectedClaims,
+                            spotlight: selectedSpotlight,
+                            roundup: selectedRoundup,
+                            tips: selectedTips
+                        },
                         generatedImages: generatedImages,
                         specialSection: specialSection,
                         subjectLine: document.getElementById('finalSubjectLine')?.value || '',
@@ -10789,6 +10799,13 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 generatedTipsContent = gc.tips || '';
                 generatedIntroContent = gc.intro || '';
                 generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null, specialSection: null };
+
+                // Restore selected articles
+                const sa = d.selectedArticles || {};
+                selectedClaims = sa.claims || null;
+                selectedSpotlight = sa.spotlight || null;
+                selectedRoundup = sa.roundup || [];
+                selectedTips = sa.tips || null;
 
                 // Restore special section state
                 if (d.specialSection) {
