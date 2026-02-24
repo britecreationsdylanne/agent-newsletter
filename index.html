@@ -10723,6 +10723,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                             tips: selectedTips
                         },
                         generatedImages: generatedImages,
+                        imagePrompts: basePrompts,  // Save image prompts
                         specialSection: specialSection,
                         subjectLine: document.getElementById('finalSubjectLine')?.value || '',
                         preheader: document.getElementById('finalPreheader')?.value || '',
@@ -10806,6 +10807,17 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 selectedSpotlight = sa.spotlight || null;
                 selectedRoundup = sa.roundup || [];
                 selectedTips = sa.tips || null;
+
+                // Restore image prompts and prevent regeneration
+                if (d.imagePrompts && Object.keys(d.imagePrompts).length > 0) {
+                    basePrompts = d.imagePrompts;
+                    promptsAlreadyGenerated = true;
+                    // Populate the prompt textareas
+                    if (basePrompts.briteSpot) document.getElementById('briteSpotImagePromptText').value = basePrompts.briteSpot;
+                    if (basePrompts.claims) document.getElementById('claimsImagePromptText').value = basePrompts.claims;
+                    if (basePrompts.spotlight) document.getElementById('spotlightImagePromptText').value = basePrompts.spotlight;
+                    if (basePrompts.tips) document.getElementById('tipsImagePromptText').value = basePrompts.tips;
+                }
 
                 // Restore special section state
                 if (d.specialSection) {
