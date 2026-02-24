@@ -5003,8 +5003,18 @@
             const claimsEl = document.getElementById('review-claims');
             if (claimsEl) {
                 const claimsContent = cleanContentForDisplay(generatedClaimsContent);
-                const sourceLink = makeSourceLink(selectedClaims?.url || selectedClaims?.source_url);
-                claimsEl.innerHTML = `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${selectedClaims?.title || 'Curious Claims'}</h4>${claimsContent}${sourceLink}`;
+                let sourceSection = '';
+                if (selectedClaims && selectedClaims.url) {
+                    const articleTitle = selectedClaims.title || 'Source Article';
+                    sourceSection = `
+                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #666;">
+                            <strong>Source:</strong><br>
+                            <a href="${selectedClaims.url}" target="_blank" style="color: #018181; text-decoration: underline; display: block; margin-top: 5px;">${articleTitle}</a>
+                            <code style="display: block; margin-top: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #374151; word-break: break-all; user-select: all;">${selectedClaims.url}</code>
+                        </div>
+                    `;
+                }
+                claimsEl.innerHTML = `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${selectedClaims?.title || 'Curious Claims'}</h4>${claimsContent}${sourceSection}`;
             }
 
             // 4. News Roundup
@@ -5019,6 +5029,22 @@
                     roundupHtml += `<li>${styleLinksBlue(generatedRoundupContent) || 'News roundup content'}</li>`;
                 }
                 roundupHtml += '</ul>';
+
+                // Add source URLs for News Roundup
+                if (selectedRoundup && selectedRoundup.length > 0) {
+                    roundupHtml += '<div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #666;"><strong>Sources:</strong><br>';
+                    selectedRoundup.forEach((art, idx) => {
+                        const title = art.title || art.headline || `Article ${idx + 1}`;
+                        roundupHtml += `
+                            <div style="margin: 8px 0;">
+                                <a href="${art.url}" target="_blank" style="color: #018181; text-decoration: underline; display: block;">${title}</a>
+                                <code style="display: block; margin-top: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #374151; word-break: break-all; user-select: all;">${art.url}</code>
+                            </div>
+                        `;
+                    });
+                    roundupHtml += '</div>';
+                }
+
                 roundupEl.innerHTML = roundupHtml;
             }
 
@@ -5027,7 +5053,18 @@
             if (spotlightEl) {
                 const spotlightData = generatedSpotlightContent || spotlightGeneratedContent || null;
                 const spotlightContent = cleanContentForDisplay(spotlightData);
-                spotlightEl.innerHTML = `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${generatedSpotlightSubheader || 'Industry Spotlight'}</h4>${spotlightContent}`;
+                let spotlightSourceSection = '';
+                if (selectedSpotlight && selectedSpotlight.url) {
+                    const articleTitle = selectedSpotlight.title || selectedSpotlight.headline || 'Source Article';
+                    spotlightSourceSection = `
+                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #666;">
+                            <strong>Source:</strong><br>
+                            <a href="${selectedSpotlight.url}" target="_blank" style="color: #018181; text-decoration: underline; display: block; margin-top: 5px;">${articleTitle}</a>
+                            <code style="display: block; margin-top: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #374151; word-break: break-all; user-select: all;">${selectedSpotlight.url}</code>
+                        </div>
+                    `;
+                }
+                spotlightEl.innerHTML = `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${generatedSpotlightSubheader || 'Industry Spotlight'}</h4>${spotlightContent}${spotlightSourceSection}`;
             }
 
             // 6. Agent Advantage
@@ -5052,6 +5089,19 @@
                 } else {
                     tipsHtml = `<p>${styleLinksBlue(generatedTipsContent) || 'Agent tips content'}</p>`;
                 }
+
+                // Add source URL for Agent Advantage
+                if (selectedTips && selectedTips.url) {
+                    const articleTitle = selectedTips.title || selectedTips.headline || 'Source Article';
+                    tipsHtml += `
+                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #666;">
+                            <strong>Source:</strong><br>
+                            <a href="${selectedTips.url}" target="_blank" style="color: #018181; text-decoration: underline; display: block; margin-top: 5px;">${articleTitle}</a>
+                            <code style="display: block; margin-top: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #374151; word-break: break-all; user-select: all;">${selectedTips.url}</code>
+                        </div>
+                    `;
+                }
+
                 tipsEl.innerHTML = tipsHtml;
             }
         }
