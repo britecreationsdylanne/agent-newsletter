@@ -10835,8 +10835,13 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
                 // Navigate to the saved step (redirect removed brand check steps to edit)
                 const savedStep = d.currentStep || 'step1';
-                let stepId = savedStep.replace('step', '');
+                let stepId = String(savedStep).replace('step', '');
                 if (stepId === '6' || stepId === '7') stepId = '5';
+                // If content exists but step is too early, jump to review
+                const gc = d.generatedContent || {};
+                if (Object.keys(gc).length > 0 && (stepId === '1' || stepId === '2' || stepId === '3' || stepId === '4' || parseInt(stepId) <= 4)) {
+                    stepId = '5';
+                }
                 showStep(stepId || 1);
                 alert('Draft loaded! You can continue where you left off.');
             } catch (e) {
