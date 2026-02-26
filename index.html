@@ -10406,8 +10406,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
         }
 
         function showStep(stepNum) {
-            // Auto-save draft at key transitions
-            if ([5, '5b', '7b', 10, 12, 13].includes(stepNum)) {
+            // Auto-save draft at key transitions (skip during draft load to prevent overwrites)
+            if (!isLoadingDraft && [5, '5b', '7b', 10, 12, 13].includes(stepNum)) {
                 saveDraft();
             }
 
@@ -10774,11 +10774,14 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             }
         }
 
+        let isLoadingDraft = false;
+
         async function loadDraft(filename) {
             try {
+                isLoadingDraft = true; // Prevent auto-save from overwriting during load
                 const response = await fetch(`${API_BASE}/api/load-draft?file=${encodeURIComponent(filename)}`);
                 const data = await response.json();
-                if (!data.success || !data.draft) { alert('Failed to load draft'); return; }
+                if (!data.success || !data.draft) { isLoadingDraft = false; alert('Failed to load draft'); return; }
                 const d = data.draft;
 
                 selectedMonth = d.month || '';
@@ -10843,8 +10846,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     stepId = '5';
                 }
                 showStep(stepId || 1);
+                isLoadingDraft = false;
                 alert('Draft loaded! You can continue where you left off.');
             } catch (e) {
+                isLoadingDraft = false;
                 console.error('[Draft] Load failed:', e);
                 alert('Failed to load draft: ' + e.message);
             }
