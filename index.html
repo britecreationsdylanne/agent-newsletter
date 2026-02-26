@@ -2152,7 +2152,7 @@
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep('2-research')">← Back</button>
                 <button class="btn" onclick="saveDraft(); this.textContent='✓ Saved'; setTimeout(() => this.textContent='💾 Save Draft', 2000);" style="background: #22c55e; padding: 10px 30px;">💾 Save Draft</button>
-                <button class="btn" id="step5NextBtn" onclick="populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
+                <button class="btn" id="step5NextBtn" onclick="syncContentFromDOM(); populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
             </div>
         </div>
 
@@ -2248,7 +2248,7 @@
 
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep(5)">← Back</button>
-                <button class="btn" onclick="saveSpecialSection(); populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
+                <button class="btn" onclick="saveSpecialSection(); syncContentFromDOM(); populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
             </div>
         </div>
 
@@ -2364,8 +2364,8 @@
             </div>
 
             <div class="buttons">
-                <button class="btn btn-secondary" onclick="showStep(5)">← Back to Edit</button>
-                <button class="btn" onclick="saveFinalCopyToState(); generateImages();">Continue to Image Prompts →</button>
+                <button class="btn btn-secondary" onclick="syncContentFromDOM(); displayGeneratedContent(); showStep(5);">← Back to Edit</button>
+                <button class="btn" onclick="syncContentFromDOM(); generateImages();">Continue to Image Prompts →</button>
             </div>
         </div>
 
@@ -5632,7 +5632,7 @@
                 btn.onclick = () => { showStep('5b'); };
             } else {
                 btn.textContent = 'Continue to Final Copy →';
-                btn.onclick = () => { populateFinalCopy(); showStep('7b'); };
+                btn.onclick = () => { syncContentFromDOM(); populateFinalCopy(); showStep('7b'); };
             }
         }
 
@@ -5951,6 +5951,9 @@
         let lastExportedYear = '';
 
         async function exportToGoogleDocs() {
+            // Sync any edits from active contenteditable divs before exporting
+            syncContentFromDOM();
+
             const btn = document.getElementById('exportDocsBtn');
             const btnText = document.getElementById('exportDocsBtnText');
             const resultDiv = document.getElementById('exportDocsResult');
@@ -5985,18 +5988,13 @@
 
                 console.log('[Export] Spotlight export data:', spotlightExport);
 
-                // Get BriteCo Brief Intro - check Step 5 box first, then saved content, then Step 1 input
-                const headerIntroExport = (document.getElementById('fc-headerIntro') || document.getElementById('review-headerIntro'))?.innerHTML
-                    || headerIntroContent
-                    || document.getElementById('headerIntroInput')?.value?.trim()
-                    || '';
-
+                // All global vars are now synced from DOM by syncContentFromDOM() above
                 const content = {
-                    header_intro: headerIntroExport,
+                    header_intro: headerIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '',
                     introduction: generatedIntroContent || '',
-                    brite_spot: (document.getElementById('fc-britespot') || document.getElementById('review-britespot'))?.innerHTML || briteSpotRewritten || briteSpotContent || '',
-                    curious_claims: (document.getElementById('fc-claims') || document.getElementById('review-claims'))?.innerHTML || generatedClaimsContent || '',
-                    roundup: (document.getElementById('fc-roundup') || document.getElementById('review-roundup'))?.innerHTML || generatedRoundupContent || '',
+                    brite_spot: briteSpotRewritten || briteSpotContent || '',
+                    curious_claims: generatedClaimsContent || '',
+                    roundup: generatedRoundupContent || '',
                     spotlight: spotlightExport,
                     agent_tips: generatedTipsContent || ''
                 };
@@ -10689,6 +10687,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         async function saveDraft() {
             if (!selectedMonth) return;
+            // Sync any edits from active contenteditable divs before saving
+            syncContentFromDOM();
             try {
                 const userEmail = (window.AUTH_USER && window.AUTH_USER.email) || 'unknown';
                 const resp = await fetch(`${API_BASE}/api/save-draft`, {
@@ -10904,6 +10904,50 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
         // FINAL COPY - Populate & Save
         // ============================================================
 
+        // Sync edited content from DOM back into global state variables
+        // Reads from whichever page is active: review step (review-*) or final copy (fc-*)
+        function syncContentFromDOM() {
+            const activeStep = document.querySelector('.step.active')?.id || '';
+            const onFinalCopy = (activeStep === 'step7b');
+            const prefix = onFinalCopy ? 'fc-' : 'review-';
+
+            const getHtml = id => {
+                const el = document.getElementById(id);
+                return el ? el.innerHTML.trim() : '';
+            };
+
+            const introHtml = getHtml(prefix + 'headerIntro');
+            if (introHtml) headerIntroContent = introHtml;
+
+            const bsHtml = getHtml(prefix + 'britespot');
+            if (bsHtml) {
+                briteSpotContent = bsHtml;
+                briteSpotRewritten = bsHtml;
+                generatedBriteSpotContent = bsHtml;
+            }
+
+            const claimsHtml = getHtml(prefix + 'claims');
+            if (claimsHtml) generatedClaimsContent = claimsHtml;
+
+            const roundupHtml = getHtml(prefix + 'roundup');
+            if (roundupHtml) generatedRoundupContent = roundupHtml;
+
+            const spotlightHtml = getHtml(prefix + 'spotlight');
+            if (spotlightHtml) {
+                generatedSpotlightContent = spotlightHtml;
+                spotlightGeneratedContent = spotlightHtml;
+            }
+
+            const tipsHtml = getHtml(prefix + 'tips');
+            if (tipsHtml) generatedTipsContent = tipsHtml;
+
+            // Special section body
+            const ssHtml = getHtml(onFinalCopy ? 'fc-specialSection' : 'specialSectionBody');
+            if (ssHtml && specialSection.enabled) specialSection.body = ssHtml;
+
+            console.log('[Sync] State updated from DOM (step: ' + activeStep + ', prefix: ' + prefix + ')');
+        }
+
         function populateFinalCopy() {
             // Copy content from review-* divs (Step 5) into fc-* divs (Step 7b)
             const sections = ['headerIntro', 'britespot', 'claims', 'roundup', 'spotlight', 'tips'];
@@ -10924,39 +10968,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
         }
 
         function saveFinalCopyToState() {
-            try {
-                // Read from fc-* editable divs and save to global state variables
-                const getHtml = id => { const el = document.getElementById(id); return el ? el.innerHTML.trim() : ''; };
-
-                const introHtml = getHtml('fc-headerIntro');
-                if (introHtml) headerIntroContent = introHtml;
-
-                const bsHtml = getHtml('fc-britespot');
-                if (bsHtml) {
-                    briteSpotContent = bsHtml;
-                    briteSpotRewritten = bsHtml;
-                    generatedBriteSpotContent = bsHtml;
-                }
-
-                const claimsHtml = getHtml('fc-claims');
-                if (claimsHtml) generatedClaimsContent = claimsHtml;
-
-                const roundupHtml = getHtml('fc-roundup');
-                if (roundupHtml) generatedRoundupContent = roundupHtml;
-
-                const spotlightHtml = getHtml('fc-spotlight');
-                if (spotlightHtml) {
-                    generatedSpotlightContent = spotlightHtml;
-                    spotlightGeneratedContent = spotlightHtml;
-                }
-
-                const tipsHtml = getHtml('fc-tips');
-                if (tipsHtml) generatedTipsContent = tipsHtml;
-
-                // Save special section body from final copy editable div
-                const ssHtml = getHtml('fc-specialSection');
-                if (ssHtml && specialSection.enabled) specialSection.body = ssHtml;
-            } catch (e) { console.error('[FinalCopy] Save error:', e); }
+            syncContentFromDOM();
         }
 
         function downloadAllImages() {
