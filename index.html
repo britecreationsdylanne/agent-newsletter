@@ -4851,13 +4851,11 @@
 
                     // Display content
                     displayGeneratedContent();
+                    showStep(5); // Review Content step
 
-                    // Auto-save immediately after content generation
+                    // Auto-save after content generation (after showStep so currentStep = 5)
                     await saveDraft();
                     console.log('[Draft] Auto-saved after content generation');
-
-                    // Move to review step
-                    showStep(5); // Review Content step
                 } else {
                     throw new Error(data.error || 'Failed to generate content');
                 }
