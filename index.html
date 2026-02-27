@@ -2849,7 +2849,7 @@
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="goBackToPrompts()">← Back to Prompts</button>
                 <button class="btn-secondary btn" onclick="generateImagesFromPrompts(true)" style="background: #f59e0b; color: white; border-color: #f59e0b;">🔄 Regenerate All Images</button>
-                <button class="btn" onclick="showSubjectLineStep()">Continue to Subject Line →</button>
+                <button class="btn" onclick="showSubjectLineStep()">Continue to Footer CTA →</button>
             </div>
         </div>
 
@@ -2933,7 +2933,7 @@
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="goBackToMemeConceptWithState()">← Back to Concept</button>
                 <button class="btn-secondary btn" onclick="proceedToMemeGeneration(true)" style="background: #f59e0b; color: white; border-color: #f59e0b;">🔄 Regenerate Meme</button>
-                <button class="btn" onclick="showStep(12)">Continue to Subject Line →</button>
+                <button class="btn" onclick="showStep(12)">Continue to Footer CTA →</button>
             </div>
         </div>
 
@@ -5345,7 +5345,7 @@
                 // Populate sandbox
                 populateSandbox('spotlight', spotlightData);
                 const sbSpotlight = document.getElementById('sandbox-spotlight');
-                if (sbSpotlight) sbSpotlight.style.display = sections.length > 0 ? '' : 'none';
+                if (sbSpotlight) sbSpotlight.style.display = spotlightData ? '' : 'none';
             }
 
             // 6. Agent Advantage - intro + dynamic tips + sources
@@ -8028,6 +8028,7 @@
                 preheader = '',
                 subjectLine = 'The BriteCo Brief',
                 introText = '',
+                introTextHero = '',
                 introCTAUrl = 'https://brite.co/agents',
                 introCTAText = 'Learn More',
                 briteSpotText = '',
