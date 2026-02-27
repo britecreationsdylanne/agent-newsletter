@@ -2264,64 +2264,6 @@
                 <p style="margin: 8px 0 0 36px; font-size: 13px; color: #666;">Add a custom section with your own content, image, and/or CTA</p>
             </div>
 
-            <!-- Export to Google Docs & Email Section -->
-            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                <h3 style="margin: 0 0 10px 0; color: #008181;">📄 Export to Google Docs & Email</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Hit export and once complete, you can auto email the exported link to your team.</p>
-
-                <!-- Primary Export Button -->
-                <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4;">
-                    <span id="exportDocsBtnText">📄 Export to Google Docs</span>
-                </button>
-
-                <!-- Export Result (shows after export) -->
-                <div id="exportDocsResult" style="display: none; margin-top: 20px; padding: 15px; border-radius: 6px;"></div>
-
-                <!-- Email Section (hidden until export succeeds) -->
-                <div id="emailAfterExportSection" style="display: none; margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
-                    <h4 style="margin: 0 0 15px 0; color: #374151;">✉️ Email the Google Doc Link</h4>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Select recipients:</label>
-
-                        <!-- Team member checkboxes -->
-                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="john.ortbal@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>John Ortbal (john.ortbal@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Stef Lynn (stef.lynn@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Selena Fragassi (selena.fragassi@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Dylanne Crugnale (dylanne.crugnale@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="ben.glispie@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Ben Glispie (ben.glispie@brite.co)</span>
-                            </label>
-                        </div>
-
-                        <!-- Additional emails input -->
-                        <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Additional emails (comma-separated):</label>
-                        <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px; margin-bottom: 15px;">
-
-                        <!-- Send Email Button -->
-                        <button class="btn" onclick="sendExportEmail()" id="sendExportEmailBtn" style="background: #059669;">
-                            <span id="sendExportEmailBtnText">✉️ Send Email</span>
-                        </button>
-
-                        <div id="emailSendResult" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px;"></div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Subject Line & Preheader Section -->
             <hr style="border: none; border-top: 2px solid #e5e7eb; margin: 30px 0;">
             <div class="content-section">
@@ -2394,6 +2336,64 @@
                             <option value="exclusive">Exclusive & Premium</option>
                         </select>
                         <button class="btn-secondary btn" onclick="regenerateSubjectLines()" style="width: 100%;">Regenerate with New Tone</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export to Google Docs & Email Section -->
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; margin-top: 30px; border: 2px solid #e5e7eb;">
+                <h3 style="margin: 0 0 10px 0; color: #008181;">📄 Export to Google Docs & Email</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Hit export and once complete, you can auto email the exported link to your team.</p>
+
+                <!-- Primary Export Button -->
+                <button class="btn" onclick="exportToGoogleDocs()" id="exportDocsBtn" style="background: #4285f4;">
+                    <span id="exportDocsBtnText">📄 Export to Google Docs</span>
+                </button>
+
+                <!-- Export Result (shows after export) -->
+                <div id="exportDocsResult" style="display: none; margin-top: 20px; padding: 15px; border-radius: 6px;"></div>
+
+                <!-- Email Section (hidden until export succeeds) -->
+                <div id="emailAfterExportSection" style="display: none; margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #374151;">✉️ Email the Google Doc Link</h4>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px;">Select recipients:</label>
+
+                        <!-- Team member checkboxes -->
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="john.ortbal@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>John Ortbal (john.ortbal@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Stef Lynn (stef.lynn@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Selena Fragassi (selena.fragassi@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Dylanne Crugnale (dylanne.crugnale@brite.co)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="docRecipientCheckbox" value="ben.glispie@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Ben Glispie (ben.glispie@brite.co)</span>
+                            </label>
+                        </div>
+
+                        <!-- Additional emails input -->
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Additional emails (comma-separated):</label>
+                        <input type="text" id="docAdditionalEmails" placeholder="email1@example.com, email2@example.com" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px; margin-bottom: 15px;">
+
+                        <!-- Send Email Button -->
+                        <button class="btn" onclick="sendExportEmail()" id="sendExportEmailBtn" style="background: #059669;">
+                            <span id="sendExportEmailBtnText">✉️ Send Email</span>
+                        </button>
+
+                        <div id="emailSendResult" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px;"></div>
                     </div>
                 </div>
             </div>
@@ -2507,6 +2507,14 @@
         <div class="step" id="step7b">
             <h2>📝 Final Copy</h2>
             <p class="step-description">Review and edit all content before generating images. This is the source of truth.</p>
+
+            <!-- Subject Line & Preheader Summary -->
+            <div style="background: #f0fdf4; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #bbf7d0;">
+                <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600; color: #166534;">Subject Line:</p>
+                <p style="margin: 0 0 10px 0; font-size: 15px; color: #272d3f;" id="fc-subjectLineDisplay">—</p>
+                <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600; color: #166534;">Preheader:</p>
+                <p style="margin: 0; font-size: 14px; color: #666;" id="fc-preheaderDisplay">—</p>
+            </div>
 
             <div class="content-section">
                 <h3>BriteCo Brief Intro</h3>
@@ -6320,6 +6328,8 @@
                         title: title,
                         month: monthCapitalized,
                         year: year,
+                        subject_line: document.getElementById('finalSubjectLine')?.value || '',
+                        preheader: document.getElementById('finalPreheader')?.value || '',
                         send_email: false,  // Don't send email during export
                         recipients: []
                     })
@@ -11458,6 +11468,14 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
         }
 
         function populateFinalCopy() {
+            // Subject line & preheader display
+            const slEl = document.getElementById('finalSubjectLine');
+            const phEl = document.getElementById('finalPreheader');
+            const slDisplay = document.getElementById('fc-subjectLineDisplay');
+            const phDisplay = document.getElementById('fc-preheaderDisplay');
+            if (slDisplay && slEl) slDisplay.textContent = slEl.value || '—';
+            if (phDisplay && phEl) phDisplay.textContent = phEl.value || '—';
+
             // Simple fields
             copyField('review-headerIntro', 'fc-headerIntro');
             copyField('review-britespot-paragraph', 'fc-britespot-paragraph');
