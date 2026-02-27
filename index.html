@@ -2723,7 +2723,7 @@
                 </div>
 
                 <div class="buttons">
-                    <button class="btn-secondary btn" onclick="showStep('7b')">← Back to Final Copy</button>
+                    <button class="btn-secondary btn" onclick="syncContentFromDOM(); populateFinalCopy(); showStep('7b')">← Back to Final Copy</button>
                     <button class="btn-secondary btn" onclick="generateImages(true)" style="background: #f59e0b; color: white; border-color: #f59e0b;">🔄 Regenerate Prompts</button>
                     <button class="btn" onclick="generateImagesFromPrompts()">Generate Images →</button>
                 </div>
@@ -5272,21 +5272,29 @@
                 return text;
             }
 
-            // 1. BriteCo Brief Intro (unchanged - single field)
+            // 1. BriteCo Brief Intro (use AI-generated intro as fallback)
             const headerIntroEl = document.getElementById('review-headerIntro');
             if (headerIntroEl) {
-                const headerIntroDisplay = headerIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
-                headerIntroEl.innerHTML = headerIntroDisplay || '<p style="color:#999;">No intro content</p>';
+                const headerIntroDisplay = headerIntroContent || generatedIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
+                headerIntroEl.innerHTML = styleLinksBlue(headerIntroDisplay) || '<p style="color:#999;">No intro content</p>';
             }
 
-            // 2. Brite Spot - paragraph + dynamic bullets
+            // 2. Brite Spot - paragraph + dynamic bullets (use AI-generated as fallback)
             const bsParagraphEl = document.getElementById('review-britespot-paragraph');
             if (bsParagraphEl) {
-                bsParagraphEl.innerHTML = styleLinksBlue(briteSpotContent || '');
+                let bsText = briteSpotContent || '';
+                if (!bsText && generatedBriteSpotContent) {
+                    bsText = typeof generatedBriteSpotContent === 'string' ? generatedBriteSpotContent : (generatedBriteSpotContent.paragraph || generatedBriteSpotContent.body || generatedBriteSpotContent.content || '');
+                }
+                bsParagraphEl.innerHTML = styleLinksBlue(bsText);
             }
-            const bsBullets = briteSpotBullets || [];
+            let bsBullets = briteSpotBullets || [];
+            if (bsBullets.length === 0 && generatedBriteSpotContent) {
+                const gbs = typeof generatedBriteSpotContent === 'object' ? generatedBriteSpotContent : null;
+                if (gbs && Array.isArray(gbs.bullets)) bsBullets = gbs.bullets;
+            }
             if (bsBullets.length > 0) {
-                renderDynamicBullets('review-', 'britespot', bsBullets.map(b => ({text: b})));
+                renderDynamicBullets('review-', 'britespot', bsBullets.map(b => ({text: typeof b === 'string' ? b : (b.text || b.bullet || '')})));
             }
 
             // 3. Curious Claims - title + copy + sources
@@ -5333,17 +5341,47 @@
                 const subheaderEl = document.getElementById('review-spotlight-subheader');
                 if (subheaderEl) subheaderEl.textContent = generatedSpotlightSubheader || selectedSpotlight?.title || 'Industry Spotlight';
 
+                // Helper: parse markdown string with # headers into sections array
+                function parseMarkdownSections(text) {
+                    if (!text || typeof text !== 'string') return [];
+                    const parts = text.split(/^#{1,3}\s+/m).filter(p => p.trim());
+                    if (parts.length <= 1) return [{title: '', body: styleLinksBlue(text.replace(/^#{1,3}\s+.*$/m, '').trim())}];
+                    const lines = text.split('\n');
+                    const result = [];
+                    let currentTitle = '', currentBody = '';
+                    lines.forEach(line => {
+                        const headerMatch = line.match(/^#{1,3}\s+(.+)/);
+                        if (headerMatch) {
+                            if (currentTitle || currentBody.trim()) result.push({title: currentTitle, body: styleLinksBlue(currentBody.trim())});
+                            currentTitle = headerMatch[1].trim();
+                            currentBody = '';
+                        } else {
+                            currentBody += line + '\n';
+                        }
+                    });
+                    if (currentTitle || currentBody.trim()) result.push({title: currentTitle, body: styleLinksBlue(currentBody.trim())});
+                    return result;
+                }
+
                 let sections = [];
                 if (spotlightData && typeof spotlightData === 'object' && !Array.isArray(spotlightData)) {
-                    if (spotlightData.h3s && Array.isArray(spotlightData.h3s)) {
+                    if (spotlightData.h3s && Array.isArray(spotlightData.h3s) && spotlightData.h3s.length > 0) {
                         sections = spotlightData.h3s;
+                    } else if (spotlightData.body && typeof spotlightData.body === 'string' && spotlightData.body.includes('#')) {
+                        sections = parseMarkdownSections(spotlightData.body);
                     } else if (spotlightData.body) {
-                        sections = [{body: spotlightData.body}];
+                        sections = [{title: '', body: styleLinksBlue(spotlightData.body)}];
+                    } else if (spotlightData.content && typeof spotlightData.content === 'string' && spotlightData.content.includes('#')) {
+                        sections = parseMarkdownSections(spotlightData.content);
                     } else if (spotlightData.content) {
-                        sections = [{body: spotlightData.content}];
+                        sections = [{title: '', body: styleLinksBlue(spotlightData.content)}];
                     }
                 } else if (typeof spotlightData === 'string') {
-                    sections = [{body: spotlightData}];
+                    if (spotlightData.includes('#')) {
+                        sections = parseMarkdownSections(spotlightData);
+                    } else {
+                        sections = [{title: '', body: styleLinksBlue(spotlightData)}];
+                    }
                 }
                 renderDynamicSpotlightSections('review-', sections);
                 renderSourceUrls('review-spotlight-sources', null, selectedSpotlight);
@@ -6275,33 +6313,22 @@
             emailSection.style.display = 'none';
 
             try {
-                // Gather all newsletter content from editable boxes (user may have edited)
-                const spotlightBox = document.getElementById('fc-spotlight') || document.getElementById('review-spotlight');
-                let spotlightExport = null;
-
-                // Try Final Copy or Review editable div first
-                if (spotlightBox && spotlightBox.innerHTML && spotlightBox.innerHTML.trim() !== '' && !spotlightBox.innerHTML.includes('Content not available')) {
-                    spotlightExport = {
-                        subheader: generatedSpotlightSubheader || (spotlightGeneratedContent?.subheader || 'Industry Spotlight'),
-                        body: spotlightBox.innerHTML
-                    };
-                }
-                // Fall back to Step 4 generated content
-                if (!spotlightExport && generatedSpotlightContent) {
-                    spotlightExport = generatedSpotlightContent;
-                }
-                // Fall back to Step 2B generated content
-                if (!spotlightExport && spotlightGeneratedContent) {
-                    spotlightExport = spotlightGeneratedContent;
+                // Read spotlight from labeled sub-fields (synced by syncContentFromDOM above)
+                let spotlightExport = generatedSpotlightContent || spotlightGeneratedContent || null;
+                // Read the subheader from DOM in case user edited it
+                const shEl = document.getElementById('review-spotlight-subheader');
+                if (shEl && shEl.textContent.trim()) {
+                    if (!spotlightExport || typeof spotlightExport === 'string') spotlightExport = {};
+                    spotlightExport.subheader = shEl.textContent.trim();
                 }
 
                 console.log('[Export] Spotlight export data:', spotlightExport);
 
                 // All global vars are now synced from DOM by syncContentFromDOM() above
                 const content = {
-                    header_intro: headerIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '',
+                    header_intro: headerIntroContent || generatedIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '',
                     introduction: generatedIntroContent || '',
-                    brite_spot: briteSpotRewritten || briteSpotContent || '',
+                    brite_spot: briteSpotContent || (typeof generatedBriteSpotContent === 'string' ? generatedBriteSpotContent : '') || '',
                     curious_claims: generatedClaimsContent || '',
                     roundup: generatedRoundupContent || '',
                     spotlight: spotlightExport,
@@ -7995,6 +8022,9 @@
         // Generate newsletter HTML
         function showNewsletterPreview() {
             try {
+                // Sync any edits from active contenteditable divs
+                syncContentFromDOM();
+
                 // Get subject line and preheader
                 const subjectLine = document.getElementById('finalSubjectLine')?.value || 'Your Monthly Newsletter';
                 const preheader = document.getElementById('finalPreheader')?.value || 'Latest insights inside';

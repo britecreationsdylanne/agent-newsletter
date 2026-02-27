@@ -3436,7 +3436,19 @@ def export_to_docs():
             if isinstance(spotlight, dict):
                 if spotlight.get('subheader'):
                     add_text(spotlight['subheader'])
-                if spotlight.get('body'):
+                if spotlight.get('h3s') and isinstance(spotlight['h3s'], list):
+                    for h3 in spotlight['h3s']:
+                        if isinstance(h3, dict):
+                            title = h3.get('title', h3.get('h3', ''))
+                            if title:
+                                # Strip markdown # headers
+                                import re
+                                title = re.sub(r'^#{1,3}\s+', '', title)
+                                add_text(title, bold=True)
+                            body = h3.get('body', h3.get('content', ''))
+                            if body:
+                                add_rich_text(body)
+                elif spotlight.get('body'):
                     add_rich_text(spotlight['body'])
             else:
                 add_rich_text(str(spotlight))
@@ -3447,8 +3459,17 @@ def export_to_docs():
             if isinstance(tips, dict) and tips.get('intro'):
                 add_rich_text(tips['intro'])
                 for i, tip in enumerate(tips.get('tips', []), 1):
-                    tip_text = tip.get('tip', tip) if isinstance(tip, dict) else tip
-                    add_rich_text(f"{i}. {tip_text}")
+                    if isinstance(tip, dict):
+                        tip_title = tip.get('title', '')
+                        tip_body = tip.get('tip', tip.get('content', ''))
+                        if tip_title:
+                            add_text(f"{i}. {tip_title}", bold=True)
+                            if tip_body:
+                                add_rich_text(tip_body)
+                        else:
+                            add_rich_text(f"{i}. {tip_body}")
+                    else:
+                        add_rich_text(f"{i}. {tip}")
             elif isinstance(tips, list):
                 for i, tip in enumerate(tips, 1):
                     tip_text = tip.get('tip', tip) if isinstance(tip, dict) else tip
