@@ -11270,6 +11270,17 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     if (basePrompts.tips) document.getElementById('tipsImagePromptText').value = basePrompts.tips;
                 }
 
+                // Restore image flags to prevent regeneration
+                if (generatedImages && (generatedImages.briteSpot || generatedImages.claims || generatedImages.spotlight || generatedImages.tips)) {
+                    imagesAlreadyGenerated = true;
+                    // Display saved images so they show on step 10
+                    displayImages();
+                }
+                if (generatedImages && generatedImages.meme) {
+                    memeConceptGenerated = true;
+                    memeImageGenerated = true;
+                }
+
                 // Restore special section state
                 if (d.specialSection) {
                     specialSection = d.specialSection;
@@ -11370,10 +11381,14 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     populateFinalCopy();
                 }
 
-                // Navigate to the saved step (redirect removed brand check steps to edit)
+                // Navigate to the saved step (redirect loading/transitional steps)
                 const savedStep = d.currentStep || 'step1';
                 let stepId = String(savedStep).replace('step', '');
                 if (stepId === '6' || stepId === '7') stepId = '5';
+                // Redirect loading/transitional steps to their result step
+                if (stepId === '9') stepId = imagesAlreadyGenerated ? '10' : '8'; // image generation loading → show images or prompts
+                if (stepId === '10_4' || stepId === '10_5') stepId = '10'; // meme loading → show images
+                if (stepId === '14') stepId = '13'; // test email → preview
                 // If content exists but step is too early, jump to review
                 const gcCheck = d.generatedContent || {};
                 if (Object.keys(gcCheck).length > 0 && (stepId === '1' || stepId === '2' || stepId === '3' || stepId === '4' || parseInt(stepId) <= 4)) {
