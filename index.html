@@ -5113,16 +5113,19 @@
             if (!container) return;
             container.innerHTML = '';
             sections.forEach((s, idx) => {
+                const titleId = prefix + 'spotlight-section-' + idx + '-title';
                 const contentId = prefix + 'spotlight-section-' + idx + '-content';
                 const item = document.createElement('div');
                 item.className = 'dynamic-field-item';
                 item.dataset.sectionIndex = idx;
                 item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                    '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
                     '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Content</label>' +
                     '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
                     '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
                     '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
                 container.appendChild(item);
+                document.getElementById(titleId).textContent = s.title || s.h3 || '';
                 document.getElementById(contentId).innerHTML = s.body || s.content || s.text || '';
             });
         }
@@ -5190,10 +5193,12 @@
             const container = document.getElementById(prefix + 'spotlight-sections-container');
             if (!container) return;
             const idx = container.querySelectorAll('.dynamic-field-item').length;
+            const titleId = prefix + 'spotlight-section-' + idx + '-title';
             const contentId = prefix + 'spotlight-section-' + idx + '-content';
             const item = document.createElement('div');
             item.className = 'dynamic-field-item';
             item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
                 '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Content</label>' +
                 '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
                 '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
@@ -8764,8 +8769,14 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             const spotlightContainer = document.getElementById('fc-spotlight-sections-container') || document.getElementById('review-spotlight-sections-container');
             if (spotlightContainer) {
                 spotlightContainer.querySelectorAll('.dynamic-field-item').forEach(item => {
-                    const el = item.querySelector('.editable[contenteditable]');
-                    if (el && el.innerHTML.trim()) spotlightH2s.push({ body: el.innerHTML.trim() });
+                    const titleEl = item.querySelector('.editable-sm');
+                    const contentEl = item.querySelector('.editable:not(.editable-sm)');
+                    if (contentEl && contentEl.innerHTML.trim()) {
+                        spotlightH2s.push({
+                            title: titleEl ? titleEl.textContent.trim() : '',
+                            body: contentEl.innerHTML.trim()
+                        });
+                    }
                 });
             }
             if (spotlightH2s.length === 0 && generatedSpotlightContent?.h3s) {
@@ -11064,14 +11075,16 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 });
             }
 
-            // Spotlight sections
+            // Spotlight sections (title + content)
             const spotlightContainer = document.getElementById(prefix + 'spotlight-sections-container');
             if (spotlightContainer) {
                 const items = spotlightContainer.querySelectorAll('.dynamic-field-item');
                 reviewHTML['spotlight-section-count'] = items.length;
                 items.forEach((item, idx) => {
-                    const el = item.querySelector('.editable');
-                    reviewHTML['spotlight-section-' + idx] = el ? el.innerHTML : '';
+                    const titleEl = item.querySelector('.editable-sm');
+                    const contentEl = item.querySelector('.editable:not(.editable-sm)');
+                    reviewHTML['spotlight-section-' + idx + '-title'] = titleEl ? titleEl.textContent : '';
+                    reviewHTML['spotlight-section-' + idx + '-content'] = contentEl ? contentEl.innerHTML : '';
                 });
             }
 
@@ -11270,11 +11283,16 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         renderDynamicBullets('review-', 'roundup', bullets);
                     }
 
-                    // Spotlight sections
+                    // Spotlight sections (title + content)
                     const spotlightSectionCount = savedHTML['spotlight-section-count'] || 0;
                     if (spotlightSectionCount > 0) {
                         const sections = [];
-                        for (let i = 0; i < spotlightSectionCount; i++) sections.push({body: savedHTML['spotlight-section-' + i] || ''});
+                        for (let i = 0; i < spotlightSectionCount; i++) {
+                            sections.push({
+                                title: savedHTML['spotlight-section-' + i + '-title'] || savedHTML['spotlight-section-' + i] || '',
+                                body: savedHTML['spotlight-section-' + i + '-content'] || savedHTML['spotlight-section-' + i] || ''
+                            });
+                        }
                         renderDynamicSpotlightSections('review-', sections);
                     }
 
@@ -11442,9 +11460,15 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             if (spotlightContainer) {
                 const items = spotlightContainer.querySelectorAll('.dynamic-field-item');
                 const h3s = [];
-                items.forEach((item, idx) => {
-                    const el = item.querySelector('.editable');
-                    if (el && el.innerHTML.trim()) h3s.push({body: el.innerHTML.trim()});
+                items.forEach((item) => {
+                    const titleEl = item.querySelector('.editable-sm');
+                    const contentEl = item.querySelector('.editable:not(.editable-sm)');
+                    if (contentEl && contentEl.innerHTML.trim()) {
+                        h3s.push({
+                            title: titleEl ? titleEl.textContent.trim() : '',
+                            body: contentEl.innerHTML.trim()
+                        });
+                    }
                 });
                 if (h3s.length > 0) generatedSpotlightContent = {subheader: spotlightSubheader, h3s: h3s};
             }
@@ -11516,14 +11540,18 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 renderDynamicBullets('fc-', 'roundup', bullets);
             }
 
-            // Spotlight sections: read from review, render into fc
+            // Spotlight sections: read from review, render into fc (title + content)
             const spotlightContainer = document.getElementById('review-spotlight-sections-container');
             if (spotlightContainer) {
                 const items = spotlightContainer.querySelectorAll('.dynamic-field-item');
                 const sections = [];
                 items.forEach(item => {
-                    const el = item.querySelector('.editable');
-                    if (el) sections.push({body: el.innerHTML});
+                    const titleEl = item.querySelector('.editable-sm');
+                    const contentEl = item.querySelector('.editable:not(.editable-sm)');
+                    sections.push({
+                        title: titleEl ? titleEl.textContent.trim() : '',
+                        body: contentEl ? contentEl.innerHTML : ''
+                    });
                 });
                 renderDynamicSpotlightSections('fc-', sections);
             }
