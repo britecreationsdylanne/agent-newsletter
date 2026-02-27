@@ -559,6 +559,7 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             margin: 20px 0;
+            position: relative;
         }
 
         @media (max-width: 1200px) {
@@ -909,6 +910,141 @@
         .editable:focus {
             outline: none;
             border-color: #018181;
+        }
+
+        .editable-sm {
+            min-height: 36px;
+            padding: 8px 12px;
+        }
+
+        .field-group {
+            margin-bottom: 12px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .source-urls {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .source-urls a {
+            color: #018181;
+            text-decoration: underline;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .source-urls code {
+            display: block;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #374151;
+            word-break: break-all;
+            user-select: all;
+        }
+
+        .dynamic-fields-container {
+            margin-top: 8px;
+        }
+
+        .dynamic-field-item {
+            padding: 10px 0;
+            border-bottom: 1px dashed #e5e7eb;
+            position: relative;
+        }
+
+        .dynamic-field-item:last-child {
+            border-bottom: none;
+        }
+
+        .dynamic-remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 14px;
+            cursor: pointer;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .dynamic-remove-btn:hover {
+            background: #fca5a5;
+        }
+
+        .sandbox-preview {
+            background: #fefce8;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #374151;
+            position: relative;
+        }
+
+        .sandbox-preview h4 {
+            font-weight: 700;
+            margin: 12px 0 4px;
+            font-size: 15px;
+        }
+
+        .sandbox-preview .sandbox-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .sandbox-preview .sandbox-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #92400e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: help;
+        }
+
+        .sandbox-toggle {
+            font-size: 12px;
+            color: #92400e;
+            background: none;
+            border: 1px solid #fde68a;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+        }
+
+        .sandbox-toggle:hover {
+            background: #fef3c7;
+        }
+
+        .sandbox-preview.collapsed .sandbox-body {
+            display: none;
         }
 
         /* Link Toolbar (inline per-section) */
@@ -1815,9 +1951,10 @@
                     <h3>Researching for: <strong id="researchSectionTitle">Curious Claims</strong> section.</h3>
                     <p id="researchSectionDesc">Search and select one article below.</p>
                 </div>
-                <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
                     <button class="btn-add-link" onclick="showCustomLinkModal(currentResearchSection)">📎 Add Custom Link</button>
                     <button class="btn-add-link" onclick="showSavedArticlesModal(currentResearchSection)">📌 Saved Articles</button>
+                    <button id="skipResearchBtn" onclick="toggleSkipResearch(currentResearchSection)" style="padding: 6px 14px; border: 2px solid #d1d5db; background: white; color: #6b7280; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Skip Section</button>
                 </div>
             </div>
 
@@ -1857,6 +1994,12 @@
             </div>
 
             <div class="research-dashboard">
+                <div id="skipResearchOverlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 10; border-radius: 8px; align-items: center; justify-content: center;">
+                    <div style="text-align: center; padding: 30px; color: #b45309; font-weight: 600; font-size: 16px;">
+                        This section will be skipped<br>
+                        <p style="margin-top: 8px; font-size: 13px; font-weight: 400; color: #6b7280;">No copy will be generated for this section. Click "Unskip Section" to restore.</p>
+                    </div>
+                </div>
                 <!-- Card 1: Perplexity Research -->
                 <div class="research-card" id="perplexityCard">
                     <div class="research-card-header">
@@ -2014,72 +2157,102 @@
 
             <div class="content-section">
                 <h3>Brite Spot</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-britespot')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-review-britespot">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('review-britespot')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('review-britespot')">Insert</button>
+                <div class="field-group">
+                    <label class="field-label">Paragraph</label>
+                    <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-britespot-paragraph')" type="button">🔗 Insert Link</button></div>
+                    <div class="link-popover" id="lp-review-britespot-paragraph">
+                        <input type="text" placeholder="Display text" class="lp-text">
+                        <input type="text" placeholder="https://..." class="lp-url">
+                        <div class="link-popover-actions">
+                            <button type="button" onclick="hideLinkPopover('review-britespot-paragraph')">Cancel</button>
+                            <button type="button" class="link-insert-btn" onclick="insertLink('review-britespot-paragraph')">Insert</button>
+                        </div>
                     </div>
+                    <div class="editable" contenteditable="true" id="review-britespot-paragraph"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="review-britespot"></div>
+                <div class="dynamic-fields-container" id="review-britespot-bullets-container"></div>
+                <button type="button" class="btn-secondary btn" onclick="addBriteSpotBullet('review')" style="margin: 10px 0; font-size: 13px;">+ Add Bullet</button>
             </div>
 
             <div class="content-section">
                 <h3>Curious Claims</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-claims')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-review-claims">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('review-claims')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('review-claims')">Insert</button>
-                    </div>
+                <div class="field-group">
+                    <label class="field-label">Title</label>
+                    <div class="editable editable-sm" contenteditable="true" id="review-claims-title"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="review-claims"></div>
+                <div class="field-group">
+                    <label class="field-label">Copy</label>
+                    <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-claims-copy')" type="button">🔗 Insert Link</button></div>
+                    <div class="link-popover" id="lp-review-claims-copy">
+                        <input type="text" placeholder="Display text" class="lp-text">
+                        <input type="text" placeholder="https://..." class="lp-url">
+                        <div class="link-popover-actions">
+                            <button type="button" onclick="hideLinkPopover('review-claims-copy')">Cancel</button>
+                            <button type="button" class="link-insert-btn" onclick="insertLink('review-claims-copy')">Insert</button>
+                        </div>
+                    </div>
+                    <div class="editable" contenteditable="true" id="review-claims-copy"></div>
+                </div>
+                <div class="source-urls" id="review-claims-sources"></div>
             </div>
 
             <div class="content-section">
                 <h3>News Roundup</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-roundup')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-review-roundup">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('review-roundup')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('review-roundup')">Insert</button>
+                <div class="sandbox-preview" id="sandbox-roundup">
+                    <div class="sandbox-header">
+                        <span class="sandbox-label" title="Use this as a scratch pad — read, highlight, rearrange. Copy-paste into the fields below when ready. This content is saved with your draft but does not export or pass to final copy.">Scratch Pad</span>
+                        <button class="sandbox-toggle" onclick="toggleSandbox('roundup')">Collapse</button>
                     </div>
+                    <div class="sandbox-body" contenteditable="true" id="sandbox-roundup-body"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="review-roundup"></div>
+                <div class="dynamic-fields-container" id="review-roundup-bullets-container"></div>
+                <button type="button" class="btn-secondary btn" onclick="addRoundupBullet('review')" style="margin: 10px 0; font-size: 13px;">+ Add Bullet</button>
+                <div class="source-urls" id="review-roundup-sources"></div>
             </div>
 
             <div class="content-section">
                 <h3>InsurNews Spotlight</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-spotlight')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-review-spotlight">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('review-spotlight')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('review-spotlight')">Insert</button>
+                <div class="sandbox-preview" id="sandbox-spotlight">
+                    <div class="sandbox-header">
+                        <span class="sandbox-label" title="Use this as a scratch pad — read, highlight, rearrange. Copy-paste into the fields below when ready. This content is saved with your draft but does not export or pass to final copy.">Scratch Pad</span>
+                        <button class="sandbox-toggle" onclick="toggleSandbox('spotlight')">Collapse</button>
                     </div>
+                    <div class="sandbox-body" contenteditable="true" id="sandbox-spotlight-body"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="review-spotlight"></div>
+                <div class="field-group">
+                    <label class="field-label">Subheader</label>
+                    <div class="editable editable-sm" contenteditable="true" id="review-spotlight-subheader"></div>
+                </div>
+                <div class="dynamic-fields-container" id="review-spotlight-sections-container"></div>
+                <button type="button" class="btn-secondary btn" onclick="addSpotlightSection('review')" style="margin: 10px 0; font-size: 13px;">+ Add Section</button>
+                <div class="source-urls" id="review-spotlight-sources"></div>
             </div>
 
             <div class="content-section">
                 <h3>Agent Advantage</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-tips')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-review-tips">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('review-tips')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('review-tips')">Insert</button>
+                <div class="sandbox-preview" id="sandbox-tips">
+                    <div class="sandbox-header">
+                        <span class="sandbox-label" title="Use this as a scratch pad — read, highlight, rearrange. Copy-paste into the fields below when ready. This content is saved with your draft but does not export or pass to final copy.">Scratch Pad</span>
+                        <button class="sandbox-toggle" onclick="toggleSandbox('tips')">Collapse</button>
                     </div>
+                    <div class="sandbox-body" contenteditable="true" id="sandbox-tips-body"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="review-tips"></div>
+                <div class="field-group">
+                    <label class="field-label">Intro</label>
+                    <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-tips-intro')" type="button">🔗 Insert Link</button></div>
+                    <div class="link-popover" id="lp-review-tips-intro">
+                        <input type="text" placeholder="Display text" class="lp-text">
+                        <input type="text" placeholder="https://..." class="lp-url">
+                        <div class="link-popover-actions">
+                            <button type="button" onclick="hideLinkPopover('review-tips-intro')">Cancel</button>
+                            <button type="button" class="link-insert-btn" onclick="insertLink('review-tips-intro')">Insert</button>
+                        </div>
+                    </div>
+                    <div class="editable" contenteditable="true" id="review-tips-intro"></div>
+                </div>
+                <div class="dynamic-fields-container" id="review-tips-container"></div>
+                <button type="button" class="btn-secondary btn" onclick="addTip('review')" style="margin: 10px 0; font-size: 13px;">+ Add Tip</button>
+                <div class="source-urls" id="review-tips-sources"></div>
             </div>
 
             <!-- Special Section Toggle -->
@@ -2275,72 +2448,77 @@
 
             <div class="content-section">
                 <h3>Brite Spot</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-britespot')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-fc-britespot">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('fc-britespot')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-britespot')">Insert</button>
+                <div class="field-group">
+                    <label class="field-label">Paragraph</label>
+                    <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-britespot-paragraph')" type="button">🔗 Insert Link</button></div>
+                    <div class="link-popover" id="lp-fc-britespot-paragraph">
+                        <input type="text" placeholder="Display text" class="lp-text">
+                        <input type="text" placeholder="https://..." class="lp-url">
+                        <div class="link-popover-actions">
+                            <button type="button" onclick="hideLinkPopover('fc-britespot-paragraph')">Cancel</button>
+                            <button type="button" class="link-insert-btn" onclick="insertLink('fc-britespot-paragraph')">Insert</button>
+                        </div>
                     </div>
+                    <div class="editable" contenteditable="true" id="fc-britespot-paragraph"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="fc-britespot"></div>
+                <div class="dynamic-fields-container" id="fc-britespot-bullets-container"></div>
+                <button type="button" class="btn-secondary btn" onclick="addBriteSpotBullet('fc')" style="margin: 10px 0; font-size: 13px;">+ Add Bullet</button>
             </div>
 
             <div class="content-section">
                 <h3>Curious Claims</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-claims')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-fc-claims">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('fc-claims')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-claims')">Insert</button>
-                    </div>
+                <div class="field-group">
+                    <label class="field-label">Title</label>
+                    <div class="editable editable-sm" contenteditable="true" id="fc-claims-title"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="fc-claims"></div>
+                <div class="field-group">
+                    <label class="field-label">Copy</label>
+                    <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-claims-copy')" type="button">🔗 Insert Link</button></div>
+                    <div class="link-popover" id="lp-fc-claims-copy">
+                        <input type="text" placeholder="Display text" class="lp-text">
+                        <input type="text" placeholder="https://..." class="lp-url">
+                        <div class="link-popover-actions">
+                            <button type="button" onclick="hideLinkPopover('fc-claims-copy')">Cancel</button>
+                            <button type="button" class="link-insert-btn" onclick="insertLink('fc-claims-copy')">Insert</button>
+                        </div>
+                    </div>
+                    <div class="editable" contenteditable="true" id="fc-claims-copy"></div>
+                </div>
             </div>
 
             <div class="content-section">
                 <h3>News Roundup</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-roundup')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-fc-roundup">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('fc-roundup')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-roundup')">Insert</button>
-                    </div>
-                </div>
-                <div class="editable" contenteditable="true" id="fc-roundup"></div>
+                <div class="dynamic-fields-container" id="fc-roundup-bullets-container"></div>
+                <button type="button" class="btn-secondary btn" onclick="addRoundupBullet('fc')" style="margin: 10px 0; font-size: 13px;">+ Add Bullet</button>
             </div>
 
             <div class="content-section">
                 <h3>InsurNews Spotlight</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-spotlight')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-fc-spotlight">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('fc-spotlight')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-spotlight')">Insert</button>
-                    </div>
+                <div class="field-group">
+                    <label class="field-label">Subheader</label>
+                    <div class="editable editable-sm" contenteditable="true" id="fc-spotlight-subheader"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="fc-spotlight"></div>
+                <div class="dynamic-fields-container" id="fc-spotlight-sections-container"></div>
+                <button type="button" class="btn-secondary btn" onclick="addSpotlightSection('fc')" style="margin: 10px 0; font-size: 13px;">+ Add Section</button>
             </div>
 
             <div class="content-section">
                 <h3>Agent Advantage</h3>
-                <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-tips')" type="button">🔗 Insert Link</button></div>
-                <div class="link-popover" id="lp-fc-tips">
-                    <input type="text" placeholder="Display text" class="lp-text">
-                    <input type="text" placeholder="https://..." class="lp-url">
-                    <div class="link-popover-actions">
-                        <button type="button" onclick="hideLinkPopover('fc-tips')">Cancel</button>
-                        <button type="button" class="link-insert-btn" onclick="insertLink('fc-tips')">Insert</button>
+                <div class="field-group">
+                    <label class="field-label">Intro</label>
+                    <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-tips-intro')" type="button">🔗 Insert Link</button></div>
+                    <div class="link-popover" id="lp-fc-tips-intro">
+                        <input type="text" placeholder="Display text" class="lp-text">
+                        <input type="text" placeholder="https://..." class="lp-url">
+                        <div class="link-popover-actions">
+                            <button type="button" onclick="hideLinkPopover('fc-tips-intro')">Cancel</button>
+                            <button type="button" class="link-insert-btn" onclick="insertLink('fc-tips-intro')">Insert</button>
+                        </div>
                     </div>
+                    <div class="editable" contenteditable="true" id="fc-tips-intro"></div>
                 </div>
-                <div class="editable" contenteditable="true" id="fc-tips"></div>
+                <div class="dynamic-fields-container" id="fc-tips-container"></div>
+                <button type="button" class="btn-secondary btn" onclick="addTip('fc')" style="margin: 10px 0; font-size: 13px;">+ Add Tip</button>
             </div>
 
             <!-- Special Section Copy (shown only when specialSection.enabled && specialSection.body) -->
@@ -2968,6 +3146,7 @@
         let selectedSpotlight = null;  // Selected article for spotlight section
         let selectedRoundup = [];  // Array of up to 5 articles for roundup bullets
         let currentResearchSection = 'claims'; // Track which section we're researching for
+        let skippedResearch = { claims: false, roundup: false, tips: false };
         let selectedTips = null;  // Single article for agent tips (generates intro + 5 tips)
         let claimsTopics = [];
         let roundupTopics = [];
@@ -4782,21 +4961,22 @@
 
             try {
                 // Show research starting
-                updateResearchStatus('Claims', 'Researching...', true);
-                updateResearchStatus('Roundup', 'Waiting...');
+                updateResearchStatus('Claims', skippedResearch.claims ? 'Skipped' : 'Researching...', !skippedResearch.claims);
+                updateResearchStatus('Roundup', skippedResearch.roundup ? 'Skipped' : 'Waiting...');
                 updateResearchStatus('Spotlight', 'Waiting...');
-                updateResearchStatus('Tips', 'Waiting...');
+                updateResearchStatus('Tips', skippedResearch.tips ? 'Skipped' : 'Waiting...');
 
-                console.log('[Research] Starting GPT-5.2 research phase...');
+                console.log('[Research] Starting GPT-5.2 research phase...', 'Skipped:', skippedResearch);
 
                 const researchResponse = await fetch(`${API_BASE}/api/research-articles`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        curious_claims_topic: selectedClaims,
-                        roundup_topics: selectedRoundup,
+                        curious_claims_topic: skippedResearch.claims ? null : selectedClaims,
+                        roundup_topics: skippedResearch.roundup ? [] : selectedRoundup,
                         spotlight_content: spotlightGeneratedContent,  // Pass pre-generated spotlight content
-                        agent_tips_topics: selectedTips
+                        agent_tips_topics: skippedResearch.tips ? null : selectedTips,
+                        skipped_sections: skippedResearch
                     })
                 });
 
@@ -4809,10 +4989,10 @@
                 console.log('[Research] GPT-5.2 research complete:', researchData.research);
 
                 // Update status to show research complete
-                updateResearchStatus('Claims', 'Done');
-                updateResearchStatus('Roundup', 'Done');
+                updateResearchStatus('Claims', skippedResearch.claims ? 'Skipped' : 'Done');
+                updateResearchStatus('Roundup', skippedResearch.roundup ? 'Skipped' : 'Done');
                 updateResearchStatus('Spotlight', 'Done');
-                updateResearchStatus('Tips', 'Done');
+                updateResearchStatus('Tips', skippedResearch.tips ? 'Skipped' : 'Done');
 
                 // Brief pause to show completion
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -4830,7 +5010,8 @@
                         month: selectedMonth,
                         research: researchData.research,
                         brite_spot_topic: '',
-                        intro_content: ''
+                        intro_content: '',
+                        skipped_sections: skippedResearch
                     })
                 });
 
@@ -4869,100 +5050,198 @@
             }
         }
 
+        // Helper: render source URLs into non-editable container
+        function renderSourceUrls(containerId, articles, singleArticle) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            const arts = singleArticle ? [singleArticle] : (articles || []);
+            if (arts.length === 0) return;
+            let html = '<strong>Source' + (arts.length > 1 ? 's' : '') + ':</strong>';
+            arts.forEach(art => {
+                if (!art || !art.url) return;
+                const title = art.title || art.headline || 'Source Article';
+                html += '<div style="margin: 8px 0;"><a href="' + art.url + '" target="_blank">' + title + '</a><code>' + art.url + '</code></div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // Helper: render dynamic bullet fields
+        function renderDynamicBullets(prefix, sectionKey, bullets) {
+            const container = document.getElementById(prefix + sectionKey + '-bullets-container');
+            if (!container) return;
+            container.innerHTML = '';
+            bullets.forEach((b, idx) => {
+                let text = b.summary || b.text || b.headline || (typeof b === 'string' ? b : '');
+                if (typeof text === 'string') {
+                    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #0066cc; text-decoration: underline;">$1</a>');
+                }
+                const bulletId = prefix + sectionKey + '-bullet-' + idx;
+                const item = document.createElement('div');
+                item.className = 'dynamic-field-item';
+                item.dataset.bulletIndex = idx;
+                item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                    '<div class="field-group"><label class="field-label">Bullet ' + (idx + 1) + '</label>' +
+                    '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + bulletId + '\')" type="button">🔗 Insert Link</button></div>' +
+                    '<div class="link-popover" id="lp-' + bulletId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + bulletId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + bulletId + '\')">Insert</button></div></div>' +
+                    '<div class="editable" contenteditable="true" id="' + bulletId + '"></div></div>';
+                container.appendChild(item);
+                document.getElementById(bulletId).innerHTML = text;
+            });
+        }
+
+        // Helper: render dynamic spotlight sections (h3 body pairs)
+        function renderDynamicSpotlightSections(prefix, sections) {
+            const container = document.getElementById(prefix + 'spotlight-sections-container');
+            if (!container) return;
+            container.innerHTML = '';
+            sections.forEach((s, idx) => {
+                const contentId = prefix + 'spotlight-section-' + idx + '-content';
+                const item = document.createElement('div');
+                item.className = 'dynamic-field-item';
+                item.dataset.sectionIndex = idx;
+                item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                    '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Content</label>' +
+                    '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
+                    '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
+                    '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
+                container.appendChild(item);
+                document.getElementById(contentId).innerHTML = s.body || s.content || s.text || '';
+            });
+        }
+
+        // Helper: render dynamic tips (title + content pairs)
+        function renderDynamicTips(prefix, tips) {
+            const container = document.getElementById(prefix + 'tips-container');
+            if (!container) return;
+            container.innerHTML = '';
+            tips.forEach((tip, idx) => {
+                const titleId = prefix + 'tip-' + idx + '-title';
+                const contentId = prefix + 'tip-' + idx + '-content';
+                const item = document.createElement('div');
+                item.className = 'dynamic-field-item';
+                item.dataset.tipIndex = idx;
+                item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                    '<div class="field-group"><label class="field-label">Tip ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
+                    '<div class="field-group"><label class="field-label">Tip ' + (idx + 1) + ' Content</label>' +
+                    '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
+                    '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
+                    '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
+                container.appendChild(item);
+                document.getElementById(titleId).textContent = tip.title || '';
+                document.getElementById(contentId).innerHTML = tip.tip || tip.content || '';
+            });
+        }
+
+        // Helper: copy field innerHTML
+        function copyField(srcId, dstId) {
+            const src = document.getElementById(srcId);
+            const dst = document.getElementById(dstId);
+            if (src && dst) dst.innerHTML = src.innerHTML;
+        }
+
+        // Add empty bullet
+        function addBriteSpotBullet(prefix) {
+            const container = document.getElementById(prefix + 'britespot-bullets-container');
+            if (!container) return;
+            const idx = container.querySelectorAll('.dynamic-field-item').length;
+            const bulletId = prefix + 'britespot-bullet-' + idx;
+            const item = document.createElement('div');
+            item.className = 'dynamic-field-item';
+            item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                '<div class="field-group"><label class="field-label">Bullet ' + (idx + 1) + '</label>' +
+                '<div class="editable" contenteditable="true" id="' + bulletId + '"></div></div>';
+            container.appendChild(item);
+        }
+
+        function addRoundupBullet(prefix) {
+            const container = document.getElementById(prefix + 'roundup-bullets-container');
+            if (!container) return;
+            const idx = container.querySelectorAll('.dynamic-field-item').length;
+            const bulletId = prefix + 'roundup-bullet-' + idx;
+            const item = document.createElement('div');
+            item.className = 'dynamic-field-item';
+            item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                '<div class="field-group"><label class="field-label">Bullet ' + (idx + 1) + '</label>' +
+                '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + bulletId + '\')" type="button">🔗 Insert Link</button></div>' +
+                '<div class="link-popover" id="lp-' + bulletId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + bulletId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + bulletId + '\')">Insert</button></div></div>' +
+                '<div class="editable" contenteditable="true" id="' + bulletId + '"></div></div>';
+            container.appendChild(item);
+        }
+
+        function addSpotlightSection(prefix) {
+            const container = document.getElementById(prefix + 'spotlight-sections-container');
+            if (!container) return;
+            const idx = container.querySelectorAll('.dynamic-field-item').length;
+            const contentId = prefix + 'spotlight-section-' + idx + '-content';
+            const item = document.createElement('div');
+            item.className = 'dynamic-field-item';
+            item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Content</label>' +
+                '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
+                '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
+                '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
+            container.appendChild(item);
+        }
+
+        function addTip(prefix) {
+            const container = document.getElementById(prefix + 'tips-container');
+            if (!container) return;
+            const idx = container.querySelectorAll('.dynamic-field-item').length;
+            const titleId = prefix + 'tip-' + idx + '-title';
+            const contentId = prefix + 'tip-' + idx + '-content';
+            const item = document.createElement('div');
+            item.className = 'dynamic-field-item';
+            item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                '<div class="field-group"><label class="field-label">Tip ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
+                '<div class="field-group"><label class="field-label">Tip ' + (idx + 1) + ' Content</label>' +
+                '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
+                '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
+                '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
+            container.appendChild(item);
+        }
+
+        // Sandbox functions
+        function toggleSandbox(section) {
+            const box = document.getElementById('sandbox-' + section);
+            if (!box) return;
+            box.classList.toggle('collapsed');
+            const btn = box.querySelector('.sandbox-toggle');
+            if (btn) btn.textContent = box.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+        }
+
+        function populateSandbox(section, data) {
+            let html = '';
+            if (section === 'spotlight' && data) {
+                html += '<strong>' + (data.subheader || data.title || '') + '</strong>';
+                const sections = data.h3s || data.sections || [];
+                sections.forEach(s => {
+                    const body = s.body || s.content || s.text || '';
+                    if (body) html += '<p>' + body + '</p>';
+                });
+                if (typeof data === 'string') html = '<p>' + data + '</p>';
+            } else if (section === 'tips' && data) {
+                if (data.intro) html += '<p>' + data.intro + '</p>';
+                const tips = data.tips || [];
+                tips.forEach(t => {
+                    if (t.title) html += '<h4>' + t.title + '</h4>';
+                    html += '<p>' + (t.tip || t.content || '') + '</p>';
+                });
+                if (typeof data === 'string') html = '<p>' + data + '</p>';
+            } else if (section === 'roundup' && data) {
+                const items = Array.isArray(data) ? data : [];
+                if (items.length > 0) {
+                    html += '<ul>';
+                    items.forEach(b => { html += '<li>' + (b.summary || b.text || b) + '</li>'; });
+                    html += '</ul>';
+                }
+            }
+            const body = document.getElementById('sandbox-' + section + '-body');
+            if (body) body.innerHTML = html;
+        }
+
         function displayGeneratedContent() {
-            // Helper function to recursively extract all text from any object structure
-            function extractTextFromObject(obj, depth = 0) {
-                if (depth > 5) return '';
-                if (!obj) return '';
-                if (typeof obj === 'string') return obj;
-                if (typeof obj === 'number') return '';
-                if (Array.isArray(obj)) {
-                    return obj.map(item => extractTextFromObject(item, depth + 1)).filter(t => t.length > 10).join('\n\n');
-                }
-                if (typeof obj === 'object') {
-                    const priorityKeys = ['body', 'content', 'text', 'paragraph', 'summary', 'description', 'intro', 'tip'];
-                    for (const key of priorityKeys) {
-                        if (obj[key] && typeof obj[key] === 'string' && obj[key].length > 20) return obj[key];
-                    }
-                    const texts = [];
-                    for (const [key, val] of Object.entries(obj)) {
-                        if (['subheader', 'h3', 'title', 'heading', 'url', 'source', 'link', 'id', 'type'].includes(key)) continue;
-                        const extracted = extractTextFromObject(val, depth + 1);
-                        if (extracted && extracted.length > 20) texts.push(extracted);
-                    }
-                    return texts.join('\n\n');
-                }
-                return '';
-            }
-
-            // Helper to clean content for display and style links blue
-            function cleanContentForDisplay(content) {
-                if (!content) return 'Content not available';
-                let contentStr;
-                if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
-                    if (content.h3s && Array.isArray(content.h3s) && content.h3s.length > 0) {
-                        let paragraphs = [];
-                        content.h3s.forEach((h3Item, idx) => {
-                            const bodyText = h3Item.body || h3Item.content || h3Item.text || '';
-                            if (bodyText) {
-                                const isLast = idx === content.h3s.length - 1;
-                                if (typeof bodyText === 'string' && (bodyText.includes('<p') || bodyText.includes('<div'))) {
-                                    paragraphs.push(bodyText);
-                                } else {
-                                    paragraphs.push(`<p style="margin: 0${isLast ? '' : ' 0 16px 0'}; line-height: 1.7;">${bodyText}</p>`);
-                                }
-                            }
-                        });
-                        contentStr = paragraphs.join('');
-                    } else if (content.body) {
-                        if (typeof content.body === 'string' && (content.body.includes('<p') || content.body.includes('<div'))) {
-                            contentStr = content.body;
-                        } else {
-                            contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.body}</p>`;
-                        }
-                    } else if (content.content) {
-                        contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.content}</p>`;
-                    } else if (content.text) {
-                        contentStr = `<p style="margin: 0 0 16px 0; line-height: 1.7;">${content.text}</p>`;
-                    } else if (content.sections && Array.isArray(content.sections)) {
-                        let paragraphs = [];
-                        content.sections.forEach(section => {
-                            const text = section.body || section.content || section.text || '';
-                            if (text) paragraphs.push(`<p style="margin: 0 0 16px 0; line-height: 1.7;">${text}</p>`);
-                        });
-                        contentStr = paragraphs.join('');
-                    } else {
-                        const extracted = extractTextFromObject(content);
-                        if (extracted && extracted.length > 20) {
-                            contentStr = extracted.split('\n\n').map(p => `<p style="margin: 0 0 16px 0; line-height: 1.7;">${p}</p>`).join('');
-                        } else {
-                            contentStr = '<p style="color: #999;">Content could not be parsed. Please try regenerating.</p>';
-                        }
-                    }
-                } else if (typeof content === 'string') {
-                    contentStr = content;
-                } else if (Array.isArray(content)) {
-                    contentStr = content.map(item => {
-                        if (typeof item === 'string') return `<p style="margin: 0 0 16px 0; line-height: 1.7;">${item}</p>`;
-                        const text = extractTextFromObject(item);
-                        return text ? `<p style="margin: 0 0 16px 0; line-height: 1.7;">${text}</p>` : '';
-                    }).filter(p => p).join('');
-                } else {
-                    contentStr = '<p style="color: #999;">Content could not be parsed.</p>';
-                }
-                contentStr = contentStr.replace(/color:\s*#ffffff;?/gi, 'color: #1f2937;');
-                contentStr = contentStr.replace(/^###\s*(.+)$/gm, '<strong style="font-size: 16px; color: #272D3F;">$1</strong>');
-                contentStr = contentStr.replace(/^##\s*(.+)$/gm, '<strong style="font-size: 17px; color: #272D3F;">$1</strong>');
-                contentStr = contentStr.replace(/\n##\s*([^\n]+)/g, '\n<strong style="font-size: 17px; color: #272D3F;">$1</strong>');
-                contentStr = contentStr.replace(/>##\s*([^<\n]+)/g, '><strong style="font-size: 17px; color: #272D3F;">$1</strong>');
-                contentStr = contentStr.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-                contentStr = contentStr.replace(/\*\*/g, '');
-                contentStr = contentStr.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-                contentStr = contentStr.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
-                contentStr = contentStr.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
-                return contentStr;
-            }
-
+            // Helper functions (keep existing cleanContentForDisplay, styleLinksBlue, etc.)
             function styleLinksBlue(text) {
                 if (!text) return '';
                 text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
@@ -4971,137 +5250,115 @@
                 return text;
             }
 
-            const makeSourceLink = (url) => url ? `<br><a href="${url}" target="_blank" style="color: #018181; text-decoration: underline; font-size: 13px;">Read more →</a>` : '';
-
-            // Populate per-section editable divs
-
-            // 1. BriteCo Brief Intro
+            // 1. BriteCo Brief Intro (unchanged - single field)
             const headerIntroEl = document.getElementById('review-headerIntro');
             if (headerIntroEl) {
                 const headerIntroDisplay = headerIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
                 headerIntroEl.innerHTML = headerIntroDisplay || '<p style="color:#999;">No intro content</p>';
             }
 
-            // 2. Brite Spot
-            const briteSpotEl = document.getElementById('review-britespot');
-            if (briteSpotEl) {
-                let bsContent = '';
-                const bsParagraph = briteSpotContent || '';
-                const bsBullets = briteSpotBullets || [];
-                if (bsParagraph) bsContent = `<p style="margin: 0 0 12px 0;">${bsParagraph}</p>`;
-                if (bsBullets.length > 0) {
-                    bsContent += '<ul style="margin: 0; padding-left: 20px;">';
-                    bsBullets.forEach(b => { bsContent += `<li style="margin-bottom: 6px;">${b}</li>`; });
-                    bsContent += '</ul>';
-                }
-                if (!bsContent) bsContent = cleanContentForDisplay(generatedBriteSpotContent || briteSpotRewritten || '');
-                briteSpotEl.innerHTML = bsContent;
+            // 2. Brite Spot - paragraph + dynamic bullets
+            const bsParagraphEl = document.getElementById('review-britespot-paragraph');
+            if (bsParagraphEl) {
+                bsParagraphEl.innerHTML = styleLinksBlue(briteSpotContent || '');
+            }
+            const bsBullets = briteSpotBullets || [];
+            if (bsBullets.length > 0) {
+                renderDynamicBullets('review-', 'britespot', bsBullets.map(b => ({text: b})));
             }
 
-            // 3. Curious Claims
-            const claimsEl = document.getElementById('review-claims');
-            if (claimsEl) {
-                const claimsContent = cleanContentForDisplay(generatedClaimsContent);
-                let sourceSection = '';
-                if (selectedClaims && selectedClaims.url) {
-                    const articleTitle = selectedClaims.title || 'Source Article';
-                    sourceSection = `
-                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #666;">
-                            <strong>Source:</strong><br>
-                            <a href="${selectedClaims.url}" target="_blank" style="color: #018181; text-decoration: underline; display: block; margin-top: 5px;">${articleTitle}</a>
-                            <code style="display: block; margin-top: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #374151; word-break: break-all; user-select: all;">${selectedClaims.url}</code>
-                        </div>
-                    `;
+            // 3. Curious Claims - title + copy + sources
+            if (skippedResearch && skippedResearch.claims) {
+                const ct = document.getElementById('review-claims-title');
+                if (ct) ct.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
+            } else {
+                const claimsTitleEl = document.getElementById('review-claims-title');
+                const claimsCopyEl = document.getElementById('review-claims-copy');
+                if (claimsTitleEl) claimsTitleEl.textContent = selectedClaims?.title || 'Curious Claims';
+                if (claimsCopyEl) {
+                    let content = generatedClaimsContent || '';
+                    if (typeof content === 'object') content = content.body || content.content || content.text || JSON.stringify(content);
+                    claimsCopyEl.innerHTML = styleLinksBlue(content);
                 }
-                claimsEl.innerHTML = `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${selectedClaims?.title || 'Curious Claims'}</h4>${claimsContent}${sourceSection}`;
+                renderSourceUrls('review-claims-sources', null, selectedClaims);
             }
 
-            // 4. News Roundup
-            const roundupEl = document.getElementById('review-roundup');
-            if (roundupEl) {
-                let roundupHtml = '<ul style="padding-left: 20px; margin: 0;">';
+            // 4. News Roundup - dynamic bullets + sources
+            if (skippedResearch && skippedResearch.roundup) {
+                const rc = document.getElementById('review-roundup-bullets-container');
+                if (rc) rc.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
+            } else {
+                let roundupItems = [];
                 if (Array.isArray(generatedRoundupContent)) {
-                    generatedRoundupContent.forEach(item => {
-                        roundupHtml += `<li style="margin-bottom: 8px;">${styleLinksBlue(item.summary || item)}</li>`;
-                    });
-                } else {
-                    roundupHtml += `<li>${styleLinksBlue(generatedRoundupContent) || 'News roundup content'}</li>`;
+                    roundupItems = generatedRoundupContent.map(item => ({
+                        text: item.summary || item.text || (typeof item === 'string' ? item : '')
+                    }));
                 }
-                roundupHtml += '</ul>';
-
-                // Add source URLs for News Roundup
-                if (selectedRoundup && selectedRoundup.length > 0) {
-                    roundupHtml += '<div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #666;"><strong>Sources:</strong><br>';
-                    selectedRoundup.forEach((art, idx) => {
-                        const title = art.title || art.headline || `Article ${idx + 1}`;
-                        roundupHtml += `
-                            <div style="margin: 8px 0;">
-                                <a href="${art.url}" target="_blank" style="color: #018181; text-decoration: underline; display: block;">${title}</a>
-                                <code style="display: block; margin-top: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #374151; word-break: break-all; user-select: all;">${art.url}</code>
-                            </div>
-                        `;
-                    });
-                    roundupHtml += '</div>';
-                }
-
-                roundupEl.innerHTML = roundupHtml;
+                renderDynamicBullets('review-', 'roundup', roundupItems);
+                renderSourceUrls('review-roundup-sources', selectedRoundup);
+                // Populate sandbox
+                populateSandbox('roundup', generatedRoundupContent);
+                const sbRoundup = document.getElementById('sandbox-roundup');
+                if (sbRoundup) sbRoundup.style.display = roundupItems.length > 0 ? '' : 'none';
             }
 
-            // 5. InsurNews Spotlight
-            const spotlightEl = document.getElementById('review-spotlight');
-            if (spotlightEl) {
+            // 5. InsurNews Spotlight - subheader + dynamic sections + sources
+            if (skippedResearch && skippedResearch.spotlight) {
+                const se = document.getElementById('review-spotlight-subheader');
+                if (se) se.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
+            } else {
                 const spotlightData = generatedSpotlightContent || spotlightGeneratedContent || null;
-                const spotlightContent = cleanContentForDisplay(spotlightData);
-                let spotlightSourceSection = '';
-                if (selectedSpotlight && selectedSpotlight.url) {
-                    const articleTitle = selectedSpotlight.title || selectedSpotlight.headline || 'Source Article';
-                    spotlightSourceSection = `
-                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #666;">
-                            <strong>Source:</strong><br>
-                            <a href="${selectedSpotlight.url}" target="_blank" style="color: #018181; text-decoration: underline; display: block; margin-top: 5px;">${articleTitle}</a>
-                            <code style="display: block; margin-top: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #374151; word-break: break-all; user-select: all;">${selectedSpotlight.url}</code>
-                        </div>
-                    `;
+                const subheaderEl = document.getElementById('review-spotlight-subheader');
+                if (subheaderEl) subheaderEl.textContent = generatedSpotlightSubheader || selectedSpotlight?.title || 'Industry Spotlight';
+
+                let sections = [];
+                if (spotlightData && typeof spotlightData === 'object' && !Array.isArray(spotlightData)) {
+                    if (spotlightData.h3s && Array.isArray(spotlightData.h3s)) {
+                        sections = spotlightData.h3s;
+                    } else if (spotlightData.body) {
+                        sections = [{body: spotlightData.body}];
+                    } else if (spotlightData.content) {
+                        sections = [{body: spotlightData.content}];
+                    }
+                } else if (typeof spotlightData === 'string') {
+                    sections = [{body: spotlightData}];
                 }
-                spotlightEl.innerHTML = `<h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${generatedSpotlightSubheader || 'Industry Spotlight'}</h4>${spotlightContent}${spotlightSourceSection}`;
+                renderDynamicSpotlightSections('review-', sections);
+                renderSourceUrls('review-spotlight-sources', null, selectedSpotlight);
+                // Populate sandbox
+                populateSandbox('spotlight', spotlightData);
+                const sbSpotlight = document.getElementById('sandbox-spotlight');
+                if (sbSpotlight) sbSpotlight.style.display = sections.length > 0 ? '' : 'none';
             }
 
-            // 6. Agent Advantage
-            const tipsEl = document.getElementById('review-tips');
-            if (tipsEl) {
-                let tipsHtml = '';
+            // 6. Agent Advantage - intro + dynamic tips + sources
+            if (skippedResearch && skippedResearch.tips) {
+                const te = document.getElementById('review-tips-intro');
+                if (te) te.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
+            } else {
+                const tipsIntroEl = document.getElementById('review-tips-intro');
+                let tips = [];
                 if (generatedTipsContent && generatedTipsContent.intro) {
-                    tipsHtml += `<p style="margin-bottom: 15px;">${styleLinksBlue(generatedTipsContent.intro)}</p>`;
-                    tipsHtml += '<ol style="padding-left: 20px; margin: 0;">';
-                    (generatedTipsContent.tips || []).forEach(item => {
-                        const title = item.title ? `<strong>${item.title}:</strong> ` : '';
-                        tipsHtml += `<li style="margin-bottom: 10px;">${title}${styleLinksBlue(item.tip || item)}</li>`;
-                    });
-                    tipsHtml += '</ol>';
+                    if (tipsIntroEl) tipsIntroEl.innerHTML = styleLinksBlue(generatedTipsContent.intro);
+                    tips = (generatedTipsContent.tips || []).map(t => ({
+                        title: t.title || '',
+                        tip: t.tip || t.content || ''
+                    }));
                 } else if (Array.isArray(generatedTipsContent)) {
-                    tipsHtml += '<ol style="padding-left: 20px; margin: 0;">';
-                    generatedTipsContent.forEach(item => {
-                        const title = item.title ? `<strong>${item.title}:</strong> ` : '';
-                        tipsHtml += `<li style="margin-bottom: 8px;">${title}${styleLinksBlue(item.tip || item)}</li>`;
-                    });
-                    tipsHtml += '</ol>';
+                    if (tipsIntroEl) tipsIntroEl.innerHTML = '';
+                    tips = generatedTipsContent.map(t => ({
+                        title: t.title || '',
+                        tip: t.tip || t.content || (typeof t === 'string' ? t : '')
+                    }));
                 } else {
-                    tipsHtml = `<p>${styleLinksBlue(generatedTipsContent) || 'Agent tips content'}</p>`;
+                    if (tipsIntroEl) tipsIntroEl.innerHTML = styleLinksBlue(generatedTipsContent || '');
                 }
-
-                // Add source URL for Agent Advantage
-                if (selectedTips && selectedTips.url) {
-                    const articleTitle = selectedTips.title || selectedTips.headline || 'Source Article';
-                    tipsHtml += `
-                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #666;">
-                            <strong>Source:</strong><br>
-                            <a href="${selectedTips.url}" target="_blank" style="color: #018181; text-decoration: underline; display: block; margin-top: 5px;">${articleTitle}</a>
-                            <code style="display: block; margin-top: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #374151; word-break: break-all; user-select: all;">${selectedTips.url}</code>
-                        </div>
-                    `;
-                }
-
-                tipsEl.innerHTML = tipsHtml;
+                renderDynamicTips('review-', tips);
+                renderSourceUrls('review-tips-sources', null, selectedTips);
+                // Populate sandbox
+                populateSandbox('tips', generatedTipsContent);
+                const sbTips = document.getElementById('sandbox-tips');
+                if (sbTips) sbTips.style.display = tips.length > 0 || (tipsIntroEl && tipsIntroEl.innerHTML) ? '' : 'none';
             }
         }
 
@@ -5270,13 +5527,41 @@
             try {
                 showStep(6); // Brand Check loading screen
 
-                // Get the edited content from the per-section editable divs
+                // Get the edited content from labeled sub-fields
                 const welcomeText = document.getElementById('review-headerIntro')?.innerHTML || headerIntroContent || '';
-                const briteSpotText = document.getElementById('review-britespot')?.innerHTML || briteSpotRewritten || briteSpotContent || '';
-                const claimsText = document.getElementById('review-claims')?.innerHTML || '';
-                const roundupText = document.getElementById('review-roundup')?.innerHTML || '';
-                const spotlightText = document.getElementById('review-spotlight')?.innerHTML || '';
-                const tipsText = document.getElementById('review-tips')?.innerHTML || '';
+                const bsPara = document.getElementById('review-britespot-paragraph')?.innerHTML || '';
+                let bsBullets = '';
+                const bsContainer = document.getElementById('review-britespot-bullets-container');
+                if (bsContainer) {
+                    bsContainer.querySelectorAll('.dynamic-field-item .editable[contenteditable]').forEach(el => {
+                        if (el.innerHTML.trim()) bsBullets += ' ' + el.innerHTML.trim();
+                    });
+                }
+                const briteSpotText = bsPara + bsBullets || briteSpotRewritten || briteSpotContent || '';
+                const claimsTitle = document.getElementById('review-claims-title')?.innerText || '';
+                const claimsCopy = document.getElementById('review-claims-copy')?.innerHTML || '';
+                const claimsText = claimsTitle + ' ' + claimsCopy;
+                let roundupText = '';
+                const roundupContainer = document.getElementById('review-roundup-bullets-container');
+                if (roundupContainer) {
+                    roundupContainer.querySelectorAll('.dynamic-field-item .editable[contenteditable]').forEach(el => {
+                        if (el.innerHTML.trim()) roundupText += ' ' + el.innerHTML.trim();
+                    });
+                }
+                let spotlightText = document.getElementById('review-spotlight-subheader')?.innerText || '';
+                const spotlightSC = document.getElementById('review-spotlight-sections-container');
+                if (spotlightSC) {
+                    spotlightSC.querySelectorAll('.dynamic-field-item .editable[contenteditable]').forEach(el => {
+                        if (el.innerHTML.trim()) spotlightText += ' ' + el.innerHTML.trim();
+                    });
+                }
+                let tipsText = document.getElementById('review-tips-intro')?.innerHTML || '';
+                const tipsContainer = document.getElementById('review-tips-container');
+                if (tipsContainer) {
+                    tipsContainer.querySelectorAll('.dynamic-field-item .editable[contenteditable]').forEach(el => {
+                        if (el.innerHTML.trim()) tipsText += ' ' + el.innerHTML.trim();
+                    });
+                }
 
                 const response = await fetch(`${API_BASE}/api/brand-check`, {
                     method: 'POST',
@@ -6289,6 +6574,9 @@
                 showStep(8); // Edit Image Prompts step
                 document.getElementById('promptGenerationLoading').style.display = 'block';
                 document.getElementById('promptEditing').style.display = 'none';
+
+                // Sync edited content from DOM into globals before extracting
+                syncContentFromDOM();
 
                 // Extract content text for each section
                 const briteSpotText = briteSpotRewritten || briteSpotContent || '';
@@ -8414,98 +8702,85 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 || document.getElementById('headerIntroInput')?.value?.trim()
                 || '';
 
-            // Get Brite Spot content (paragraph + bullets from Step 1)
-            // Try to get from Step 1 inputs first, then fall back to contenteditable box or generated content
-            let briteSpotTextForTemplate = briteSpotContent || '';
-            let briteSpotBulletsForTemplate = briteSpotBullets || [];
+            // --- Read from labeled sub-fields (FC preferred, then Review) ---
 
-            // If no Step 1 content, try contenteditable box (may have been edited)
-            if (!briteSpotTextForTemplate) {
-                const contentBoxHtml = (document.getElementById('fc-britespot') || document.getElementById('review-britespot'))?.innerHTML || generatedBriteSpotContent || '';
-                // Extract paragraph from HTML if needed
-                if (contentBoxHtml.includes('<p')) {
-                    const match = contentBoxHtml.match(/<p[^>]*>([\s\S]*?)<\/p>/);
-                    if (match) briteSpotTextForTemplate = match[1];
-                } else {
-                    briteSpotTextForTemplate = contentBoxHtml.replace(/<\/?[^>]+(>|$)/g, '');
-                }
-            }
+            // Brite Spot paragraph
+            const bsParagraphEl = document.getElementById('fc-britespot-paragraph') || document.getElementById('review-britespot-paragraph');
+            const briteSpotTextForTemplate = bsParagraphEl ? bsParagraphEl.innerHTML : (briteSpotContent || '');
 
-            // Get claims content
-            const claimsText = (document.getElementById('fc-claims') || document.getElementById('review-claims'))?.innerHTML || generatedClaimsContent || '';
-
-            // Get roundup content - array of news items
-            let roundupItems = [];
-            if (Array.isArray(generatedRoundupContent)) {
-                roundupItems = generatedRoundupContent.map(item => ({
-                    summary: typeof item === 'string' ? item : (item.summary || item.headline || item.text || '')
-                }));
-            } else if (typeof generatedRoundupContent === 'string' && generatedRoundupContent.trim()) {
-                // After saveFinalCopyToState converts to HTML string - parse <li> items
-                const temp = document.createElement('div');
-                temp.innerHTML = generatedRoundupContent;
-                temp.querySelectorAll('li').forEach(li => {
-                    const text = li.innerHTML.trim();
-                    if (text) roundupItems.push({ summary: text });
+            // Brite Spot bullets
+            let briteSpotBulletsForTemplate = [];
+            const bsBulletsContainer = document.getElementById('fc-britespot-bullets-container') || document.getElementById('review-britespot-bullets-container');
+            if (bsBulletsContainer) {
+                bsBulletsContainer.querySelectorAll('.dynamic-field-item').forEach(item => {
+                    const el = item.querySelector('.editable[contenteditable]');
+                    if (el && el.innerHTML.trim()) briteSpotBulletsForTemplate.push(el.innerHTML.trim());
                 });
-                if (roundupItems.length === 0) {
-                    roundupItems.push({ summary: generatedRoundupContent.trim() });
+            }
+            if (briteSpotBulletsForTemplate.length === 0) briteSpotBulletsForTemplate = (briteSpotBullets || []);
+
+            // Claims (skip if skippedResearch.claims)
+            let claimsTitle = '';
+            let claimsText = '';
+            if (!skippedResearch.claims) {
+                const ctEl = document.getElementById('fc-claims-title') || document.getElementById('review-claims-title');
+                claimsTitle = ctEl ? ctEl.innerText.trim() : (selectedClaims?.title || '');
+                const ccEl = document.getElementById('fc-claims-copy') || document.getElementById('review-claims-copy');
+                claimsText = ccEl ? ccEl.innerHTML : (generatedClaimsContent || '');
+            }
+
+            // Roundup (skip if skippedResearch.roundup)
+            let roundupItems = [];
+            if (!skippedResearch.roundup) {
+                const rc = document.getElementById('fc-roundup-bullets-container') || document.getElementById('review-roundup-bullets-container');
+                if (rc) {
+                    rc.querySelectorAll('.dynamic-field-item').forEach(item => {
+                        const el = item.querySelector('.editable[contenteditable]');
+                        if (el && el.innerHTML.trim()) roundupItems.push({ summary: el.innerHTML.trim() });
+                    });
+                }
+                if (roundupItems.length === 0 && Array.isArray(generatedRoundupContent)) {
+                    roundupItems = generatedRoundupContent.map(item => ({
+                        summary: typeof item === 'string' ? item : (item.summary || item.headline || item.text || '')
+                    }));
                 }
             }
 
-            // Get spotlight content - with subheader and h3s structure
-            const spotlightSubheader = generatedSpotlightSubheader || '';
-            let spotlightText = '';
+            // Spotlight
+            const shEl = document.getElementById('fc-spotlight-subheader') || document.getElementById('review-spotlight-subheader');
+            const spotlightSubheader = shEl ? shEl.innerText.trim() : (generatedSpotlightSubheader || '');
             let spotlightH2s = [];
-
-            // Handle spotlight structured content { subheader, h3s: [...] }
-            if (generatedSpotlightContent && typeof generatedSpotlightContent === 'object') {
-                if (generatedSpotlightContent.h3s && Array.isArray(generatedSpotlightContent.h3s)) {
-                    spotlightH2s = generatedSpotlightContent.h3s;
-                }
-                if (generatedSpotlightContent.body) {
-                    spotlightText = generatedSpotlightContent.body;
-                }
-            } else {
-                spotlightText = (document.getElementById('fc-spotlight') || document.getElementById('review-spotlight'))?.innerHTML || generatedSpotlightContent || '';
+            const spotlightContainer = document.getElementById('fc-spotlight-sections-container') || document.getElementById('review-spotlight-sections-container');
+            if (spotlightContainer) {
+                spotlightContainer.querySelectorAll('.dynamic-field-item').forEach(item => {
+                    const el = item.querySelector('.editable[contenteditable]');
+                    if (el && el.innerHTML.trim()) spotlightH2s.push({ body: el.innerHTML.trim() });
+                });
             }
+            if (spotlightH2s.length === 0 && generatedSpotlightContent?.h3s) {
+                spotlightH2s = generatedSpotlightContent.h3s;
+            }
+            const spotlightText = spotlightH2s.length > 0 ? '' : (generatedSpotlightContent?.body || (typeof generatedSpotlightContent === 'string' ? generatedSpotlightContent : ''));
 
-            // Get tips content - array of tips with titles
+            // Tips (skip if skippedResearch.tips)
             let tipsIntro = '';
             let tipsItems = [];
-
-            if (generatedTipsContent) {
-                if (generatedTipsContent.intro) {
-                    tipsIntro = generatedTipsContent.intro;
-                }
-                if (generatedTipsContent.tips && Array.isArray(generatedTipsContent.tips)) {
-                    tipsItems = generatedTipsContent.tips.map(tip => ({
-                        title: tip.title || '',
-                        tip: tip.tip || tip.description || (typeof tip === 'string' ? tip : '')
-                    }));
-                } else if (Array.isArray(generatedTipsContent)) {
-                    tipsItems = generatedTipsContent.map(tip => ({
-                        title: tip.title || '',
-                        tip: tip.tip || tip.description || (typeof tip === 'string' ? tip : '')
-                    }));
-                } else if (typeof generatedTipsContent === 'string' && generatedTipsContent.trim()) {
-                    // After saveFinalCopyToState converts to HTML string - parse intro and tips
-                    const temp = document.createElement('div');
-                    temp.innerHTML = generatedTipsContent;
-                    const firstP = temp.querySelector('p');
-                    if (firstP) tipsIntro = firstP.innerHTML.trim();
-                    temp.querySelectorAll('li').forEach(li => {
-                        const liHtml = li.innerHTML.trim();
-                        const strongMatch = liHtml.match(/<strong>(.*?):?<\/strong>\s*([\s\S]*)/);
-                        if (strongMatch) {
-                            tipsItems.push({
-                                title: strongMatch[1].replace(/:$/, '').trim(),
-                                tip: strongMatch[2].trim()
-                            });
-                        } else {
-                            tipsItems.push({ title: '', tip: liHtml });
-                        }
+            if (!skippedResearch.tips) {
+                const tiEl = document.getElementById('fc-tips-intro') || document.getElementById('review-tips-intro');
+                tipsIntro = tiEl ? tiEl.innerHTML : (generatedTipsContent?.intro || '');
+                const tc = document.getElementById('fc-tips-container') || document.getElementById('review-tips-container');
+                if (tc) {
+                    tc.querySelectorAll('.dynamic-field-item').forEach(item => {
+                        const titleEl = item.querySelector('.editable-sm');
+                        const contentEl = item.querySelector('.editable:not(.editable-sm)');
+                        tipsItems.push({
+                            title: titleEl ? titleEl.innerText.trim() : '',
+                            tip: contentEl ? contentEl.innerHTML.trim() : ''
+                        });
                     });
+                }
+                if (tipsItems.length === 0 && generatedTipsContent?.tips) {
+                    tipsItems = generatedTipsContent.tips.map(t => ({ title: t.title || '', tip: t.tip || t.description || '' }));
                 }
             }
 
@@ -8519,7 +8794,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 briteSpotText: convertMarkdownLinksToHTML(briteSpotTextForTemplate),
                 briteSpotImage: generatedImages.briteSpot?.url || '',
                 briteSpotBullets: briteSpotBulletsForTemplate.map(b => convertMarkdownLinksToHTML(b)),
-                claimsTitle: selectedClaims?.title || '',
+                claimsTitle: claimsTitle,
                 claimsText: convertMarkdownLinksToHTML(claimsText),
                 claimsImage: generatedImages.claims?.url || '',
                 roundupItems: roundupItems.map(item => ({
@@ -9976,6 +10251,49 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
             // Update progress tracker and next button
             updateSelectionProgress();
+
+            // Sync skip button state
+            const skipBtn = document.getElementById('skipResearchBtn');
+            const overlay = document.getElementById('skipResearchOverlay');
+            if (skipBtn && overlay) {
+                if (skippedResearch[section]) {
+                    skipBtn.textContent = 'Unskip Section';
+                    skipBtn.style.background = '#fef3c7';
+                    skipBtn.style.borderColor = '#f59e0b';
+                    skipBtn.style.color = '#b45309';
+                    overlay.style.display = 'flex';
+                } else {
+                    skipBtn.textContent = 'Skip Section';
+                    skipBtn.style.background = 'white';
+                    skipBtn.style.borderColor = '#d1d5db';
+                    skipBtn.style.color = '#6b7280';
+                    overlay.style.display = 'none';
+                }
+            }
+        }
+
+        function toggleSkipResearch(tab) {
+            skippedResearch[tab] = !skippedResearch[tab];
+            const skipBtn = document.getElementById('skipResearchBtn');
+            const overlay = document.getElementById('skipResearchOverlay');
+            const tabCheck = document.getElementById(tab + 'TabCheck');
+
+            if (skippedResearch[tab]) {
+                skipBtn.textContent = 'Unskip Section';
+                skipBtn.style.background = '#fef3c7';
+                skipBtn.style.borderColor = '#f59e0b';
+                skipBtn.style.color = '#b45309';
+                if (overlay) overlay.style.display = 'flex';
+                if (tabCheck) { tabCheck.style.display = 'inline'; tabCheck.textContent = 'SKIP'; tabCheck.style.color = '#f59e0b'; }
+            } else {
+                skipBtn.textContent = 'Skip Section';
+                skipBtn.style.background = 'white';
+                skipBtn.style.borderColor = '#d1d5db';
+                skipBtn.style.color = '#6b7280';
+                if (overlay) overlay.style.display = 'none';
+                if (tabCheck) { tabCheck.style.display = 'none'; tabCheck.textContent = '✓'; tabCheck.style.color = '#059669'; }
+            }
+            updateSelectionProgress();
         }
 
         // Re-attach click handlers to result items after restoring from cache
@@ -10047,10 +10365,11 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         // Update the selection progress tracker and Next button
         function updateSelectionProgress() {
-            const hasClaims = selectedClaims !== null;
-            const hasRoundup = selectedRoundup.length >= 5;  // Require 5 articles for roundup
-            const hasTips = selectedTips !== null;  // Only 1 article for tips now
-            const allSelected = hasClaims && hasRoundup && hasTips;
+            const hasClaims = selectedClaims !== null || skippedResearch.claims;
+            const hasRoundup = selectedRoundup.length >= 5 || skippedResearch.roundup;
+            const hasTips = selectedTips !== null || skippedResearch.tips;
+            const allSkipped = skippedResearch.claims && skippedResearch.roundup && skippedResearch.tips;
+            const allSelected = hasClaims && hasRoundup && hasTips && !allSkipped;
 
             // Update progress tracker items
             const claimsItem = document.getElementById('progressClaims');
@@ -10061,29 +10380,29 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             if (claimsItem) {
                 claimsItem.classList.toggle('completed', hasClaims);
                 claimsItem.classList.toggle('active', currentResearchSection === 'claims');
-                document.getElementById('checkClaims').textContent = hasClaims ? '✓' : '';
+                document.getElementById('checkClaims').textContent = skippedResearch.claims ? 'SKIP' : (selectedClaims !== null ? '✓' : '');
             }
             if (roundupItem) {
                 roundupItem.classList.toggle('completed', hasRoundup);
                 roundupItem.classList.toggle('active', currentResearchSection === 'roundup');
-                document.getElementById('checkRoundup').textContent = hasRoundup ? '✓' : `${selectedRoundup.length}/5`;
+                document.getElementById('checkRoundup').textContent = skippedResearch.roundup ? 'SKIP' : (selectedRoundup.length >= 5 ? '✓' : `${selectedRoundup.length}/5`);
             }
             if (tipsItem) {
                 tipsItem.classList.toggle('completed', hasTips);
                 tipsItem.classList.toggle('active', currentResearchSection === 'tips');
-                document.getElementById('checkTips').textContent = hasTips ? '✓' : '';
+                document.getElementById('checkTips').textContent = skippedResearch.tips ? 'SKIP' : (selectedTips !== null ? '✓' : '');
             }
 
-            // Update tab checkmarks
-            document.getElementById('claimsTabCheck').style.display = hasClaims ? 'inline' : 'none';
-            document.getElementById('roundupTabCheck').style.display = hasRoundup ? 'inline' : 'none';
-            document.getElementById('tipsTabCheck').style.display = hasTips ? 'inline' : 'none';
+            // Update tab checkmarks (skip state handled by toggleSkipResearch)
+            if (!skippedResearch.claims) document.getElementById('claimsTabCheck').style.display = (selectedClaims !== null) ? 'inline' : 'none';
+            if (!skippedResearch.roundup) document.getElementById('roundupTabCheck').style.display = (selectedRoundup.length >= 5) ? 'inline' : 'none';
+            if (!skippedResearch.tips) document.getElementById('tipsTabCheck').style.display = (selectedTips !== null) ? 'inline' : 'none';
 
-            // Update Next button - always shows "Generate Newsletter" but disabled until all 3 selected
+            // Update Next button - always shows "Generate Newsletter" but disabled until all 3 selected (or skipped)
             const nextBtn = document.getElementById('researchNextBtn');
             if (nextBtn) {
                 nextBtn.disabled = !allSelected;
-                nextBtn.textContent = 'Generate Newsletter →';
+                nextBtn.textContent = allSkipped ? 'Cannot skip all sections' : 'Generate Newsletter →';
                 nextBtn.onclick = allSelected ? () => generateContent() : null;
             }
         }
@@ -10691,6 +11010,72 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             if (!selectedMonth) return;
             // Sync any edits from active contenteditable divs before saving
             syncContentFromDOM();
+
+            // Build per-field reviewHTML
+            const reviewHTML = { _layout: 'labeled' };
+            const onFinalCopy = document.querySelector('.step.active')?.id === 'step7b';
+            const prefix = onFinalCopy ? 'fc-' : 'review-';
+
+            // Simple fields
+            ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                const el = document.getElementById(prefix + field);
+                if (el) reviewHTML[field] = el.innerHTML;
+            });
+
+            // Brite Spot bullets
+            const bsBulletContainer = document.getElementById(prefix + 'britespot-bullets-container');
+            if (bsBulletContainer) {
+                const items = bsBulletContainer.querySelectorAll('.dynamic-field-item');
+                reviewHTML['britespot-bullet-count'] = items.length;
+                items.forEach((item, idx) => {
+                    const el = item.querySelector('.editable');
+                    reviewHTML['britespot-bullet-' + idx] = el ? el.innerHTML : '';
+                });
+            }
+
+            // Roundup bullets
+            const roundupContainer = document.getElementById(prefix + 'roundup-bullets-container');
+            if (roundupContainer) {
+                const items = roundupContainer.querySelectorAll('.dynamic-field-item');
+                reviewHTML['roundup-bullet-count'] = items.length;
+                items.forEach((item, idx) => {
+                    const el = item.querySelector('.editable');
+                    reviewHTML['roundup-bullet-' + idx] = el ? el.innerHTML : '';
+                });
+            }
+
+            // Spotlight sections
+            const spotlightContainer = document.getElementById(prefix + 'spotlight-sections-container');
+            if (spotlightContainer) {
+                const items = spotlightContainer.querySelectorAll('.dynamic-field-item');
+                reviewHTML['spotlight-section-count'] = items.length;
+                items.forEach((item, idx) => {
+                    const el = item.querySelector('.editable');
+                    reviewHTML['spotlight-section-' + idx] = el ? el.innerHTML : '';
+                });
+            }
+
+            // Tips
+            const tipsContainerSave = document.getElementById(prefix + 'tips-container');
+            if (tipsContainerSave) {
+                const items = tipsContainerSave.querySelectorAll('.dynamic-field-item');
+                reviewHTML['tip-count'] = items.length;
+                items.forEach((item, idx) => {
+                    const titleEl = item.querySelector('.editable-sm');
+                    const contentEl = item.querySelector('.editable:not(.editable-sm)');
+                    reviewHTML['tip-' + idx + '-title'] = titleEl ? titleEl.innerHTML : '';
+                    reviewHTML['tip-' + idx + '-content'] = contentEl ? contentEl.innerHTML : '';
+                });
+            }
+
+            // Sandbox content
+            ['roundup', 'spotlight', 'tips'].forEach(section => {
+                const sbBody = document.getElementById('sandbox-' + section + '-body');
+                if (sbBody) reviewHTML['sandbox-' + section] = sbBody.innerHTML;
+                const sbBox = document.getElementById('sandbox-' + section);
+                if (sbBox) reviewHTML['sandbox-' + section + '-collapsed'] = sbBox.classList.contains('collapsed');
+            });
+
             try {
                 const userEmail = (window.AUTH_USER && window.AUTH_USER.email) || 'unknown';
                 const resp = await fetch(`${API_BASE}/api/save-draft`, {
@@ -10720,8 +11105,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         generatedImages: generatedImages,
                         imagePrompts: basePrompts,  // Save image prompts
                         specialSection: specialSection,
+                        skippedResearch: skippedResearch,
                         subjectLine: document.getElementById('finalSubjectLine')?.value || '',
                         preheader: document.getElementById('finalPreheader')?.value || '',
+                        reviewHTML: reviewHTML,
                         savedBy: userEmail
                     })
                 });
@@ -10806,6 +11193,9 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 selectedRoundup = sa.roundup || [];
                 selectedTips = sa.tips || null;
 
+                // Restore skipped research state
+                skippedResearch = d.skippedResearch || { claims: false, roundup: false, tips: false };
+
                 // Restore image prompts and prevent regeneration
                 if (d.imagePrompts && Object.keys(d.imagePrompts).length > 0) {
                     basePrompts = d.imagePrompts;
@@ -10835,16 +11225,82 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 if (preheaderEl && d.preheader) preheaderEl.value = d.preheader;
 
                 // Populate UI with stored content so it doesn't need to be regenerated
-                displayGeneratedContent();  // Populate review step divs
-                populateFinalCopy();         // Populate final copy divs
+                const savedHTML = d.reviewHTML || {};
+                if (savedHTML._layout === 'labeled') {
+                    console.log('[Draft] Restoring from labeled reviewHTML');
+                    // Simple fields
+                    ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                        const el = document.getElementById('review-' + field);
+                        if (el && savedHTML[field] !== undefined) el.innerHTML = savedHTML[field];
+                    });
+
+                    // Brite Spot bullets
+                    const bsBulletCount = savedHTML['britespot-bullet-count'] || 0;
+                    if (bsBulletCount > 0) {
+                        const bullets = [];
+                        for (let i = 0; i < bsBulletCount; i++) bullets.push({text: savedHTML['britespot-bullet-' + i] || ''});
+                        renderDynamicBullets('review-', 'britespot', bullets);
+                    }
+
+                    // Roundup bullets
+                    const roundupBulletCount = savedHTML['roundup-bullet-count'] || 0;
+                    if (roundupBulletCount > 0) {
+                        const bullets = [];
+                        for (let i = 0; i < roundupBulletCount; i++) bullets.push({text: savedHTML['roundup-bullet-' + i] || ''});
+                        renderDynamicBullets('review-', 'roundup', bullets);
+                    }
+
+                    // Spotlight sections
+                    const spotlightSectionCount = savedHTML['spotlight-section-count'] || 0;
+                    if (spotlightSectionCount > 0) {
+                        const sections = [];
+                        for (let i = 0; i < spotlightSectionCount; i++) sections.push({body: savedHTML['spotlight-section-' + i] || ''});
+                        renderDynamicSpotlightSections('review-', sections);
+                    }
+
+                    // Tips
+                    const tipCount = savedHTML['tip-count'] || 0;
+                    if (tipCount > 0) {
+                        const tips = [];
+                        for (let i = 0; i < tipCount; i++) tips.push({title: savedHTML['tip-' + i + '-title'] || '', tip: savedHTML['tip-' + i + '-content'] || ''});
+                        renderDynamicTips('review-', tips);
+                    }
+
+                    // Source URLs
+                    renderSourceUrls('review-claims-sources', null, selectedClaims);
+                    renderSourceUrls('review-roundup-sources', selectedRoundup);
+                    renderSourceUrls('review-spotlight-sources', null, selectedSpotlight);
+                    renderSourceUrls('review-tips-sources', null, selectedTips);
+
+                    // Sandbox
+                    ['roundup', 'spotlight', 'tips'].forEach(section => {
+                        const sbBody = document.getElementById('sandbox-' + section + '-body');
+                        if (sbBody && savedHTML['sandbox-' + section]) sbBody.innerHTML = savedHTML['sandbox-' + section];
+                        const sbBox = document.getElementById('sandbox-' + section);
+                        if (sbBox && savedHTML['sandbox-' + section + '-collapsed']) {
+                            sbBox.classList.add('collapsed');
+                            const btn = sbBox.querySelector('.sandbox-toggle');
+                            if (btn) btn.textContent = 'Expand';
+                        }
+                    });
+
+                    // Restore skippedResearch
+                    if (typeof skippedResearch === 'undefined') window.skippedResearch = {claims: false, roundup: false, tips: false};
+
+                    populateFinalCopy();
+                } else {
+                    // Old format: populate from globals
+                    displayGeneratedContent();
+                    populateFinalCopy();
+                }
 
                 // Navigate to the saved step (redirect removed brand check steps to edit)
                 const savedStep = d.currentStep || 'step1';
                 let stepId = String(savedStep).replace('step', '');
                 if (stepId === '6' || stepId === '7') stepId = '5';
                 // If content exists but step is too early, jump to review
-                const gc = d.generatedContent || {};
-                if (Object.keys(gc).length > 0 && (stepId === '1' || stepId === '2' || stepId === '3' || stepId === '4' || parseInt(stepId) <= 4)) {
+                const gcCheck = d.generatedContent || {};
+                if (Object.keys(gcCheck).length > 0 && (stepId === '1' || stepId === '2' || stepId === '3' || stepId === '4' || parseInt(stepId) <= 4)) {
                     stepId = '5';
                 }
                 showStep(stepId || 1);
@@ -10913,59 +11369,167 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             const onFinalCopy = (activeStep === 'step7b');
             const prefix = onFinalCopy ? 'fc-' : 'review-';
 
-            const getHtml = id => {
-                const el = document.getElementById(id);
-                return el ? el.innerHTML.trim() : '';
-            };
+            const getText = id => { const el = document.getElementById(id); return el ? el.textContent.trim() : ''; };
+            const getHTML = id => { const el = document.getElementById(id); return el ? el.innerHTML.trim() : ''; };
 
-            const introHtml = getHtml(prefix + 'headerIntro');
+            // Header Intro
+            const introHtml = getHTML(prefix + 'headerIntro');
             if (introHtml) headerIntroContent = introHtml;
 
-            const bsHtml = getHtml(prefix + 'britespot');
-            if (bsHtml) {
-                briteSpotContent = bsHtml;
-                briteSpotRewritten = bsHtml;
-                generatedBriteSpotContent = bsHtml;
+            // Brite Spot
+            const bsPara = getHTML(prefix + 'britespot-paragraph');
+            if (bsPara) { briteSpotContent = bsPara; briteSpotRewritten = bsPara; generatedBriteSpotContent = bsPara; }
+            // Read bullets from container
+            const bsBulletContainer = document.getElementById(prefix + 'britespot-bullets-container');
+            if (bsBulletContainer) {
+                const items = bsBulletContainer.querySelectorAll('.dynamic-field-item');
+                briteSpotBullets = [];
+                items.forEach((item, idx) => {
+                    const el = document.getElementById(prefix + 'britespot-bullet-' + idx);
+                    if (el && el.innerHTML.trim()) briteSpotBullets.push(el.innerHTML.trim());
+                });
             }
 
-            const claimsHtml = getHtml(prefix + 'claims');
-            if (claimsHtml) generatedClaimsContent = claimsHtml;
+            // Curious Claims
+            const claimsTitle = getText(prefix + 'claims-title');
+            const claimsCopy = getHTML(prefix + 'claims-copy');
+            if (claimsCopy) generatedClaimsContent = claimsCopy;
 
-            const roundupHtml = getHtml(prefix + 'roundup');
-            if (roundupHtml) generatedRoundupContent = roundupHtml;
-
-            const spotlightHtml = getHtml(prefix + 'spotlight');
-            if (spotlightHtml) {
-                generatedSpotlightContent = spotlightHtml;
-                spotlightGeneratedContent = spotlightHtml;
+            // News Roundup - read dynamic bullets
+            const roundupContainer = document.getElementById(prefix + 'roundup-bullets-container');
+            if (roundupContainer) {
+                const items = roundupContainer.querySelectorAll('.dynamic-field-item');
+                const bullets = [];
+                items.forEach((item, idx) => {
+                    const el = item.querySelector('.editable');
+                    if (el && el.innerHTML.trim()) bullets.push({summary: el.innerHTML.trim()});
+                });
+                if (bullets.length > 0) generatedRoundupContent = bullets;
             }
 
-            const tipsHtml = getHtml(prefix + 'tips');
-            if (tipsHtml) generatedTipsContent = tipsHtml;
+            // InsurNews Spotlight - subheader + dynamic sections
+            const spotlightSubheader = getText(prefix + 'spotlight-subheader');
+            if (spotlightSubheader) generatedSpotlightSubheader = spotlightSubheader;
+            const spotlightContainer = document.getElementById(prefix + 'spotlight-sections-container');
+            if (spotlightContainer) {
+                const items = spotlightContainer.querySelectorAll('.dynamic-field-item');
+                const h3s = [];
+                items.forEach((item, idx) => {
+                    const el = item.querySelector('.editable');
+                    if (el && el.innerHTML.trim()) h3s.push({body: el.innerHTML.trim()});
+                });
+                if (h3s.length > 0) generatedSpotlightContent = {subheader: spotlightSubheader, h3s: h3s};
+            }
+
+            // Agent Advantage - intro + dynamic tips
+            const tipsIntro = getHTML(prefix + 'tips-intro');
+            const tipsContainer = document.getElementById(prefix + 'tips-container');
+            if (tipsContainer) {
+                const items = tipsContainer.querySelectorAll('.dynamic-field-item');
+                const tips = [];
+                items.forEach((item, idx) => {
+                    const titleEl = document.getElementById(prefix + 'tip-' + idx + '-title');
+                    const contentEl = document.getElementById(prefix + 'tip-' + idx + '-content');
+                    if (titleEl || contentEl) {
+                        tips.push({
+                            title: titleEl ? titleEl.textContent.trim() : '',
+                            tip: contentEl ? contentEl.innerHTML.trim() : ''
+                        });
+                    }
+                });
+                generatedTipsContent = {intro: tipsIntro, tips: tips};
+            }
 
             // Special section body
-            const ssHtml = getHtml(onFinalCopy ? 'fc-specialSection' : 'specialSectionBody');
+            const ssHtml = getHTML(onFinalCopy ? 'fc-specialSection' : 'specialSectionBody');
             if (ssHtml && specialSection.enabled) specialSection.body = ssHtml;
 
             console.log('[Sync] State updated from DOM (step: ' + activeStep + ', prefix: ' + prefix + ')');
         }
 
         function populateFinalCopy() {
-            // Copy content from review-* divs (Step 5) into fc-* divs (Step 7b)
-            const sections = ['headerIntro', 'britespot', 'claims', 'roundup', 'spotlight', 'tips'];
-            sections.forEach(section => {
-                const src = document.getElementById('review-' + section);
-                const dst = document.getElementById('fc-' + section);
-                if (src && dst) {
-                    dst.innerHTML = src.innerHTML;
+            // Simple fields
+            copyField('review-headerIntro', 'fc-headerIntro');
+            copyField('review-britespot-paragraph', 'fc-britespot-paragraph');
+            copyField('review-claims-title', 'fc-claims-title');
+            copyField('review-claims-copy', 'fc-claims-copy');
+            copyField('review-spotlight-subheader', 'fc-spotlight-subheader');
+            copyField('review-tips-intro', 'fc-tips-intro');
+
+            // Brite Spot bullets: read from review, render into fc
+            const bsContainer = document.getElementById('review-britespot-bullets-container');
+            if (bsContainer) {
+                const items = bsContainer.querySelectorAll('.dynamic-field-item');
+                const bullets = [];
+                items.forEach((item, idx) => {
+                    const el = document.getElementById('review-britespot-bullet-' + idx);
+                    if (el) bullets.push({text: el.innerHTML});
+                });
+                renderDynamicBullets('fc-', 'britespot', bullets);
+            }
+
+            // Roundup bullets: read from review, render into fc
+            const roundupContainer = document.getElementById('review-roundup-bullets-container');
+            if (roundupContainer) {
+                const items = roundupContainer.querySelectorAll('.dynamic-field-item');
+                const bullets = [];
+                items.forEach(item => {
+                    const el = item.querySelector('.editable');
+                    if (el) bullets.push({text: el.innerHTML});
+                });
+                renderDynamicBullets('fc-', 'roundup', bullets);
+            }
+
+            // Spotlight sections: read from review, render into fc
+            const spotlightContainer = document.getElementById('review-spotlight-sections-container');
+            if (spotlightContainer) {
+                const items = spotlightContainer.querySelectorAll('.dynamic-field-item');
+                const sections = [];
+                items.forEach(item => {
+                    const el = item.querySelector('.editable');
+                    if (el) sections.push({body: el.innerHTML});
+                });
+                renderDynamicSpotlightSections('fc-', sections);
+            }
+
+            // Tips: read from review, render into fc
+            const tipsContainer = document.getElementById('review-tips-container');
+            if (tipsContainer) {
+                const items = tipsContainer.querySelectorAll('.dynamic-field-item');
+                const tips = [];
+                items.forEach((item, idx) => {
+                    const titleEl = document.getElementById('review-tip-' + idx + '-title');
+                    const contentEl = document.getElementById('review-tip-' + idx + '-content');
+                    tips.push({
+                        title: titleEl ? titleEl.textContent : '',
+                        tip: contentEl ? contentEl.innerHTML : ''
+                    });
+                });
+                renderDynamicTips('fc-', tips);
+            }
+
+            // Skipped sections
+            if (typeof skippedResearch !== 'undefined') {
+                if (skippedResearch.claims) {
+                    const el = document.getElementById('fc-claims-title');
+                    if (el) el.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
                 }
-            });
-            // Populate special section if enabled and has body copy
+                if (skippedResearch.roundup) {
+                    const el = document.getElementById('fc-roundup-bullets-container');
+                    if (el) el.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
+                }
+                if (skippedResearch.tips) {
+                    const el = document.getElementById('fc-tips-intro');
+                    if (el) el.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
+                }
+            }
+
+            // Special section
             if (specialSection.enabled && specialSection.body) {
                 const ssDst = document.getElementById('fc-specialSection');
-                const ssWrapper = document.getElementById('fc-specialSection-wrapper');
                 if (ssDst) ssDst.innerHTML = specialSection.body;
-                if (ssWrapper) ssWrapper.style.display = 'block';
+                const ssWrapper = document.getElementById('fc-specialSection-wrapper');
+                if (ssWrapper) ssWrapper.style.display = '';
             }
         }
 

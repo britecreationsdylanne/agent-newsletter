@@ -3340,32 +3340,85 @@ def export_to_docs():
 
             index_offset[0] = end_index
 
+        def html_to_plain_text_keep_links(html):
+            """Strip HTML tags EXCEPT <a> tags."""
+            import re
+            # Keep <a> tags but strip everything else
+            result = re.sub(r'<br\s*/?\s*>', '\n', html)
+            result = re.sub(r'</p>\s*<p[^>]*>', '\n\n', result)
+            result = re.sub(r'<(?!/?a[ >])[^>]+>', '', result)
+            result = result.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&nbsp;', ' ').replace('&#39;', "'").replace('&quot;', '"')
+            return result.strip()
+
+        def add_rich_text(html_val, bold=False, index_offset=[None]):
+            """Insert text preserving <a> tag hyperlinks as Google Docs links."""
+            import re
+            if not html_val:
+                return
+            # Use the same index_offset as add_text by accessing add_text's default
+            offset = add_text.__defaults__[2]
+            if not html_val:
+                return
+            # Strip to plain text but keep <a> tags
+            text_val = html_to_plain_text_keep_links(html_val)
+            # Parse segments: plain text and links
+            segments = []
+            last_end = 0
+            for m in re.finditer(r'<a\s+[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', text_val, re.IGNORECASE | re.DOTALL):
+                if m.start() > last_end:
+                    segments.append(('text', text_val[last_end:m.start()]))
+                segments.append(('link', m.group(2), m.group(1)))
+                last_end = m.end()
+            if last_end < len(text_val):
+                segments.append(('text', text_val[last_end:]))
+            if not segments:
+                segments = [('text', html_to_plain_text(html_val))]
+            for seg in segments:
+                if seg[0] == 'text':
+                    plain = seg[1]
+                    plain = re.sub(r'<[^>]+>', '', plain)
+                    if not plain:
+                        continue
+                    requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': plain}})
+                    if bold:
+                        requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + len(plain)}, 'textStyle': {'bold': True}, 'fields': 'bold'}})
+                    offset[0] += len(plain)
+                elif seg[0] == 'link':
+                    link_text = re.sub(r'<[^>]+>', '', seg[1])
+                    link_url = seg[2]
+                    if not link_text:
+                        link_text = link_url
+                    requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': link_text}})
+                    requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + len(link_text)}, 'textStyle': {'link': {'url': link_url}, 'foregroundColor': {'color': {'rgbColor': {'red': 0.0, 'green': 0.506, 'blue': 0.506}}}}, 'fields': 'link,foregroundColor'}})
+                    offset[0] += len(link_text)
+            # Add newline
+            requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': '\n'}})
+            offset[0] += 1
+
         # Add newsletter sections
         add_text(title, heading=True)
 
         if content.get('header_intro'):
-            add_text(content['header_intro'])
+            add_rich_text(content['header_intro'])
 
         # Note: Introduction section removed - BriteCo Brief header_intro is used instead
 
         if content.get('brite_spot'):
             add_text('The Brite Spot', bold=True)
-            add_text(content['brite_spot'])
+            add_rich_text(content['brite_spot'])
 
         if content.get('curious_claims'):
             add_text('Curious Claims', bold=True)
-            add_text(content['curious_claims'])
+            add_rich_text(content['curious_claims'])
 
         if content.get('roundup'):
             add_text('Insurance News Roundup', bold=True)
-            roundup_text = ''
             if isinstance(content['roundup'], list):
                 for item in content['roundup']:
                     bullet = item.get('summary', item) if isinstance(item, dict) else item
-                    roundup_text += f"• {bullet}\n\n"  # Double newline for spacing between bullets
+                    add_rich_text(f"• {bullet}")
             else:
-                roundup_text = content['roundup']
-            add_text(roundup_text.rstrip())  # Remove trailing whitespace
+                add_rich_text(content['roundup'])
 
         if content.get('spotlight'):
             add_text('InsurNews Spotlight', bold=True)
@@ -3374,24 +3427,24 @@ def export_to_docs():
                 if spotlight.get('subheader'):
                     add_text(spotlight['subheader'])
                 if spotlight.get('body'):
-                    add_text(spotlight['body'])
+                    add_rich_text(spotlight['body'])
             else:
-                add_text(str(spotlight))
+                add_rich_text(str(spotlight))
 
         if content.get('agent_tips'):
             add_text('Agent Advantage', bold=True)
             tips = content['agent_tips']
             if isinstance(tips, dict) and tips.get('intro'):
-                add_text(tips['intro'])
+                add_rich_text(tips['intro'])
                 for i, tip in enumerate(tips.get('tips', []), 1):
                     tip_text = tip.get('tip', tip) if isinstance(tip, dict) else tip
-                    add_text(f"{i}. {tip_text}")
+                    add_rich_text(f"{i}. {tip_text}")
             elif isinstance(tips, list):
                 for i, tip in enumerate(tips, 1):
                     tip_text = tip.get('tip', tip) if isinstance(tip, dict) else tip
-                    add_text(f"{i}. {tip_text}")
+                    add_rich_text(f"{i}. {tip_text}")
             else:
-                add_text(str(tips))
+                add_rich_text(str(tips))
 
         # Special Section (if included)
         if content.get('special_section'):
@@ -3399,7 +3452,7 @@ def export_to_docs():
             ss_title = ss.get('title', 'Special Section') if isinstance(ss, dict) else 'Special Section'
             ss_body = ss.get('body', str(ss)) if isinstance(ss, dict) else str(ss)
             add_text(ss_title, bold=True)
-            add_text(ss_body)
+            add_rich_text(ss_body)
 
         # Execute batch update
         if requests_list:
@@ -3768,6 +3821,8 @@ def save_draft():
             'specialSection': data.get('specialSection'),
             'subjectLine': data.get('subjectLine'),
             'preheader': data.get('preheader'),
+            'reviewHTML': data.get('reviewHTML'),
+            'skippedResearch': data.get('skippedResearch'),
             'lastSavedBy': data.get('savedBy', 'unknown'),
             'lastSavedAt': datetime.now(CHICAGO_TZ).isoformat()
         }
