@@ -10966,7 +10966,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     month: selectedMonth, headerIntro: headerIntroContent, briteSpot: briteSpotContent,
                     briteSpotBullets: briteSpotBullets, claims: generatedClaimsContent, roundup: generatedRoundupContent,
                     spotlight: generatedSpotlightContent, spotlightSub: generatedSpotlightSubheader,
-                    tips: generatedTipsContent, intro: generatedIntroContent, images: generatedImages
+                    tips: generatedTipsContent, intro: generatedIntroContent, images: generatedImages,
+                    skippedResearch: Object.assign({}, skippedResearch)
                 };
                 // Set state from published draft
                 selectedMonth = d.month || '';
@@ -10981,8 +10982,11 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 generatedTipsContent = gc.tips || '';
                 generatedIntroContent = gc.intro || '';
                 generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null };
+                skippedResearch = d.skippedResearch || { claims: false, roundup: false, tips: false };
+                // Populate review DOM fields so generateNewsletterHTML() can read them
+                displayGeneratedContent();
                 // Generate preview
-                const html = getFinalNewsletterHTML();
+                const html = generateNewsletterHTML();
                 document.getElementById('newsletterModalContent').innerHTML = html;
                 document.getElementById('newsletterModal').style.display = 'block';
                 // Restore original state
@@ -10990,6 +10994,9 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 briteSpotBullets = orig.briteSpotBullets; generatedClaimsContent = orig.claims; generatedRoundupContent = orig.roundup;
                 generatedSpotlightContent = orig.spotlight; generatedSpotlightSubheader = orig.spotlightSub;
                 generatedTipsContent = orig.tips; generatedIntroContent = orig.intro; generatedImages = orig.images;
+                skippedResearch = orig.skippedResearch;
+                // Re-populate DOM with current session data
+                displayGeneratedContent();
             } catch (e) {
                 console.error('Error viewing newsletter:', e);
                 alert('Failed to load newsletter preview');
