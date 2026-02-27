@@ -2200,7 +2200,7 @@
                 <h3>News Roundup</h3>
                 <div class="sandbox-preview" id="sandbox-roundup">
                     <div class="sandbox-header">
-                        <span class="sandbox-label" title="Use this as a scratch pad — read, highlight, rearrange. Copy-paste into the fields below when ready. This content is saved with your draft but does not export or pass to final copy.">Scratch Pad</span>
+                        <span class="sandbox-label" title="AI-generated draft copy for reference. Edit freely here, then copy-paste into the labeled fields below to build the newsletter. Saves with your draft but is not included in the final email or export.">Scratch Pad — Edit here, then add to fields below</span>
                         <button class="sandbox-toggle" onclick="toggleSandbox('roundup')">Collapse</button>
                     </div>
                     <div class="sandbox-body" contenteditable="true" id="sandbox-roundup-body"></div>
@@ -2214,7 +2214,7 @@
                 <h3>InsurNews Spotlight</h3>
                 <div class="sandbox-preview" id="sandbox-spotlight">
                     <div class="sandbox-header">
-                        <span class="sandbox-label" title="Use this as a scratch pad — read, highlight, rearrange. Copy-paste into the fields below when ready. This content is saved with your draft but does not export or pass to final copy.">Scratch Pad</span>
+                        <span class="sandbox-label" title="AI-generated draft copy for reference. Edit freely here, then copy-paste into the labeled fields below to build the newsletter. Saves with your draft but is not included in the final email or export.">Scratch Pad — Edit here, then add to fields below</span>
                         <button class="sandbox-toggle" onclick="toggleSandbox('spotlight')">Collapse</button>
                     </div>
                     <div class="sandbox-body" contenteditable="true" id="sandbox-spotlight-body"></div>
@@ -2232,7 +2232,7 @@
                 <h3>Agent Advantage</h3>
                 <div class="sandbox-preview" id="sandbox-tips">
                     <div class="sandbox-header">
-                        <span class="sandbox-label" title="Use this as a scratch pad — read, highlight, rearrange. Copy-paste into the fields below when ready. This content is saved with your draft but does not export or pass to final copy.">Scratch Pad</span>
+                        <span class="sandbox-label" title="AI-generated draft copy for reference. Edit freely here, then copy-paste into the labeled fields below to build the newsletter. Saves with your draft but is not included in the final email or export.">Scratch Pad — Edit here, then add to fields below</span>
                         <button class="sandbox-toggle" onclick="toggleSandbox('tips')">Collapse</button>
                     </div>
                     <div class="sandbox-body" contenteditable="true" id="sandbox-tips-body"></div>
@@ -11272,10 +11272,18 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     renderSourceUrls('review-spotlight-sources', null, selectedSpotlight);
                     renderSourceUrls('review-tips-sources', null, selectedTips);
 
-                    // Sandbox
+                    // Sandbox — restore from saved data, or populate from generated content if empty
                     ['roundup', 'spotlight', 'tips'].forEach(section => {
                         const sbBody = document.getElementById('sandbox-' + section + '-body');
-                        if (sbBody && savedHTML['sandbox-' + section]) sbBody.innerHTML = savedHTML['sandbox-' + section];
+                        if (sbBody && savedHTML['sandbox-' + section]) {
+                            sbBody.innerHTML = savedHTML['sandbox-' + section];
+                        } else {
+                            // Draft was saved before sandbox existed — populate from generated globals
+                            const sectionData = section === 'roundup' ? generatedRoundupContent
+                                : section === 'spotlight' ? generatedSpotlightContent
+                                : generatedTipsContent;
+                            if (sectionData) populateSandbox(section, sectionData);
+                        }
                         const sbBox = document.getElementById('sandbox-' + section);
                         if (sbBox && savedHTML['sandbox-' + section + '-collapsed']) {
                             sbBox.classList.add('collapsed');
