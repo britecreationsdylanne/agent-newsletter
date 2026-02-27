@@ -2322,12 +2322,88 @@
                 </div>
             </div>
 
+            <!-- Subject Line & Preheader Section -->
+            <hr style="border: none; border-top: 2px solid #e5e7eb; margin: 30px 0;">
+            <div class="content-section">
+                <h3>Subject Line & Preheader</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Generate a subject line based on the content above</p>
+
+                <!-- Tone Selection -->
+                <div id="toneSelection" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #3b82f6;">
+                    <h3 style="margin: 0 0 10px 0;">Select Tone</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Choose the tone for your subject line and preheader</p>
+                    <select id="subjectLineTone" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white; margin-bottom: 15px;">
+                        <option value="professional">Professional & Informative</option>
+                        <option value="friendly">Friendly & Conversational</option>
+                        <option value="urgent">Urgent & Action-Oriented</option>
+                        <option value="playful">Playful & Fun</option>
+                        <option value="exclusive">Exclusive & Premium</option>
+                    </select>
+                    <button class="btn" onclick="generateWithSelectedTone()" style="width: 100%;">Generate Subject Lines</button>
+                </div>
+
+                <!-- Loading indicator -->
+                <div id="subjectLineLoading" style="display: none;">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <h3>Generating Options...</h3>
+                        <p style="color: #666;">Claude is reviewing your newsletter content...</p>
+                    </div>
+                </div>
+
+                <!-- Subject Line & Preheader Options -->
+                <div id="subjectLineOptions" style="display: none;">
+                    <!-- Subject Line Options -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+                        <h3 style="margin: 0 0 15px 0;">Subject Line Options</h3>
+                        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Choose one or edit to create your own</p>
+
+                        <div id="subjectOptions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                            <!-- Options will be populated here -->
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Your Subject Line:</label>
+                            <input type="text" id="finalSubjectLine" placeholder="Selected or custom subject line" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 4px; font-size: 16px; font-weight: 500;">
+                        </div>
+                    </div>
+
+                    <!-- Preheader Options -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+                        <h3 style="margin: 0 0 15px 0;">Preheader Options</h3>
+                        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Choose one or edit to create your own</p>
+
+                        <div id="preheaderOptions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                            <!-- Options will be populated here -->
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px;">Your Preheader:</label>
+                            <input type="text" id="finalPreheader" placeholder="Selected or custom preheader" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 4px; font-size: 16px;">
+                        </div>
+                    </div>
+
+                    <!-- Regenerate with different tone -->
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px dashed #e5e7eb;">
+                        <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">Not satisfied? Try a different tone:</p>
+                        <select id="regenerateTone" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px; background: white; margin-bottom: 10px;">
+                            <option value="professional">Professional & Informative</option>
+                            <option value="friendly">Friendly & Conversational</option>
+                            <option value="urgent">Urgent & Action-Oriented</option>
+                            <option value="playful">Playful & Fun</option>
+                            <option value="exclusive">Exclusive & Premium</option>
+                        </select>
+                        <button class="btn-secondary btn" onclick="regenerateSubjectLines()" style="width: 100%;">Regenerate with New Tone</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="draftAutoSaveStatus" style="text-align: center; font-size: 13px; color: #999; margin-bottom: 10px;"></div>
 
             <div class="buttons">
                 <button class="btn-secondary btn" onclick="showStep('2-research')">← Back</button>
-                <button class="btn" onclick="saveDraft(); this.textContent='✓ Saved'; setTimeout(() => this.textContent='💾 Save Draft', 2000);" style="background: #22c55e; padding: 10px 30px;">💾 Save Draft</button>
-                <button class="btn" id="step5NextBtn" onclick="syncContentFromDOM(); populateFinalCopy(); showStep('7b');">Continue to Final Copy →</button>
+                <button class="btn" onclick="saveDraft(); this.textContent='✓ Saved'; setTimeout(() => this.textContent='💾 Save Draft', 2000);" style="background: #22c55e; padding: 10px 30px;">Save Draft</button>
+                <button class="btn" id="step5NextBtn" onclick="syncContentFromDOM(); populateFinalCopy(); showStep('7b');">Continue to Final Copy</button>
             </div>
         </div>
 
@@ -2853,81 +2929,14 @@
             </div>
         </div>
 
-        <!-- Step 12: Subject Line & Preheader -->
+        <!-- Step 12: Footer CTA -->
         <div class="step" id="step12">
-            <h2>✉️ Subject Line & Preheader</h2>
-            <p>Claude will analyze your content and suggest compelling subject lines and preheaders</p>
-
-            <!-- Tone Selection (shown first) -->
-            <div id="toneSelection" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #3b82f6;">
-                <h3 style="margin: 0 0 10px 0;">🎨 Select Tone</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Choose the tone for your subject line and preheader</p>
-                <select id="subjectLineTone" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white; margin-bottom: 15px;">
-                    <option value="professional">Professional & Informative</option>
-                    <option value="friendly">Friendly & Conversational</option>
-                    <option value="urgent">Urgent & Action-Oriented</option>
-                    <option value="playful">Playful & Fun</option>
-                    <option value="exclusive">Exclusive & Premium</option>
-                </select>
-                <button class="btn" onclick="generateWithSelectedTone()" style="width: 100%;">Generate Subject Lines →</button>
-            </div>
-
-            <div id="subjectLineLoading" style="display: none;">
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <h3>Generating Options...</h3>
-                    <p style="color: #666;">Claude is reviewing your newsletter content...</p>
-                </div>
-            </div>
-
-            <div id="subjectLineOptions" style="display: none;">
-                <!-- Subject Line Options -->
-                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                    <h3 style="margin: 0 0 15px 0;">📧 Subject Line Options</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Choose one or edit to create your own</p>
-
-                    <div id="subjectOptions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-                        <!-- Options will be populated here -->
-                    </div>
-
-                    <div style="margin-top: 15px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 5px;">Your Subject Line:</label>
-                        <input type="text" id="finalSubjectLine" placeholder="Selected or custom subject line" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 4px; font-size: 16px; font-weight: 500;">
-                    </div>
-                </div>
-
-                <!-- Preheader Options -->
-                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                    <h3 style="margin: 0 0 15px 0;">👁️ Preheader Options</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Choose one or edit to create your own</p>
-
-                    <div id="preheaderOptions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-                        <!-- Options will be populated here -->
-                    </div>
-
-                    <div style="margin-top: 15px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 5px;">Your Preheader:</label>
-                        <input type="text" id="finalPreheader" placeholder="Selected or custom preheader" style="width: 100%; padding: 12px; border: 2px solid #3b82f6; border-radius: 4px; font-size: 16px;">
-                    </div>
-                </div>
-
-                <!-- Regenerate with different tone -->
-                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px dashed #e5e7eb;">
-                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">Not satisfied? Try a different tone:</p>
-                    <select id="regenerateTone" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px; background: white; margin-bottom: 10px;">
-                        <option value="professional">Professional & Informative</option>
-                        <option value="friendly">Friendly & Conversational</option>
-                        <option value="urgent">Urgent & Action-Oriented</option>
-                        <option value="playful">Playful & Fun</option>
-                        <option value="exclusive">Exclusive & Premium</option>
-                    </select>
-                    <button class="btn-secondary btn" onclick="regenerateSubjectLines()" style="width: 100%;">🔄 Regenerate with New Tone</button>
-                </div>
-            </div>
+            <h2>Footer CTA</h2>
+            <p>Customize the call-to-action at the bottom of your newsletter</p>
 
             <!-- Footer CTA Options -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #FE8916;">
-                <h3 style="margin: 0 0 10px 0;">📢 Footer CTA</h3>
+                <h3 style="margin: 0 0 10px 0;">Footer CTA</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Customize the "Wait Before You Go..." section at the bottom of the newsletter</p>
 
                 <!-- Body Text Dropdown -->
@@ -8261,19 +8270,14 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
 
 <!-- HERO SECTION -->
 <tr>
-<td align="center" background="${assets.ctaBg}" style="padding:0;background-color:#008182;background-image:url('${assets.ctaBg}');background-repeat:no-repeat;background-position:center center;background-size:cover;">
-<!--[if mso]>
-<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;">
-<v:fill type="tile" src="${assets.ctaBg}" color="#008182"/>
-<v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
-<![endif]-->
+<td align="center" style="padding:0;background-color:#008182;">
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
 <td align="center" style="padding:50px 45px;text-align:center;" class="mobile-padding">
 <h1 style="margin:0 0 20px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:32px;line-height:38px;font-weight:700;color:#ffffff;">The BriteCo Brief</h1>
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
-${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#ffffff;text-align:center;">${introText}</p>` : ''}
+${introTextHero ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#ffffff;text-align:center;">${introTextHero}</p>` : ''}
 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;text-align:center;"><tbody><tr>
 <td align="center" style="border-radius:10px;background:#FE8916;text-align:center;">
 <a href="${introCTAUrl}" style="display:inline-block;padding:11px 29px;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:26px;font-weight:600;color:#ffffff;text-decoration:none;text-transform:uppercase;border-radius:10px;">${introCTAText.toUpperCase()}</a>
@@ -8283,10 +8287,6 @@ ${introText ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,Aria
 </tr>
 </tbody>
 </table>
-<!--[if mso]>
-</v:textbox>
-</v:rect>
-<![endif]-->
 </td>
 </tr>
 
@@ -8789,6 +8789,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 preheader,
                 subjectLine,
                 introText: convertMarkdownLinksToHTML(introText),
+                introTextHero: convertMarkdownLinksToHTML(introText).replace(/color:\s*#[0-9a-fA-F]{6}/g, 'color: #ffffff'),
                 introCTAUrl: 'https://brite.co/agents',
                 introCTAText: 'Learn More',
                 briteSpotText: convertMarkdownLinksToHTML(briteSpotTextForTemplate),
@@ -9411,6 +9412,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
         // Generate subject line and preheader options using Claude
         async function generateSubjectLineOptions(tone = 'professional') {
             try {
+                syncContentFromDOM();
                 document.getElementById('subjectLineLoading').style.display = 'block';
                 document.getElementById('subjectLineOptions').style.display = 'none';
 
