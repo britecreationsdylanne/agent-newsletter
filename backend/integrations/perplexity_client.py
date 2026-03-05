@@ -1,7 +1,7 @@
 """
 Perplexity API Client
 
-Uses Perplexity's sonar model for research queries with citations.
+Uses Perplexity's sonar-pro model for research queries with citations.
 Excellent for finding recent news with proper source attribution.
 """
 
@@ -56,10 +56,14 @@ class PerplexityClient:
             # Build the search prompt
             time_context = {
                 '7d': 'from the past week',
-                '15d': 'from the past 15 days',
-                '30d': 'from the past month',
-                '90d': 'from the past 3 months'
+                '30d': 'from the past month'
             }.get(time_window, 'recent')
+
+            # Map time_window to Perplexity's search_recency_filter
+            recency_filter = {
+                '7d': 'week',
+                '30d': 'month'
+            }.get(time_window, 'month')
 
             geo_context = f" Focus on {geography}." if geography else ""
 
@@ -89,9 +93,10 @@ Return your findings as a JSON array with this structure:
 }}
 
 Important:
-- Only include results with REAL, verifiable URLs
+- Only include results with REAL, verifiable URLs {time_context}
 - Focus on actionable insights for P&C insurance agents
 - Include specific data points, statistics, and rate changes when available
+- Do NOT include articles older than the specified time window
 - Return exactly {max_results} results"""
 
             # Make API request
@@ -101,13 +106,14 @@ Important:
             }
 
             payload = {
-                "model": "sonar",  # sonar has web search built-in
+                "model": "sonar-pro",  # deeper search, better recency and citation quality
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": query}
                 ],
                 "temperature": 0.2,
-                "max_tokens": 2000
+                "max_tokens": 2000,
+                "search_recency_filter": recency_filter
             }
 
             print(f"[Perplexity] Searching: {query[:100]}...")

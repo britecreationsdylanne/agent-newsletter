@@ -39,7 +39,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 16px;
@@ -562,7 +562,7 @@
             position: relative;
         }
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1400px) {
             .research-dashboard {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -1796,6 +1796,54 @@
                 </div>
             </div>
 
+            <!-- Theme Discovery Panel -->
+            <div id="spotlightThemePanel" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #0ea5e9; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                        <h4 style="margin: 0 0 4px 0; color: #0c4a6e; font-size: 16px;">Step 1: Discover This Month's Feature Themes</h4>
+                        <p style="margin: 0; color: #64748b; font-size: 13px;">Scan current P&C insurance news to surface 3-4 feature story angles. Pick a theme to automatically focus all 3 search cards below.</p>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+                        <select id="spotlightDiscoveryTimeWindow" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                            <option value="7d">Last 7 days</option>
+                            <option value="30d" selected>Last 30 days</option>
+                        </select>
+                        <button class="btn" id="discoverThemesBtn" onclick="discoverSpotlightThemes()" style="background: #0ea5e9; white-space: nowrap;">Discover Feature Themes</button>
+                    </div>
+                </div>
+
+                <!-- Active Theme Indicator -->
+                <div id="spotlightActiveTheme" style="display: none; background: white; border: 2px solid #0ea5e9; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <span style="font-size: 11px; font-weight: 600; color: #0ea5e9; text-transform: uppercase;">Active Theme</span>
+                            <div id="spotlightActiveThemeHeadline" style="font-weight: 600; color: #1e293b; font-size: 15px; margin-top: 2px;"></div>
+                            <div id="spotlightActiveThemeDesc" style="color: #64748b; font-size: 13px; margin-top: 4px;"></div>
+                        </div>
+                        <button onclick="clearSpotlightTheme()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0 4px;" title="Clear theme">&times;</button>
+                    </div>
+                </div>
+
+                <!-- Theme Results (hidden until discovery runs) -->
+                <div id="spotlightThemeResults" style="display: none;">
+                    <div id="spotlightThemeList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                    <div style="margin-top: 12px; text-align: right;">
+                        <button class="btn-secondary btn" id="refineThemesBtn" onclick="refineSpotlightThemes()" style="display: none; font-size: 13px;">Refine Themes from Results</button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="spotlightThemeLoading" style="display: none; text-align: center; padding: 20px; color: #64748b;">
+                    <div style="font-size: 14px;">Scanning insurance industry trends...</div>
+                    <div style="font-size: 12px; margin-top: 6px; color: #94a3b8;">This may take 15-20 seconds</div>
+                </div>
+            </div>
+
+            <!-- Search All Button -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                <button class="btn" id="searchAllSpotlightBtn" onclick="searchAllSpotlightSources()" style="background: #272d3f; padding: 10px 20px; font-size: 14px; font-weight: 600;">Search All Sources at Once</button>
+            </div>
+
             <!-- 3-Card Search Dashboard (same order as venue-voice) -->
             <div class="research-dashboard">
                 <!-- Card 1: Perplexity Research -->
@@ -1809,9 +1857,10 @@
                         <input type="text" id="spotlightPerplexityQuery" placeholder="e.g., insurance market trends..." value="P&C insurance industry trends 2026">
                         <select id="spotlightPerplexityTimeWindow">
                             <option value="7d">Last 7 days</option>
-                            <option value="15d">Last 15 days</option>
+
                             <option value="30d" selected>Last 30 days</option>
-                            <option value="90d">Last 90 days</option>
+
+
                         </select>
                     </div>
                     <button class="research-card-search-btn" onclick="searchSpotlightPerplexity()">Search with Perplexity</button>
@@ -1827,13 +1876,17 @@
                         <span class="research-card-badge">All Signals</span>
                     </div>
                     <p class="research-card-description">Scans 8 market signals simultaneously via OpenAI web search, then GPT-5.2 analyzes impact on the insurance industry and generates actionable headlines.</p>
+                    <div id="spotlightSignalsThemeIndicator" style="display: none; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; font-size: 12px; color: #0c4a6e;">
+                        <span style="margin-right: 4px;">🎯</span> <strong>Themed:</strong> <span id="spotlightSignalsThemeName"></span>
+                    </div>
                     <div class="research-card-filters">
                         <span style="color: #666; font-size: 0.8em;">Auto, Home, Commercial, Claims, Regulations, Technology, Market Trends</span>
                         <select id="spotlightSignalsTimeWindow">
                             <option value="7d">Last 7 days</option>
-                            <option value="15d">Last 15 days</option>
+
                             <option value="30d" selected>Last 30 days</option>
-                            <option value="90d">Last 90 days</option>
+
+
                         </select>
                     </div>
                     <button class="research-card-search-btn" onclick="searchSpotlightSignals()">Search All 8 Signals</button>
@@ -1862,9 +1915,10 @@
                         <input type="text" id="spotlightCuratedQuery" placeholder="e.g., market news, industry updates..." value="P&C insurance industry news">
                         <select id="spotlightCuratedTimeWindow">
                             <option value="7d">Last 7 days</option>
-                            <option value="15d">Last 15 days</option>
+
                             <option value="30d" selected>Last 30 days</option>
-                            <option value="90d">Last 90 days</option>
+
+
                         </select>
                     </div>
                     <button class="research-card-search-btn" onclick="searchSpotlightCurated()">Search Sources</button>
@@ -2011,9 +2065,10 @@
                         <input type="text" id="perplexityQuery" placeholder="e.g., insurance fraud, strange claim, lawsuit verdict..." value="unusual bizarre insurance claim lawsuit settlement story">
                         <select id="perplexityTimeWindow">
                             <option value="7d">Last 7 days</option>
-                            <option value="15d">Last 15 days</option>
+
                             <option value="30d" selected>Last 30 days</option>
-                            <option value="90d">Last 90 days</option>
+
+
                         </select>
                     </div>
                     <button class="research-card-search-btn" onclick="searchPerplexity()">Search with Perplexity</button>
@@ -2033,9 +2088,10 @@
                         <span style="color: #666; font-size: 0.8em;">Auto, Home, Commercial, Claims, Regulations, Technology, Market Trends</span>
                         <select id="insightTimeWindow">
                             <option value="7d">Last 7 days</option>
-                            <option value="15d">Last 15 days</option>
+
                             <option value="30d" selected>Last 30 days</option>
-                            <option value="90d">Last 90 days</option>
+
+
                         </select>
                     </div>
                     <button class="research-card-search-btn" onclick="searchInsights()">Search All 8 Signals</button>
@@ -2064,9 +2120,10 @@
                         <div style="margin-bottom: 10px;">
                             <select id="explorerTimeFrame" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; min-width: 120px;">
                                 <option value="7d">Last 7 days</option>
-                                <option value="15d">Last 15 days</option>
+    
                                 <option value="30d" selected>Last 30 days</option>
-                                <option value="90d">Last 90 days</option>
+    
+
                             </select>
                         </div>
                         <input type="text" id="explorerQuery" placeholder="e.g., P&C news, agent tips..." value="P&C insurance agent news" style="width: 100%;">
@@ -2099,6 +2156,7 @@
                 </div>
                 <div class="selection-progress-actions">
                     <button class="btn-secondary btn" onclick="showStep('2-spotlight')">← Back</button>
+                    <button class="btn-secondary btn" onclick="saveDraft(); alert('Progress saved!');" style="margin-left: auto; margin-right: 8px;">Save Progress</button>
                     <button class="btn" id="researchNextBtn" disabled onclick="generateContent()">Generate Newsletter →</button>
                 </div>
             </div>
@@ -3157,6 +3215,8 @@
         let spotlightSearchResults = { perplexity: [], curated: [], insight: [] };  // Object with arrays for each card
         let spotlightGeneratedContent = null;  // { subheader, h3s, body, sources }
         let spotlightCustomLinks = [];  // Persist custom links separately so they survive searches
+        let spotlightActiveTheme = null;  // Current selected theme { headline, description, search_query, source_urls }
+        let spotlightDiscoveredThemes = [];  // Themes from Layer 1 discovery
 
         // Research Dashboard state
         let selectedClaims = null;
@@ -4043,8 +4103,191 @@
         }
 
         // ============================================================================
-        // INSURNEWS SPOTLIGHT FUNCTIONS (3-Card Multi-Source)
+        // FEATURE SPOTLIGHT FUNCTIONS (3-Card Multi-Source)
         // ============================================================================
+
+        // ---- Theme Discovery (Two-Layer) ----
+
+        async function discoverSpotlightThemes() {
+            const btn = document.getElementById('discoverThemesBtn');
+            const loading = document.getElementById('spotlightThemeLoading');
+            const results = document.getElementById('spotlightThemeResults');
+
+            btn.disabled = true;
+            btn.textContent = 'Discovering...';
+            btn.style.opacity = '0.7';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                const timeWindow = document.getElementById('spotlightDiscoveryTimeWindow')?.value || '30d';
+                const resp = await fetch(`${API_BASE}/api/discover-spotlight-themes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ month: selectedMonth, time_window: timeWindow })
+                });
+                const data = await resp.json();
+
+                if (!data.success || !data.themes?.length) {
+                    loading.innerHTML = `<div style="color: #dc2626;">No themes found. Try searching manually.</div>`;
+                    return;
+                }
+
+                spotlightDiscoveredThemes = data.themes;
+                renderSpotlightThemes(data.themes);
+                results.style.display = 'block';
+
+            } catch (err) {
+                loading.innerHTML = `<div style="color: #dc2626;">Error: ${err.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Discover Feature Themes';
+                btn.style.opacity = '1';
+                loading.style.display = 'none';
+            }
+        }
+
+        function renderSpotlightThemes(themes) {
+            const list = document.getElementById('spotlightThemeList');
+            const countText = `Found ${themes.length} feature angles. Click a theme to focus all 3 search cards:`;
+            list.innerHTML = `<div style="font-size: 13px; color: #0c4a6e; margin-bottom: 4px; font-weight: 500;">${countText}</div>` + themes.map((theme, i) => {
+                const isActive = spotlightActiveTheme?.headline === theme.headline;
+                return `
+                <div style="background: white; border: 2px solid ${isActive ? '#0ea5e9' : '#e2e8f0'}; border-radius: 8px; padding: 14px 16px; transition: all 0.15s;">
+                    <div style="font-weight: 600; color: #0c4a6e; font-size: 14px; margin-bottom: 4px;">${theme.headline}</div>
+                    <div style="color: #64748b; font-size: 13px; line-height: 1.4;">${theme.description}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <div style="font-size: 11px; color: #94a3b8;">
+                            ${theme.source_urls?.length ? `${theme.source_urls.length} source${theme.source_urls.length > 1 ? 's' : ''}` : ''}
+                        </div>
+                        <button onclick="selectSpotlightTheme(${i})" class="btn" style="background: ${isActive ? '#059669' : '#0ea5e9'}; font-size: 12px; padding: 6px 14px;">${isActive ? '✓ Active' : 'Research this theme →'}</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function selectSpotlightTheme(index) {
+            const theme = spotlightDiscoveredThemes[index];
+            if (!theme) return;
+
+            spotlightActiveTheme = theme;
+
+            // Show active theme indicator
+            const indicator = document.getElementById('spotlightActiveTheme');
+            indicator.style.display = 'block';
+            document.getElementById('spotlightActiveThemeHeadline').textContent = theme.headline;
+            document.getElementById('spotlightActiveThemeDesc').textContent = theme.description;
+
+            // Populate all 3 search card inputs with the theme's search query
+            const perplexityInput = document.getElementById('spotlightPerplexityQuery');
+            if (perplexityInput) perplexityInput.value = theme.search_query;
+
+            const curatedInput = document.getElementById('spotlightCuratedQuery');
+            if (curatedInput) curatedInput.value = theme.search_query;
+
+            // Show themed indicator on Insight Builder card
+            const signalsIndicator = document.getElementById('spotlightSignalsThemeIndicator');
+            const signalsThemeName = document.getElementById('spotlightSignalsThemeName');
+            if (signalsIndicator && signalsThemeName) {
+                signalsIndicator.style.display = 'block';
+                signalsThemeName.textContent = theme.headline;
+            }
+
+            // Re-render theme list to show selection
+            renderSpotlightThemes(spotlightDiscoveredThemes);
+
+            // Show refine button
+            document.getElementById('refineThemesBtn').style.display = 'inline-block';
+        }
+
+        function clearSpotlightTheme() {
+            spotlightActiveTheme = null;
+            document.getElementById('spotlightActiveTheme').style.display = 'none';
+            const signalsIndicator = document.getElementById('spotlightSignalsThemeIndicator');
+            if (signalsIndicator) signalsIndicator.style.display = 'none';
+            renderSpotlightThemes(spotlightDiscoveredThemes);
+        }
+
+        function showRefineThemesBtn() {
+            // Show refine button if themes have been discovered and there are search results
+            if (spotlightDiscoveredThemes.length > 0) {
+                document.getElementById('refineThemesBtn').style.display = 'inline-block';
+            }
+        }
+
+        async function refineSpotlightThemes() {
+            // Collect all currently displayed results across all 3 search cards
+            const allResults = [
+                ...(spotlightSearchResults.perplexity || []),
+                ...(spotlightSearchResults.curated || []),
+                ...(spotlightSearchResults.insight || [])
+            ];
+
+            if (allResults.length < 3) {
+                alert('Run searches first — need at least 3 results across the search cards to refine themes.');
+                return;
+            }
+
+            const btn = document.getElementById('refineThemesBtn');
+            const loading = document.getElementById('spotlightThemeLoading');
+            const results = document.getElementById('spotlightThemeResults');
+
+            btn.disabled = true;
+            btn.textContent = 'Refining...';
+            loading.style.display = 'block';
+            loading.innerHTML = '<div style="font-size: 14px;">Re-analyzing your search results for refined angles...</div><div style="font-size: 12px; margin-top: 6px; color: #94a3b8;">This may take 10-15 seconds</div>';
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/refine-spotlight-themes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        articles: allResults,
+                        current_theme: spotlightActiveTheme?.headline || ''
+                    })
+                });
+                const data = await resp.json();
+
+                if (!data.success || !data.themes?.length) {
+                    loading.innerHTML = '<div style="color: #dc2626;">Could not refine themes. Try adding more search results.</div>';
+                    setTimeout(() => { loading.style.display = 'none'; }, 3000);
+                    return;
+                }
+
+                spotlightDiscoveredThemes = data.themes;
+                spotlightActiveTheme = null;
+                document.getElementById('spotlightActiveTheme').style.display = 'none';
+                renderSpotlightThemes(data.themes);
+                results.style.display = 'block';
+
+            } catch (err) {
+                loading.innerHTML = `<div style="color: #dc2626;">Error: ${err.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Refine Themes from Results';
+                loading.style.display = 'none';
+            }
+        }
+
+        // ---- Search All Sources ----
+
+        async function searchAllSpotlightSources() {
+            const btn = document.getElementById('searchAllSpotlightBtn');
+            btn.disabled = true;
+            btn.textContent = 'Searching all sources...';
+
+            // Fire all 3 searches in parallel
+            await Promise.allSettled([
+                searchSpotlightPerplexity(),
+                searchSpotlightSignals(),
+                searchSpotlightCurated()
+            ]);
+
+            btn.disabled = false;
+            btn.textContent = 'Search All Sources at Once';
+        }
+
+        // ---- Search Cards ----
 
         // Search Card 1: Perplexity Research
         async function searchSpotlightPerplexity() {
@@ -4074,6 +4317,8 @@
                 if (data.success && data.results.length > 0) {
                     // Mark these as perplexity source
                     data.results.forEach(r => r.source_card = 'perplexity');
+                    spotlightSearchResults.perplexity = data.results;
+                    showRefineThemesBtn();
 
                     // Merge with custom links (custom links come first)
                     const mergedResults = [...spotlightCustomLinks, ...data.results];
@@ -4141,6 +4386,8 @@
                 if (data.success && data.results.length > 0) {
                     // Mark these as insights source
                     data.results.forEach(r => r.source_card = 'insights');
+                    spotlightSearchResults.insight = data.results;
+                    showRefineThemesBtn();
 
                     // Show signals searched then results
                     // Preserve saved/custom article cards before clearing
@@ -4203,6 +4450,8 @@
                 if (data.success && data.results.length > 0) {
                     // Mark these as curated source
                     data.results.forEach(r => r.source_card = 'curated');
+                    spotlightSearchResults.curated = data.results;
+                    showRefineThemesBtn();
 
                     // Show queries header then results
                     // Preserve saved/custom article cards before clearing
@@ -5420,6 +5669,8 @@
                 const sbTips = document.getElementById('sandbox-tips');
                 if (sbTips) sbTips.style.display = tips.length > 0 || (tipsIntroEl && tipsIntroEl.innerHTML) ? '' : 'none';
             }
+            // Re-attach auto-save listeners for newly rendered dynamic fields
+            setupDraftAutoSave();
         }
 
         function editSection(sectionType) {
@@ -5986,26 +6237,61 @@
         // Auto-save on Step 5 (Review & Export) - debounced
         let draftAutoSaveTimer = null;
         function setupDraftAutoSave() {
-            const step5 = document.getElementById('step5');
-            if (!step5) return;
-            const editables = step5.querySelectorAll('[contenteditable="true"]');
-            editables.forEach(el => {
-                el.addEventListener('input', () => {
-                    clearTimeout(draftAutoSaveTimer);
-                    const statusEl = document.getElementById('draftAutoSaveStatus');
-                    if (statusEl) statusEl.textContent = 'Saving...';
-                    draftAutoSaveTimer = setTimeout(async () => {
-                        await saveDraft();
-                        if (statusEl) {
-                            statusEl.textContent = '✓ Auto-saved';
-                            setTimeout(() => { statusEl.textContent = ''; }, 3000);
-                        }
-                    }, 2000);
+            // Attach auto-save to contenteditable fields on step5 and step7b
+            ['step5', 'step7b'].forEach(stepId => {
+                const stepEl = document.getElementById(stepId);
+                if (!stepEl) return;
+                const editables = stepEl.querySelectorAll('[contenteditable="true"]');
+                editables.forEach(el => {
+                    if (el.dataset.autoSaveBound) return; // Prevent duplicate listeners
+                    el.dataset.autoSaveBound = 'true';
+                    el.addEventListener('input', () => {
+                        clearTimeout(draftAutoSaveTimer);
+                        const statusEl = document.getElementById('draftAutoSaveStatus');
+                        if (statusEl) statusEl.textContent = 'Saving...';
+                        draftAutoSaveTimer = setTimeout(async () => {
+                            await saveDraft();
+                            if (statusEl) {
+                                statusEl.textContent = '✓ Auto-saved';
+                                setTimeout(() => { statusEl.textContent = ''; }, 3000);
+                            }
+                        }, 2000);
+                    });
                 });
             });
         }
         // Initialize auto-save listeners after DOM is ready
         document.addEventListener('DOMContentLoaded', setupDraftAutoSave);
+
+        // Auto-save on page close/navigate away
+        window.addEventListener('beforeunload', (e) => {
+            if (selectedMonth && !isLoadingDraft) {
+                // Use sendBeacon for reliable save on page close
+                const userEmail = (window.AUTH_USER && window.AUTH_USER.email) || 'unknown';
+                syncContentFromDOM();
+                const reviewHTML = { _layout: 'labeled' };
+                const prefix = document.querySelector('.step.active')?.id === 'step7b' ? 'fc-' : 'review-';
+                ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                    const el = document.getElementById(prefix + field);
+                    if (el) reviewHTML[field] = el.innerHTML;
+                });
+                navigator.sendBeacon(`${API_BASE}/api/save-draft`, new Blob([JSON.stringify({
+                    month: selectedMonth,
+                    year: new Date().getFullYear(),
+                    currentStep: document.querySelector('.step.active')?.id || '',
+                    generatedContent: { headerIntro: headerIntroContent, briteSpot: briteSpotContent, briteSpotBullets: briteSpotBullets, claims: generatedClaimsContent, roundup: generatedRoundupContent, spotlight: generatedSpotlightContent, spotlightSubheader: generatedSpotlightSubheader, tips: generatedTipsContent, intro: generatedIntroContent },
+                    selectedArticles: { claims: selectedClaims, spotlight: selectedSpotlight, roundup: selectedRoundup, tips: selectedTips },
+                    generatedImages: generatedImages,
+                    imagePrompts: basePrompts,
+                    specialSection: specialSection,
+                    skippedResearch: skippedResearch,
+                    subjectLine: document.getElementById('finalSubjectLine')?.value || '',
+                    preheader: document.getElementById('finalPreheader')?.value || '',
+                    reviewHTML: reviewHTML,
+                    savedBy: userEmail
+                })], { type: 'application/json' }));
+            }
+        });
 
         function selectColorScheme(scheme) {
             specialSection.colorScheme = scheme;
@@ -10780,7 +11066,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         function showStep(stepNum) {
             // Auto-save draft at key transitions (skip during draft load to prevent overwrites)
-            if (!isLoadingDraft && [5, '5b', '7b', 10, 12, 13].includes(stepNum)) {
+            if (!isLoadingDraft && [5, '5b', '7b', 10, 12, 13, '2-spotlight', '2-spotlight-review', '2-research'].includes(stepNum)) {
                 saveDraft();
             }
 
@@ -11375,8 +11661,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     if (typeof skippedResearch === 'undefined') window.skippedResearch = {claims: false, roundup: false, tips: false};
 
                     populateFinalCopy();
+                    // Re-attach auto-save listeners for restored dynamic fields
+                    setupDraftAutoSave();
                 } else {
-                    // Old format: populate from globals
+                    // Old format: populate from globals (setupDraftAutoSave called inside displayGeneratedContent)
                     displayGeneratedContent();
                     populateFinalCopy();
                 }
@@ -11389,12 +11677,15 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 if (stepId === '9') stepId = imagesAlreadyGenerated ? '10' : '8'; // image generation loading → show images or prompts
                 if (stepId === '10_4' || stepId === '10_5') stepId = '10'; // meme loading → show images
                 if (stepId === '14') stepId = '13'; // test email → preview
-                // If content exists but step is too early, jump to review
+                // If generated content exists but step is too early, jump to review
                 const gcCheck = d.generatedContent || {};
-                if (Object.keys(gcCheck).length > 0 && (stepId === '1' || stepId === '2' || stepId === '3' || stepId === '4' || parseInt(stepId) <= 4)) {
+                const hasContent = Object.values(gcCheck).some(v => v && (typeof v === 'string' ? v.trim() : (Array.isArray(v) ? v.length > 0 : true)));
+                if (hasContent && (stepId === '1' || stepId === '2' || stepId === '3' || stepId === '4' || parseInt(stepId) <= 4)) {
                     stepId = '5';
                 }
                 showStep(stepId || 1);
+                // Update research dashboard progress if landing on early steps
+                if (typeof updateSelectionProgress === 'function') updateSelectionProgress();
                 isLoadingDraft = false;
                 alert('Draft loaded! You can continue where you left off.');
             } catch (e) {
@@ -11640,6 +11931,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 const ssWrapper = document.getElementById('fc-specialSection-wrapper');
                 if (ssWrapper) ssWrapper.style.display = '';
             }
+            // Re-attach auto-save listeners for step7b dynamic fields
+            setupDraftAutoSave();
         }
 
         function saveFinalCopyToState() {

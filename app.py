@@ -749,9 +749,7 @@ def v2_search_perplexity():
         # Build query description for UI
         time_desc = {
             '7d': 'past week',
-            '15d': 'past 15 days',
-            '30d': 'past month',
-            '90d': 'past 3 months'
+            '30d': 'past month'
         }.get(time_window, 'recent')
 
         return jsonify({
@@ -834,9 +832,7 @@ def v2_search_sources():
         # Convert time window to human-readable for query
         time_desc = {
             '7d': 'past week',
-            '15d': 'past 15 days',
-            '30d': 'past month',
-            '90d': 'past 3 months'
+            '30d': 'past month'
         }.get(time_window, 'recent')
 
         # Insurance industry source packs (B2B and trade publications)
@@ -1137,8 +1133,199 @@ Output ONLY the content, no labels or explanations."""
 
 
 # ============================================================================
-# ROUTES - INSURNEWS SPOTLIGHT (Multi-Source)
+# ROUTES - FEATURE SPOTLIGHT (Multi-Source)
 # ============================================================================
+
+
+@app.route('/api/discover-spotlight-themes', methods=['POST'])
+def discover_spotlight_themes():
+    """Layer 1: Auto-discover feature themes via broad Perplexity search + GPT clustering"""
+    try:
+        data = request.json
+        month = data.get('month', '')
+        time_window = data.get('time_window', '30d')
+
+        safe_print(f"\n[API] Discovering spotlight themes for month={month}, time_window={time_window}")
+
+        # Step 1: Run a broad Perplexity discovery search
+        discovery_query = (
+            f"P&C insurance industry major trends breaking news investigative topics {month} 2026 "
+            "homeowners rate changes catastrophe losses auto insurance trends "
+            "commercial insurance market regulatory changes InsurTech innovation "
+            "claims trends reinsurance market climate risk independent agent challenges "
+            "consumer behavior market shifts supply chain disruption"
+        )
+
+        discovery_results = []
+        if perplexity_client and perplexity_client.is_available():
+            discovery_results = perplexity_client.search(
+                query=discovery_query,
+                time_window=time_window,
+                max_results=12
+            )
+            safe_print(f"[API] Discovery search returned {len(discovery_results)} results")
+
+        if not discovery_results:
+            return jsonify({
+                'success': False,
+                'error': 'No results from discovery search. Try again or search manually.',
+                'themes': []
+            })
+
+        # Step 2: Send results to GPT for theme clustering
+        results_text = ""
+        for i, r in enumerate(discovery_results):
+            results_text += f"\nArticle {i+1}:\n- Title: {r.get('title', '')}\n- URL: {r.get('url', '')}\n- Summary: {r.get('snippet', r.get('summary', ''))[:300]}\n"
+
+        model_config = get_model_for_task('research_enrichment')
+        model_id = model_config.get('id', 'gpt-5.2')
+        max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
+
+        cluster_prompt = f"""You are an editorial assistant for "The BriteCo Brief", a monthly P&C insurance newsletter for independent agents.
+
+Analyze these {len(discovery_results)} recent articles and identify 3-4 distinct FEATURE STORY themes. Each theme should be a compelling, in-depth topic for a feature spotlight article.
+
+{results_text}
+
+For each theme, return:
+1. "headline" - A compelling editorial headline (not just a topic label)
+2. "description" - One sentence explaining the angle and why agents should care
+3. "search_query" - A focused follow-up search query to find more articles on this theme
+4. "source_urls" - Array of URLs from the articles above that support this theme
+
+Return ONLY a JSON array:
+[
+  {{
+    "headline": "...",
+    "description": "...",
+    "search_query": "...",
+    "source_urls": ["...", "..."]
+  }}
+]
+
+Guidelines:
+- Themes should be DISTINCT (not overlapping)
+- Prioritize themes with direct impact on independent P&C agents and their clients
+- Prefer data-driven stories (rate changes, market shifts, loss trends)
+- Avoid generic topics — each theme should have a specific angle"""
+
+        api_params = {
+            "model": model_id,
+            "messages": [{"role": "user", "content": cluster_prompt}],
+            "temperature": 0.3,
+        }
+        api_params[max_tokens_param] = 1500
+
+        response = openai_client.client.chat.completions.create(**api_params)
+        content = response.choices[0].message.content.strip()
+
+        # Parse JSON
+        if content.startswith("```"):
+            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
+            content = re.sub(r"\n```$", "", content).strip()
+
+        themes = json.loads(content)
+        safe_print(f"[API] Discovered {len(themes)} spotlight themes")
+
+        return jsonify({
+            'success': True,
+            'themes': themes,
+            'discovery_results_count': len(discovery_results),
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        safe_print(f"[API ERROR] Discover spotlight themes: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e), 'themes': []}), 500
+
+
+@app.route('/api/refine-spotlight-themes', methods=['POST'])
+def refine_spotlight_themes():
+    """Layer 2: Re-cluster themes from user's aggregated search results"""
+    try:
+        data = request.json
+        articles = data.get('articles', [])
+        current_theme = data.get('current_theme', '')
+
+        if len(articles) < 3:
+            return jsonify({
+                'success': False,
+                'error': 'Need at least 3 articles to refine themes.',
+                'themes': []
+            })
+
+        safe_print(f"\n[API] Refining spotlight themes from {len(articles)} articles (current: {current_theme})")
+
+        # Build article summaries for GPT
+        results_text = ""
+        seen_urls = set()
+        for i, a in enumerate(articles):
+            url = a.get('url', '')
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            results_text += f"\nArticle {i+1}:\n- Title: {a.get('title', a.get('headline', ''))}\n- URL: {url}\n- Summary: {a.get('snippet', a.get('summary', a.get('so_what', '')))[:300]}\n"
+
+        model_config = get_model_for_task('research_enrichment')
+        model_id = model_config.get('id', 'gpt-5.2')
+        max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
+
+        refine_prompt = f"""You are an editorial assistant for "The BriteCo Brief", a P&C insurance newsletter for independent agents.
+
+The editor has been researching articles{f' around the theme: "{current_theme}"' if current_theme else ''}. Analyze their collected articles and suggest 3-4 REFINED feature story angles.
+
+{results_text}
+
+These refined themes should be MORE SPECIFIC than broad topic areas — think investigative angles, surprising data points, or actionable narratives.
+
+Return ONLY a JSON array:
+[
+  {{
+    "headline": "A specific, compelling editorial headline",
+    "description": "One sentence on the angle and agent relevance",
+    "search_query": "A focused follow-up search query for this angle",
+    "source_urls": ["urls", "from", "above"]
+  }}
+]
+
+Guidelines:
+- Be MORE SPECIFIC than the initial themes — narrow the angle
+- Each theme should have enough source material (2+ articles) to write a full feature
+- Prioritize stories with clear implications for independent agents
+- Include data-driven angles where possible"""
+
+        api_params = {
+            "model": model_id,
+            "messages": [{"role": "user", "content": refine_prompt}],
+            "temperature": 0.3,
+        }
+        api_params[max_tokens_param] = 1500
+
+        response = openai_client.client.chat.completions.create(**api_params)
+        content = response.choices[0].message.content.strip()
+
+        if content.startswith("```"):
+            content = re.sub(r"^```[a-zA-Z]*\n", "", content)
+            content = re.sub(r"\n```$", "", content).strip()
+
+        themes = json.loads(content)
+        safe_print(f"[API] Refined into {len(themes)} spotlight themes")
+
+        return jsonify({
+            'success': True,
+            'themes': themes,
+            'articles_analyzed': len(seen_urls),
+            'generated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        safe_print(f"[API ERROR] Refine spotlight themes: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e), 'themes': []}), 500
+
 
 @app.route('/api/search-spotlight-articles', methods=['POST'])
 def search_spotlight_articles():
