@@ -401,11 +401,11 @@ Return results with title, url, publisher, published_date, and summary with key 
     return all_results
 
 
-def analyze_industry_impact(results: list) -> list:
+def analyze_industry_impact(results: list, theme_context: dict = None) -> list:
     """
     Use LLM to analyze each result for insurance industry impact.
     Generates newsletter-ready headlines and impact scores.
-    Model selection is driven by config/vision_models.yaml task_assignments.
+    If theme_context is provided, results are scored with editorial angle awareness.
     """
     if not results:
         return results
@@ -429,10 +429,23 @@ Result {i+1}:
 - Snippet: {r.get('description', r.get('snippet', ''))[:400]}
 """
 
+        # Add theme awareness if active
+        theme_instruction = ""
+        if theme_context:
+            theme_headline = theme_context.get('headline', '')
+            theme_desc = theme_context.get('description', '')
+            theme_instruction = f"""
+EDITORIAL THEME: The editor is building a feature story around this angle:
+- "{theme_headline}"
+- Angle: "{theme_desc}"
+Prioritize articles that directly support THIS ANGLE. Score them higher on impact.
+Articles only tangentially related to the theme keywords (but not the angle) should be scored lower.
+"""
+
         prompt = f"""You are analyzing news articles for an insurance agent newsletter.
 
 For each article, determine its impact on P&C insurance agents and their clients.
-
+{theme_instruction}
 Here are the articles:
 {results_text}
 
@@ -504,10 +517,10 @@ Return ONLY the JSON array, no other text."""
         return results
 
 
-def analyze_story_angles(results: list, user_query: str) -> list:
+def analyze_story_angles(results: list, user_query: str, theme_context: dict = None) -> list:
     """
     Use LLM to analyze articles and surface interesting story angles for newsletters.
-    Model selection is driven by config/vision_models.yaml task_assignments.
+    If theme_context is provided, angles are weighted toward the editorial theme.
     """
     if not results:
         return results
@@ -530,8 +543,21 @@ Article {i+1}:
 - Snippet: {r.get('snippet', r.get('description', ''))[:400]}
 """
 
-        prompt = f"""You are a newsletter editor for insurance agents. The user searched for: "{user_query}"
+        # Add theme awareness if active
+        theme_instruction = ""
+        if theme_context:
+            theme_headline = theme_context.get('headline', '')
+            theme_desc = theme_context.get('description', '')
+            theme_instruction = f"""
+EDITORIAL THEME: The editor is building a feature story around this angle:
+- "{theme_headline}"
+- Angle: "{theme_desc}"
+Frame your story angles to connect each article back to this editorial theme where relevant.
+Articles that don't naturally connect to the theme should still get useful angles, but prioritize theme-aligned framing.
+"""
 
+        prompt = f"""You are a newsletter editor for insurance agents. The user searched for: "{user_query}"
+{theme_instruction}
 Analyze these articles and surface the most interesting story angles for an agent newsletter.
 
 Here are the articles:
@@ -604,11 +630,12 @@ Return ONLY the JSON array, no other text."""
         return results
 
 
-def enrich_results_with_llm(results: list, original_query: str) -> list:
+def enrich_results_with_llm(results: list, original_query: str, theme_context: dict = None) -> list:
     """
     Use LLM to generate newsletter-ready content from research results.
     Produces three-section format: headline, industry_data, so_what
     Model selection is driven by config/vision_models.yaml task_assignments.
+    If theme_context is provided, results are scored for relevance to the editorial angle.
     """
     if not results:
         return results
@@ -631,8 +658,25 @@ Result {i+1}:
 - Raw snippet: {r.get('snippet', '')[:500]}
 """
 
-        prompt = f"""You are analyzing research findings for an insurance agent newsletter. The user searched for: "{original_query}"
+        # Build theme-aware prompt if editorial theme is active
+        theme_instruction = ""
+        if theme_context:
+            theme_headline = theme_context.get('headline', '')
+            theme_desc = theme_context.get('description', '')
+            theme_instruction = f"""
+EDITORIAL THEME CONTEXT:
+The editor is researching a specific feature story angle:
+- Theme: "{theme_headline}"
+- Angle: "{theme_desc}"
 
+When scoring impact, BOOST results that directly support this editorial angle.
+Results that are tangential to the theme (related topic but different angle) should be scored LOWER.
+For example, if the theme is about "AI risk in agencies", an article about general compliance updates
+should be MEDIUM even if compliance is mentioned in the theme headline — the ANGLE matters more than keywords.
+"""
+
+        prompt = f"""You are analyzing research findings for an insurance agent newsletter. The user searched for: "{original_query}"
+{theme_instruction}
 Here are research findings to transform into newsletter-ready content:
 {results_text}
 
@@ -714,10 +758,11 @@ def v2_search_perplexity():
     try:
         data = request.json
         query = data.get('query', 'P&C insurance industry news trends')
-        time_window = data.get('time_window', '30d')  # 7d, 15d, 30d, 90d
+        time_window = data.get('time_window', '30d')
         exclude_urls = data.get('exclude_urls', [])
+        theme_context = data.get('theme_context', None)  # Optional: {headline, description} from theme discovery
 
-        safe_print(f"\n[API v2] Perplexity Research: query='{query}', time_window={time_window}")
+        safe_print(f"\n[API v2] Perplexity Research: query='{query}', time_window={time_window}, themed={bool(theme_context)}")
 
         # Check if Perplexity is available
         if not perplexity_client or not perplexity_client.is_available():
@@ -744,7 +789,7 @@ def v2_search_perplexity():
         # Enrich results with LLM-generated titles and agent guidance
         if results:
             safe_print(f"[API v2] Enriching {len(results)} Perplexity results with LLM...")
-            results = enrich_results_with_llm(results, query)
+            results = enrich_results_with_llm(results, query, theme_context=theme_context)
 
         # Build query description for UI
         time_desc = {
@@ -776,14 +821,15 @@ def v2_search_insights():
         data = request.json
         time_window = data.get('time_window', '30d')
         exclude_urls = data.get('exclude_urls', [])
+        theme_context = data.get('theme_context', None)  # Optional: {headline, description} from theme discovery
 
-        safe_print(f"\n[API v2] Insight Builder: Searching ALL 8 signals")
+        safe_print(f"\n[API v2] Insight Builder: Searching ALL 8 signals, themed={bool(theme_context)}")
 
         # Step 1: Search all 8 signals simultaneously
         raw_results = search_all_signals(time_window=time_window, exclude_urls=exclude_urls)
 
         # Step 2: Analyze results with GPT for industry impact
-        enriched_results = analyze_industry_impact(raw_results)
+        enriched_results = analyze_industry_impact(raw_results, theme_context=theme_context)
 
         # Step 3: Transform to shared schema and limit to top 8-12 results
         results = transform_to_shared_schema(enriched_results[:12], 'insight')
@@ -826,8 +872,9 @@ def v2_search_sources():
         source_packs = data.get('source_packs', ['insurance'])  # insurance, claims, regulations
         time_window = data.get('time_window', '30d')
         exclude_urls = data.get('exclude_urls', [])
+        theme_context = data.get('theme_context', None)  # Optional: {headline, description} from theme discovery
 
-        safe_print(f"\n[API v2] Source Explorer: query='{query}', packs={source_packs}, time_window={time_window}")
+        safe_print(f"\n[API v2] Source Explorer: query='{query}', packs={source_packs}, time_window={time_window}, themed={bool(theme_context)}")
 
         # Convert time window to human-readable for query
         time_desc = {
@@ -899,7 +946,7 @@ Return results with title, url, publisher, published_date, and summary."""
         results = transform_to_shared_schema(search_results, 'explorer')
 
         # Enrich with GPT story angle analysis
-        results = analyze_story_angles(results, query)
+        results = analyze_story_angles(results, query, theme_context=theme_context)
 
         # Query summaries for UI display
         query_summaries = [
@@ -1189,9 +1236,16 @@ Analyze these {len(discovery_results)} recent articles and identify 3-4 distinct
 
 For each theme, return:
 1. "headline" - A compelling editorial headline (not just a topic label)
-2. "description" - One sentence explaining the angle and why agents should care
-3. "search_query" - A focused follow-up search query to find more articles on this theme
+2. "description" - One sentence explaining the SPECIFIC ANGLE and why agents should care
+3. "search_query" - A search query focused on the UNIQUE ANGLE of this theme (see rules below)
 4. "source_urls" - Array of URLs from the articles above that support this theme
+
+CRITICAL rules for "search_query":
+- The search_query must target the SPECIFIC ANGLE, not repeat all keywords from the headline
+- BAD: "compliance distribution tech AI agency operations insurance" (keyword dump)
+- GOOD: "AI risk insurance agency E&O liability automation compliance gaps" (angle-focused)
+- If the headline is "X and Y Are Changing Z — Where A Helps and B Hurts", the search_query should focus on the A/B angle, NOT on X and Y
+- Keep it to 6-10 words maximum, focused on what makes this angle UNIQUE
 
 Return ONLY a JSON array:
 [
@@ -1932,8 +1986,8 @@ def search_tips():
 
         print(f"\n[API] Searching for agent tips (month: {month})...")
 
-        # Build search query for agent tips
-        search_query = f"insurance agent tips sales strategies client retention independent agent advice"
+        # Build search query for practical agent job tips
+        search_query = f"independent insurance agent practical tips actionable advice how to help clients {month} 2026"
 
         try:
             search_results = openai_client.search_web(
@@ -2231,7 +2285,7 @@ Output ONLY the bullet text, nothing else."""
                 safe_print(f"  - Generating Agent Advantage from: {topic.get('title', 'Unknown')[:50]}...")
 
                 tips_style = get_humanization_guidelines('agent_advantage')
-                tips_system = f"""You write the "Agent Advantage" section for BriteCo Brief, an insurance newsletter for independent agents. This section provides practical, actionable tips based on industry articles.
+                tips_system = f"""You write the "Agent Advantage" section for BriteCo Brief, an insurance newsletter for independent agents. This section provides practical, job-related tips agents can use right away — like how to use AI in their workflow, how to talk to customers about price hikes, how to help niche clients (rideshare drivers, small business owners), or how to grow their book of business. Tips should be grounded in the source article's findings.
 
 {tips_style}
 
@@ -4022,10 +4076,14 @@ def save_draft():
     if not gcs_client:
         return jsonify({'success': False, 'error': 'GCS not available'}), 503
     try:
-        data = request.json
+        # Use server-side session for user identity (don't trust client-sent savedBy)
+        user = get_current_user()
+        user_email = user.get('email', 'unknown') if user else 'unknown'
+        saved_by = user_email.split('@')[0].replace('.', '-')
+
+        data = request.get_json(force=True)  # force=True handles sendBeacon Content-Type
         month = data.get('month', 'unknown').lower()
         year = data.get('year', datetime.now().year)
-        saved_by = data.get('savedBy', 'unknown').split('@')[0].replace('.', '-')
         blob_name = f"drafts/{month}-{year}-{saved_by}.json"
 
         draft = {
@@ -4041,7 +4099,7 @@ def save_draft():
             'preheader': data.get('preheader'),
             'reviewHTML': data.get('reviewHTML'),
             'skippedResearch': data.get('skippedResearch'),
-            'lastSavedBy': data.get('savedBy', 'unknown'),
+            'lastSavedBy': user_email,
             'lastSavedAt': datetime.now(CHICAGO_TZ).isoformat()
         }
 
@@ -4105,6 +4163,9 @@ def load_draft():
 @app.route('/api/publish-draft', methods=['POST'])
 def publish_draft():
     """Move a draft from drafts/ to published/ in GCS"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
     if not gcs_client:
         return jsonify({'success': False, 'error': 'GCS not available'}), 503
     try:
@@ -4180,6 +4241,9 @@ def load_published():
 @app.route('/api/delete-draft', methods=['DELETE'])
 def delete_draft():
     """Delete a draft from GCS"""
+    user = get_current_user()
+    if not user:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
     if not gcs_client:
         return jsonify({'success': True})
     try:

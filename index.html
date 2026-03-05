@@ -1759,7 +1759,7 @@
                     <p>Search across multiple sources and select 3-5 articles. AI will create a comprehensive feature story.</p>
                 </div>
                 <div style="display: flex; gap: 6px; flex-shrink: 0;">
-                    <button class="btn-add-link" onclick="showCustomLinkModal('spotlight')">📎 Add Custom Link</button>
+                    <button class="btn-add-link" onclick="showSpotlightUploadModal()">📎 Add Custom Link</button>
                     <button class="btn-add-link" onclick="showSavedArticlesModal('spotlight')">📌 Saved Articles</button>
                 </div>
             </div>
@@ -2006,7 +2006,7 @@
                     <p id="researchSectionDesc">Search and select one article below.</p>
                 </div>
                 <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
-                    <button class="btn-add-link" onclick="showCustomLinkModal(currentResearchSection)">📎 Add Custom Link</button>
+                    <button class="btn-add-link" onclick="showUploadLinkModal()">📎 Add Custom Link</button>
                     <button class="btn-add-link" onclick="showSavedArticlesModal(currentResearchSection)">📌 Saved Articles</button>
                     <button id="skipResearchBtn" onclick="toggleSkipResearch(currentResearchSection)" style="padding: 6px 14px; border: 2px solid #d1d5db; background: white; color: #6b7280; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Skip Section</button>
                 </div>
@@ -4269,6 +4269,16 @@
             }
         }
 
+        // ---- Theme Context Helper ----
+
+        function getSpotlightThemeContext() {
+            if (!spotlightActiveTheme) return undefined;
+            return {
+                headline: spotlightActiveTheme.headline,
+                description: spotlightActiveTheme.description
+            };
+        }
+
         // ---- Search All Sources ----
 
         async function searchAllSpotlightSources() {
@@ -4308,7 +4318,8 @@
                     body: JSON.stringify({
                         query: query,
                         time_window: timeWindow,
-                        exclude_urls: shownSpotlightArticles
+                        exclude_urls: shownSpotlightArticles,
+                        theme_context: getSpotlightThemeContext()
                     })
                 });
 
@@ -4377,7 +4388,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         time_window: timeWindow,
-                        exclude_urls: shownSpotlightArticles
+                        exclude_urls: shownSpotlightArticles,
+                        theme_context: getSpotlightThemeContext()
                     })
                 });
 
@@ -4441,7 +4453,8 @@
                         query: query,
                         source_packs: selectedPacks,
                         time_window: timeWindow,
-                        exclude_urls: shownSpotlightArticles
+                        exclude_urls: shownSpotlightArticles,
+                        theme_context: getSpotlightThemeContext()
                     })
                 });
 
@@ -10494,10 +10507,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 explorerPlaceholder: 'e.g., market news, regulatory updates...'
             },
             tips: {
-                perplexity: 'insurance agent sales tips strategies 2026',
-                perplexityPlaceholder: 'e.g., agent tips, sales strategies, client retention...',
-                explorer: 'independent insurance agent advice',
-                explorerPlaceholder: 'e.g., best practices, agency growth...'
+                perplexity: 'independent insurance agent practical tips helping clients 2026',
+                perplexityPlaceholder: 'e.g., how agents use AI, talking to clients about rate hikes, rideshare coverage tips...',
+                explorer: 'insurance agent practical advice helping clients',
+                explorerPlaceholder: 'e.g., agent AI tools, client conversations, niche coverage tips...'
             }
         };
 
