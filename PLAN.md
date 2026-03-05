@@ -97,7 +97,7 @@ These variables are undefined, causing the API call to fail.
 ### Plan
 1. Fix variable mappings in image prompt generation:
    - Map `claims` → Curious Claims section
-   - Map `spotlight` → InsurNews Spotlight section
+   - Map `spotlight` → Feature Spotlight section
    - Map `tips` → Agent Advantage section
    - Map `roundup` → News Roundup (if images needed)
 
@@ -125,7 +125,7 @@ These variables are undefined, causing the API call to fail.
 
 2. For **Image Generation**, which sections should have images?
    - Curious Claims?
-   - InsurNews Spotlight?
+   - Feature Spotlight?
    - Agent Advantage?
    - All of the above?
 

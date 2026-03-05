@@ -1142,7 +1142,7 @@ Output ONLY the content, no labels or explanations."""
 
 @app.route('/api/search-spotlight-articles', methods=['POST'])
 def search_spotlight_articles():
-    """Search for InsurNews Spotlight articles from curated insurance sources"""
+    """Search for Feature Spotlight articles from curated insurance sources"""
     try:
         data = request.json
         query = data.get('query', 'P&C insurance news')
@@ -1176,7 +1176,7 @@ def search_spotlight_articles():
                         'publisher': r.get('publisher', ''),
                         'snippet': r.get('snippet', r.get('description', '')),
                         'industry_data': r.get('snippet', ''),
-                        'so_what': 'Review for InsurNews Spotlight feature story',
+                        'so_what': 'Review for Feature Spotlight feature story',
                         'source_card': 'curated'
                     })
             print(f"  - Found {len(main_results)} from curated sources")
@@ -1255,7 +1255,7 @@ def search_spotlight_articles():
 
 @app.route('/api/generate-spotlight', methods=['POST'])
 def generate_spotlight():
-    """Generate InsurNews Spotlight from multiple source articles"""
+    """Generate Feature Spotlight from multiple source articles"""
     try:
         data = request.json
         articles = data.get('articles', [])
@@ -1264,7 +1264,7 @@ def generate_spotlight():
         if len(articles) < 3:
             return jsonify({'success': False, 'error': 'At least 3 articles required'}), 400
 
-        print(f"\n[API] Generating InsurNews Spotlight from {len(articles)} articles...")
+        print(f"\n[API] Generating Feature Spotlight from {len(articles)} articles...")
 
         if not claude_client:
             return jsonify({'success': False, 'error': 'Claude client not available'}), 500
@@ -1290,7 +1290,7 @@ Summary: {article.get('snippet', article.get('industry_data', ''))}
         from config.brand_guidelines import get_humanization_guidelines
         humanization_guide = get_humanization_guidelines('spotlight')
 
-        spotlight_system = f"""You are writing the "InsurNews Spotlight" section for BriteCo Brief, a newsletter for independent insurance agents.
+        spotlight_system = f"""You are writing the "Feature Spotlight" section for BriteCo Brief, a newsletter for independent insurance agents.
 
 {humanization_guide}
 
@@ -1846,7 +1846,7 @@ def search_roundup():
 
 @app.route('/api/search-spotlight', methods=['POST'])
 def search_spotlight():
-    """Search for major insurance news for InsurNews Spotlight"""
+    """Search for major insurance news for Feature Spotlight"""
     try:
         data = request.json
         month = data.get('month', 'january')
@@ -2024,7 +2024,7 @@ Output ONLY the bullet text, nothing else."""
             research_results['roundup'] = roundup_items
             print(f"    Roundup research complete: {len(roundup_items)} items")
 
-        # Use pre-generated InsurNews Spotlight content from Step 2B
+        # Use pre-generated Feature Spotlight content from Step 2B
         if spotlight_content:
             safe_print(f"  - Using pre-generated Spotlight: {spotlight_content.get('subheader', 'Unknown')}")
             # Pass through the pre-generated spotlight content directly
@@ -2410,10 +2410,10 @@ Output ONLY the paragraphs in <p> tags, no title or labels."""
         if research.get('roundup'):
             sections['roundup'] = research['roundup']
 
-        # Use pre-generated InsurNews Spotlight content (already written in Step 2B)
+        # Use pre-generated Feature Spotlight content (already written in Step 2B)
         # Keep the object structure for frontend to display properly
         if research.get('spotlight'):
-            print("  - Formatting InsurNews Spotlight section...")
+            print("  - Formatting Feature Spotlight section...")
             spotlight_data = research['spotlight']
 
             if isinstance(spotlight_data, dict):
@@ -2424,7 +2424,7 @@ Output ONLY the paragraphs in <p> tags, no title or labels."""
             else:
                 # Fallback if it's already a string - wrap in object structure
                 sections['spotlight'] = {
-                    'subheader': 'Industry Spotlight',
+                    'subheader': 'Feature Spotlight',
                     'h3s': [{'title': 'Overview', 'body': str(spotlight_data)}]
                 }
 
@@ -2754,7 +2754,7 @@ def generate_headlines():
 Newsletter highlights:
 - Curious Claims section
 - Insurance News Roundup
-- InsurNews Spotlight
+- Feature Spotlight
 - Agent Advantage Tips
 
 Requirements:
@@ -2836,7 +2836,7 @@ Tone: {tone_desc}
 Newsletter sections include:
 - Curious Claims (unusual insurance claims stories)
 - Insurance News Roundup (P&C industry news)
-- InsurNews Spotlight (deep dive on trending topic)
+- Feature Spotlight (deep dive on trending topic)
 - Agent Advantage Tips (actionable advice for agents)
 
 Requirements:
@@ -3431,7 +3431,7 @@ def export_to_docs():
                 add_rich_text(content['roundup'])
 
         if content.get('spotlight'):
-            add_text('InsurNews Spotlight', bold=True)
+            add_text('Feature Spotlight', bold=True)
             spotlight = content['spotlight']
             if isinstance(spotlight, dict):
                 if spotlight.get('subheader'):

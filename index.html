@@ -1747,15 +1747,15 @@
 
             <div class="buttons" style="justify-content: center;">
                 <button class="btn-secondary btn" onclick="showStep(1)">← Back</button>
-                <button class="btn" onclick="saveBriteSpotPage(); showStep('2-spotlight')">Continue to InsurNews Spotlight →</button>
+                <button class="btn" onclick="saveBriteSpotPage(); showStep('2-spotlight')">Continue to Feature Spotlight →</button>
             </div>
         </div>
 
-        <!-- Step 2B: InsurNews Spotlight (Multi-Source Selection) -->
+        <!-- Step 2B: Feature Spotlight (Multi-Source Selection) -->
         <div class="step" id="step2-spotlight">
             <div class="research-section-header">
                 <div class="research-section-info">
-                    <h3>⭐ InsurNews Spotlight</h3>
+                    <h3>⭐ Feature Spotlight</h3>
                     <p>Search across multiple sources and select 3-5 articles. AI will create a comprehensive feature story.</p>
                 </div>
                 <div style="display: flex; gap: 6px; flex-shrink: 0;">
@@ -1883,7 +1883,7 @@
         <!-- Step 2B-Review: Spotlight Story Preview/Edit -->
         <div class="step" id="step2-spotlight-review">
             <h2>⭐ Review Spotlight Story</h2>
-            <p>Review and edit your generated InsurNews Spotlight content. Click on any text to edit it directly.</p>
+            <p>Review and edit your generated Feature Spotlight content. Click on any text to edit it directly.</p>
 
             <!-- Single editable view - Google Doc style -->
             <div id="spotlightEditableView" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -2211,7 +2211,7 @@
             </div>
 
             <div class="content-section">
-                <h3>InsurNews Spotlight</h3>
+                <h3>Feature Spotlight</h3>
                 <div class="sandbox-preview" id="sandbox-spotlight">
                     <div class="sandbox-header">
                         <span class="sandbox-label" title="AI-generated draft copy for reference. Edit freely here, then copy-paste into the labeled fields below to build the newsletter. Saves with your draft but is not included in the final email or export.">Scratch Pad — Edit here, then add to fields below</span>
@@ -2492,7 +2492,7 @@
                     <option value="after-britespot">After The Brite Spot</option>
                     <option value="after-claims">After Curious Claims</option>
                     <option value="after-roundup">After News Roundup</option>
-                    <option value="after-spotlight">After InsurNews Spotlight</option>
+                    <option value="after-spotlight">After Feature Spotlight</option>
                     <option value="after-tips" selected>After Agent Advantage (before CTA)</option>
                 </select>
             </div>
@@ -2577,7 +2577,7 @@
             </div>
 
             <div class="content-section">
-                <h3>InsurNews Spotlight</h3>
+                <h3>Feature Spotlight</h3>
                 <div class="field-group">
                     <label class="field-label">Subheader</label>
                     <div class="editable editable-sm" contenteditable="true" id="fc-spotlight-subheader"></div>
@@ -2686,7 +2686,7 @@
 
                 <!-- Spotlight Prompt -->
                 <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                    <h3 style="margin: 0 0 5px 0;">⭐ InsurNews Spotlight Image Prompt</h3>
+                    <h3 style="margin: 0 0 5px 0;">⭐ Feature Spotlight Image Prompt</h3>
                     <p style="font-size: 13px; color: #666; margin-bottom: 15px;" id="spotlightPromptArticle"></p>
                     <div style="margin-bottom: 12px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Image Style:</label>
@@ -2802,7 +2802,7 @@
 
             <!-- Spotlight Image -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-                <h3 style="margin: 0 0 10px 0;">⭐ InsurNews Spotlight Image</h3>
+                <h3 style="margin: 0 0 10px 0;">⭐ Feature Spotlight Image</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="spotlightImageTitle">For your spotlight story</p>
 
                 <div id="spotlightImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
@@ -3002,7 +3002,7 @@
                         <option value="after-britespot">After The Brite Spot</option>
                         <option value="after-claims">After Curious Claims</option>
                         <option value="after-roundup">After News Roundup</option>
-                        <option value="after-spotlight">After InsurNews Spotlight</option>
+                        <option value="after-spotlight">After Feature Spotlight</option>
                         <option value="after-tips" selected>After Agent Advantage</option>
                     </select>
                 </div>
@@ -3152,7 +3152,7 @@
         let briteSpotBullets = [];  // Array of bullet point strings
         let briteSpotRewritten = '';
 
-        // InsurNews Spotlight state (multi-source)
+        // Feature Spotlight state (multi-source)
         let spotlightSelectedArticles = [];  // Array of 3-5 selected articles
         let spotlightSearchResults = { perplexity: [], curated: [], insight: [] };  // Object with arrays for each card
         let spotlightGeneratedContent = null;  // { subheader, h3s, body, sources }
@@ -4414,7 +4414,7 @@
                     console.log('[Spotlight] Could not parse as JSON, treating as plain text');
                     // Treat as plain text body
                     return {
-                        subheader: 'InsurNews Spotlight',
+                        subheader: 'Feature Spotlight',
                         h3s: [{ title: 'Overview', body: content }],
                         agent_takeaway: '',
                         sources: []
@@ -4425,7 +4425,7 @@
             // If not an object, wrap it
             if (!content || typeof content !== 'object') {
                 return {
-                    subheader: 'InsurNews Spotlight',
+                    subheader: 'Feature Spotlight',
                     h3s: [{ title: 'Overview', body: String(content || 'No content available') }],
                     agent_takeaway: '',
                     sources: []
@@ -4434,7 +4434,7 @@
 
             // Normalize the structure
             const normalized = {
-                subheader: content.subheader || content.headline || content.title || 'InsurNews Spotlight',
+                subheader: content.subheader || content.headline || content.title || 'Feature Spotlight',
                 h3s: [],
                 agent_takeaway: content.agent_takeaway || content.takeaway || content.actionable_insights || '',
                 sources: content.sources || []
@@ -5043,7 +5043,7 @@
                     generatedRoundupContent = data.content.roundup;
                     // Use Step 2B spotlight if backend didn't return it
                     generatedSpotlightContent = data.content.spotlight || spotlightGeneratedContent;
-                    generatedSpotlightSubheader = data.content.spotlight_subheader || (spotlightGeneratedContent?.subheader || 'Industry Spotlight');
+                    generatedSpotlightSubheader = data.content.spotlight_subheader || (spotlightGeneratedContent?.subheader || 'Feature Spotlight');
                     generatedTipsContent = data.content.agent_tips;
                     // Use backend-generated brite_spot (auto-generated when no topic provided)
                     generatedBriteSpotContent = data.content.brite_spot || null;
@@ -5332,14 +5332,14 @@
                 if (sbRoundup) sbRoundup.style.display = roundupItems.length > 0 ? '' : 'none';
             }
 
-            // 5. InsurNews Spotlight - subheader + dynamic sections + sources
+            // 5. Feature Spotlight - subheader + dynamic sections + sources
             if (skippedResearch && skippedResearch.spotlight) {
                 const se = document.getElementById('review-spotlight-subheader');
                 if (se) se.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
             } else {
                 const spotlightData = generatedSpotlightContent || spotlightGeneratedContent || null;
                 const subheaderEl = document.getElementById('review-spotlight-subheader');
-                if (subheaderEl) subheaderEl.textContent = generatedSpotlightSubheader || selectedSpotlight?.title || 'Industry Spotlight';
+                if (subheaderEl) subheaderEl.textContent = generatedSpotlightSubheader || selectedSpotlight?.title || 'Feature Spotlight';
 
                 // Helper: parse markdown string with # headers into sections array
                 function parseMarkdownSections(text) {
@@ -5723,7 +5723,7 @@
             html += roundupContent || '<p style="color: #999;">No content</p>';
             html += `</div>`;
 
-            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">⭐ InsurNews Spotlight</h3>';
+            html += '<h3 style="margin: 30px 0 15px 0; color: #272d3f;">⭐ Feature Spotlight</h3>';
             html += `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e5e7eb;">`;
             html += spotlightContent || '<p style="color: #999;">No content</p>';
             html += `</div>`;
@@ -6653,7 +6653,7 @@
                 const sections = {
                     briteSpot: { title: 'The Brite Spot', content: briteSpotText, month: selectedMonth },
                     claims: { title: selectedClaims?.title || 'Curious Claims', content: claimsText, month: selectedMonth },
-                    spotlight: { title: generatedSpotlightSubheader || 'InsurNews Spotlight', content: spotlightText, month: selectedMonth },
+                    spotlight: { title: generatedSpotlightSubheader || 'Feature Spotlight', content: spotlightText, month: selectedMonth },
                     tips: { title: 'Agent Advantage', content: tipsText, month: selectedMonth }
                 };
 
@@ -6701,7 +6701,7 @@
                 // Show article titles
                 document.getElementById('briteSpotPromptArticle').textContent = `For: The Brite Spot`;
                 document.getElementById('claimsPromptArticle').textContent = `For: ${selectedClaims?.title || 'Curious Claims'}`;
-                document.getElementById('spotlightPromptArticle').textContent = `For: ${generatedSpotlightSubheader || 'InsurNews Spotlight'}`;
+                document.getElementById('spotlightPromptArticle').textContent = `For: ${generatedSpotlightSubheader || 'Feature Spotlight'}`;
                 document.getElementById('tipsPromptArticle').textContent = `For: Agent Advantage Tips`;
 
                 // Apply the default style (photorealistic) to all prompts on initial load
@@ -6882,7 +6882,7 @@
                 const sections = {
                     briteSpot: { title: 'The Brite Spot', content: briteSpotText, month: selectedMonth },
                     claims: { title: selectedClaims?.title || 'Curious Claims', content: claimsText, month: selectedMonth },
-                    spotlight: { title: generatedSpotlightSubheader || 'InsurNews Spotlight', content: spotlightText, month: selectedMonth },
+                    spotlight: { title: generatedSpotlightSubheader || 'Feature Spotlight', content: spotlightText, month: selectedMonth },
                     tips: { title: 'Agent Advantage', content: tipsText, month: selectedMonth }
                 };
 
@@ -7226,7 +7226,7 @@
                             sectionContentObj = generatedClaimsContent || '';
                             break;
                         case 'spotlight':
-                            section = { title: generatedSpotlightSubheader || 'InsurNews Spotlight', season: '' };
+                            section = { title: generatedSpotlightSubheader || 'Feature Spotlight', season: '' };
                             sectionContentObj = generatedSpotlightContent || spotlightGeneratedContent || '';
                             break;
                         case 'tips':
@@ -8516,7 +8516,7 @@ ${ssPosition === 'after-roundup' ? specialSectionHtml : ''}
 <!-- SECTION: INSURNEWS SPOTLIGHT -->
 <tr>
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><th align="center" class="section-header" style="background:#008182 url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png') repeat center / 400px auto;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">InsurNews Spotlight</span></font></th></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><th align="center" class="section-header" style="background:#008182 url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png') repeat center / 400px auto;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">Feature Spotlight</span></font></th></tr></table>
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -8542,7 +8542,7 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<img alt="InsurNews Spotlight" src="${spotlightImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
+<img alt="Feature Spotlight" src="${spotlightImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
 </td>
 </tr>
 </tbody>
@@ -9476,7 +9476,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         content: generatedClaimsContent || ''
                     },
                     spotlight: {
-                        title: generatedSpotlightSubheader || 'Industry Spotlight',
+                        title: generatedSpotlightSubheader || 'Feature Spotlight',
                         content: generatedSpotlightContent || ''
                     },
                     tips: {
@@ -9827,7 +9827,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
         const sectionDisplayNames = {
             'claims': 'Curious Claims',
             'roundup': 'News Roundup',
-            'spotlight': 'InsurNews Spotlight',
+            'spotlight': 'Feature Spotlight',
             'tips': 'Agent Advantage'
         };
 
@@ -11498,7 +11498,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 if (bullets.length > 0) generatedRoundupContent = bullets;
             }
 
-            // InsurNews Spotlight - subheader + dynamic sections
+            // Feature Spotlight - subheader + dynamic sections
             const spotlightSubheader = getText(prefix + 'spotlight-subheader');
             if (spotlightSubheader) generatedSpotlightSubheader = spotlightSubheader;
             const spotlightContainer = document.getElementById(prefix + 'spotlight-sections-container');
@@ -11702,7 +11702,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                                     </div>
                                     <div style="margin-bottom: 10px; padding-left: 12px; border-left: 3px solid #008181;">
                                         <div style="font-size: 11px; text-transform: uppercase; color: #008181; font-weight: 700; letter-spacing: 0.5px;">SPOTLIGHT</div>
-                                        <div style="font-size: 13px; color: #272D3F; font-weight: 600;">${n.sections?.spotlight?.title || 'Industry Spotlight'}</div>
+                                        <div style="font-size: 13px; color: #272D3F; font-weight: 600;">${n.sections?.spotlight?.title || 'Feature Spotlight'}</div>
                                     </div>
                                 </div>
                                 <p style="margin: 8px 0 0; font-size: 12px; color: #999;">${savedBy} · ${savedAt} CT</p>

@@ -19,7 +19,7 @@ A comprehensive guide for generating content for BriteCo's monthly P&C insurance
    - Insurance News Roundup
    - Curious Claims
    - The Brite Spot
-   - InsurNews Spotlight
+   - Feature Spotlight
    - Agent Advantage
 
 ### Part 3: Writing Craft
@@ -105,7 +105,7 @@ Every issue follows this consistent section order:
 ### 4. Insurance News Roundup (5 bullet points)
 ### 5. Curious Claims (entertaining claim story)
 ### 6. The Brite Spot (BriteCo news/promotions)
-### 7. InsurNews Spotlight (deep-dive feature article)
+### 7. Feature Spotlight (deep-dive feature article)
 ### 8. Agent Advantage (practical numbered tips)
 ### 9. Footer/CTA
 
@@ -488,7 +488,7 @@ This closing section is CRITICAL. It should:
 | News Roundup | Factual, concise, informative |
 | Curious Claims | Playful, entertaining, light |
 | Brite Spot | Enthusiastic, promotional (but not pushy), supportive |
-| InsurNews Spotlight | Authoritative, analytical, educational |
+| Feature Spotlight | Authoritative, analytical, educational |
 | Agent Advantage | Helpful, practical, empowering |
 
 ### Key Voice Attributes
@@ -688,7 +688,7 @@ https://www.propertycasualty360.com/
 - Animals, weather anomalies
 - Humorous situations with insurance angles
 
-**InsurNews Spotlight:**
+**Feature Spotlight:**
 - Homeowners insurance crisis updates
 - Major regulatory changes
 - Industry forecasts
@@ -796,7 +796,7 @@ Every year, a new class of student drivers hit the road, and insurers have a bra
 4. **Know the opportunities for discounts.** Teens with good grades and good driving histories can get reduced rates. Also, if the student driver is learning in a car fully owned by the family, it's wise to advise policyholders that liability-only coverage is sufficient.
 ```
 
-### InsurNews Spotlight Template
+### Feature Spotlight Template
 
 ```
 INSURNEWS SPOTLIGHT
@@ -884,7 +884,7 @@ Before finalizing each newsletter issue:
 - [ ] All 5 News Roundup bullets present with statistics
 - [ ] Curious Claims has a clever headline and clear insurance angle
 - [ ] Brite Spot includes clear CTA
-- [ ] InsurNews Spotlight ends with "Implications for Agents"
+- [ ] Feature Spotlight ends with "Implications for Agents"
 - [ ] Agent Advantage has numbered, actionable tips
 - [ ] All sources cited appropriately
 
@@ -920,7 +920,7 @@ Before finalizing each newsletter issue:
 | News Roundup | 5 bullets | Bold lead + fact | Factual, concise |
 | Curious Claims | 150-250 words | Narrative | Playful, light |
 | Brite Spot | 150-300 words | Varies | Promotional |
-| InsurNews Spotlight | 400-600 words | Subheads | Authoritative |
+| Feature Spotlight | 400-600 words | Subheads | Authoritative |
 | Agent Advantage | 200-350 words | Numbered list | Practical |
 
 ---
@@ -1162,7 +1162,7 @@ Small, specific details make stories feel real:
 - Celebratory without being over-the-top
 - Clear and direct CTAs
 
-#### InsurNews Spotlight: Authoritative but Accessible
+#### Feature Spotlight: Authoritative but Accessible
 - Expert analysis
 - Show your work (cite sources)
 - Can express concern about trends
@@ -1256,7 +1256,7 @@ Review content for these warning signs before publishing:
 
 ---
 
-### Example 4: InsurNews Spotlight Analysis
+### Example 4: Feature Spotlight Analysis
 
 **AI-Generated (Before):**
 > The current state of homeowners insurance is characterized by various challenges that are impacting consumers and industry professionals alike. Multiple factors are contributing to this situation, including climate-related events, economic conditions, and regulatory changes. It is important for agents to understand these dynamics in order to effectively serve their clients.
@@ -1303,7 +1303,7 @@ Review content for these warning signs before publishing:
 ### Step 4: Section-Check
 - Verify each section matches its tone profile
 - Ensure Curious Claims headline has wordplay
-- Confirm InsurNews Spotlight ends with agent implications
+- Confirm Feature Spotlight ends with agent implications
 - Check that Brite Spot has clear CTA
 
 ### Step 5: AI-Tell Scan

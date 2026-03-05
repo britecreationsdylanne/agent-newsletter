@@ -259,7 +259,7 @@ NEWSLETTER_GUIDELINES = {
             "words_per_bullet": 25,
             "tone": "Factual, concise, newsworthy"
         },
-        "insurnews_spotlight": {
+        "feature_spotlight": {
             "structure": ["Executive Summary (2-3 sentences)", "Key Facts & Data (bullets)", "Industry Impact (1 paragraph)", "What It Means for Agents (1 paragraph)", "Actionable Insights (2-3 bullets)"],
             "max_words": 300,
             "tone": "Analytical, insightful, practical"
