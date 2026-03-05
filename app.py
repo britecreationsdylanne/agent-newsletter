@@ -1661,6 +1661,67 @@ Output as plain text - headline on first line, then paragraphs separated by blan
 # ROUTES - FETCH ARTICLE FROM URL
 # ============================================================================
 
+@app.route('/api/fetch-article-metadata', methods=['POST'])
+def fetch_article_metadata():
+    """Lightweight endpoint: fetch only title/description/publisher from a URL (no AI analysis)."""
+    try:
+        data = request.json
+        url = data.get('url', '').strip()
+        if not url:
+            return jsonify({'title': '', 'description': '', 'publisher': ''}), 200
+
+        session = requests.Session()
+        session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
+        })
+
+        resp = session.get(url, timeout=10)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, 'html.parser')
+
+        # Title
+        title = ''
+        og_title = soup.find('meta', property='og:title')
+        if og_title and og_title.get('content'):
+            title = og_title['content']
+        elif soup.title and soup.title.string:
+            title = soup.title.string
+
+        # Description
+        description = ''
+        og_desc = soup.find('meta', property='og:description')
+        if og_desc and og_desc.get('content'):
+            description = og_desc['content']
+        else:
+            meta_desc = soup.find('meta', attrs={'name': 'description'})
+            if meta_desc and meta_desc.get('content'):
+                description = meta_desc['content']
+
+        # Publisher
+        publisher = ''
+        og_site = soup.find('meta', property='og:site_name')
+        if og_site and og_site.get('content'):
+            publisher = og_site['content']
+        else:
+            from urllib.parse import urlparse
+            publisher = urlparse(url).netloc.replace('www.', '')
+
+        return jsonify({'title': title.strip(), 'description': description.strip(), 'publisher': publisher.strip()})
+    except Exception as e:
+        print(f"[API] fetch-article-metadata error: {e}")
+        return jsonify({'title': '', 'description': '', 'publisher': ''}), 200
+
+
 @app.route('/api/fetch-article', methods=['POST'])
 def fetch_article():
     """Fetch and analyze an article from a user-provided URL using web scraping + OpenAI"""
@@ -1675,15 +1736,24 @@ def fetch_article():
         print(f"\n[API] Fetching article from URL: {url}")
         print(f"  - Section: {section}")
 
-        # Step 1: Fetch the webpage content using requests
-        headers = {
+        # Step 1: Fetch the webpage content using a session (handles cookies/redirects)
+        session = requests.Session()
+        session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-        }
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
+        })
 
         try:
-            response = requests.get(url, headers=headers, timeout=15)
+            response = session.get(url, timeout=15)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             print(f"[API] Failed to fetch URL: {str(e)}")
