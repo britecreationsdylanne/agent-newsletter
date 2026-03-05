@@ -1756,8 +1756,21 @@ def fetch_article():
             response = session.get(url, timeout=15)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            print(f"[API] Failed to fetch URL: {str(e)}")
-            return jsonify({'success': False, 'error': f'Failed to fetch article: {str(e)}'}), 400
+            print(f"[API] Failed to fetch URL, falling back to URL-only article: {str(e)}")
+            from urllib.parse import urlparse
+            domain = urlparse(url).netloc.replace('www.', '')
+            return jsonify({
+                'success': True,
+                'article': {
+                    'title': domain + ' — ' + url.split('/')[-1].replace('-', ' ').title()[:80],
+                    'headline': url,
+                    'snippet': 'Article content could not be fetched automatically. The link has been added for reference.',
+                    'url': url,
+                    'publisher': domain,
+                    'impact': 'CUSTOM',
+                    'isCustomLink': True
+                }
+            })
 
         # Step 2: Parse HTML with BeautifulSoup
         soup = BeautifulSoup(response.text, 'html.parser')
