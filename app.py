@@ -1756,21 +1756,68 @@ def fetch_article():
             response = session.get(url, timeout=15)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            print(f"[API] Failed to fetch URL, falling back to URL-only article: {str(e)}")
+            print(f"[API] Direct fetch failed ({str(e)}), falling back to AI web reader...")
             from urllib.parse import urlparse
             domain = urlparse(url).netloc.replace('www.', '')
-            return jsonify({
-                'success': True,
-                'article': {
-                    'title': domain + ' — ' + url.split('/')[-1].replace('-', ' ').title()[:80],
-                    'headline': url,
-                    'snippet': 'Article content could not be fetched automatically. The link has been added for reference.',
-                    'url': url,
-                    'publisher': domain,
-                    'impact': 'CUSTOM',
-                    'isCustomLink': True
-                }
-            })
+
+            # Fallback: use OpenAI Responses API with web search to read the URL
+            try:
+                ai_prompt = f"""Read and analyze the article at this URL: {url}
+
+Extract and return a JSON object with:
+{{
+    "title": "The article's headline",
+    "description": "A 2-3 sentence summary of the article's main points",
+    "publisher": "{domain}",
+    "snippet": "A longer summary (4-5 sentences) with key facts and data points",
+    "industry_data": "Any specific statistics, percentages, or data mentioned (or empty string if none)",
+    "agent_implications": "How this news could relate to insurance agents (2-3 sentences, or empty if not relevant)",
+    "content_type": "news"
+}}
+
+Return ONLY the JSON object, no other text."""
+
+                ai_response = openai_client.client.responses.create(
+                    model="gpt-4o",
+                    tools=[{"type": "web_search"}],
+                    input=ai_prompt,
+                )
+                result_text = ai_response.output_text.strip()
+
+                if result_text.startswith('```'):
+                    result_text = result_text.split('```')[1]
+                    if result_text.startswith('json'):
+                        result_text = result_text[4:]
+                    result_text = result_text.strip()
+
+                article_data = json.loads(result_text)
+                article_data['url'] = url
+                article_data['source_url'] = url
+                article_data['headline'] = article_data.get('title', '')
+                article_data['so_what'] = article_data.get('agent_implications', '')
+                article_data['isCustomLink'] = True
+
+                print(f"[API] AI fallback succeeded: {article_data.get('title', 'Unknown')}")
+                return jsonify({
+                    'success': True,
+                    'article': article_data,
+                    'generated_at': datetime.now().isoformat()
+                })
+            except Exception as ai_err:
+                print(f"[API] AI fallback also failed: {str(ai_err)}")
+                # Last resort: add with URL-derived info
+                return jsonify({
+                    'success': True,
+                    'article': {
+                        'title': url.split('/')[-1].replace('-', ' ').title()[:80],
+                        'headline': url,
+                        'snippet': 'Article content could not be fetched automatically. The link has been added for reference.',
+                        'url': url,
+                        'publisher': domain,
+                        'impact': 'CUSTOM',
+                        'isCustomLink': True
+                    }
+                })
 
         # Step 2: Parse HTML with BeautifulSoup
         soup = BeautifulSoup(response.text, 'html.parser')
