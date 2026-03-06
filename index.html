@@ -2039,7 +2039,7 @@
                         <div id="addedLinksContainer" style="max-height: 150px; overflow-y: auto; border: 1px solid #d1fae5; border-radius: 6px; padding: 8px; background: #ecfdf5;"></div>
                     </div>
 
-                    <input type="text" id="customLinkInput" placeholder="https://example.com/article..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; margin-bottom: 10px;">
+                    <input type="text" id="researchCustomLinkInput" placeholder="https://example.com/article..." style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; margin-bottom: 10px;">
                     <div id="uploadLinkError" style="color: #dc2626; font-size: 13px; margin-bottom: 15px; display: none;"></div>
 
                     <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
@@ -9812,7 +9812,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         function showUploadLinkModal() {
             document.getElementById('uploadLinkModal').style.display = 'flex';
-            document.getElementById('customLinkInput').value = '';
+            document.getElementById('researchCustomLinkInput').value = '';
             document.getElementById('uploadLinkError').style.display = 'none';
             document.getElementById('addedLinksList').style.display = 'none';
             document.getElementById('addedLinksContainer').innerHTML = '';
@@ -9823,7 +9823,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             const sectionName = sectionDisplayNames[currentResearchSection] || 'This Section';
             document.getElementById('modalSectionName').textContent = sectionName;
 
-            document.getElementById('customLinkInput').focus();
+            document.getElementById('researchCustomLinkInput').focus();
         }
 
         function hideUploadLinkModal() {
@@ -9890,7 +9890,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
         }
 
         async function fetchCustomArticle() {
-            const url = document.getElementById('customLinkInput').value.trim();
+            const url = document.getElementById('researchCustomLinkInput').value.trim();
             const errorDiv = document.getElementById('uploadLinkError');
             const btn = document.getElementById('fetchArticleBtn');
 
@@ -9957,8 +9957,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     updateAddedLinksList(article.title || 'Article', url, customLinkCounter);
 
                     // Clear input for next link
-                    document.getElementById('customLinkInput').value = '';
-                    document.getElementById('customLinkInput').focus();
+                    document.getElementById('researchCustomLinkInput').value = '';
+                    document.getElementById('researchCustomLinkInput').focus();
                 } else {
                     errorDiv.textContent = data.error || 'Failed to fetch article';
                     errorDiv.style.display = 'block';
