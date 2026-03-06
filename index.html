@@ -928,6 +928,30 @@
 
         .field-group {
             margin-bottom: 12px;
+            position: relative;
+        }
+
+        .field-group-remove-btn {
+            position: absolute;
+            top: 0;
+            right: -8px;
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            z-index: 2;
+        }
+
+        .field-group-remove-btn:hover {
+            background: #fca5a5;
         }
 
         .field-label {
@@ -5387,6 +5411,16 @@
             });
         }
 
+        // Helper: remove a single field-group; if no field-groups remain in the parent item, remove the whole item
+        function removeFieldGroup(btn) {
+            const fieldGroup = btn.closest('.field-group');
+            const item = fieldGroup.closest('.dynamic-field-item');
+            fieldGroup.remove();
+            if (item && item.querySelectorAll('.field-group').length === 0) {
+                item.remove();
+            }
+        }
+
         // Helper: render dynamic bullet fields
         function renderDynamicBullets(prefix, sectionKey, bullets) {
             const container = document.getElementById(prefix + sectionKey + '-bullets-container');
@@ -5422,9 +5456,8 @@
                 const item = document.createElement('div');
                 item.className = 'dynamic-field-item';
                 item.dataset.sectionIndex = idx;
-                item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
-                    '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
-                    '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Content</label>' +
+                item.innerHTML = '<div class="field-group"><button class="field-group-remove-btn" onclick="removeFieldGroup(this)" title="Remove">&times;</button><label class="field-label">Section ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
+                    '<div class="field-group"><button class="field-group-remove-btn" onclick="removeFieldGroup(this)" title="Remove">&times;</button><label class="field-label">Section ' + (idx + 1) + ' Content</label>' +
                     '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
                     '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
                     '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
@@ -5445,9 +5478,8 @@
                 const item = document.createElement('div');
                 item.className = 'dynamic-field-item';
                 item.dataset.tipIndex = idx;
-                item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
-                    '<div class="field-group"><label class="field-label">Tip ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
-                    '<div class="field-group"><label class="field-label">Tip ' + (idx + 1) + ' Content</label>' +
+                item.innerHTML = '<div class="field-group"><button class="field-group-remove-btn" onclick="removeFieldGroup(this)" title="Remove">&times;</button><label class="field-label">Tip ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
+                    '<div class="field-group"><button class="field-group-remove-btn" onclick="removeFieldGroup(this)" title="Remove">&times;</button><label class="field-label">Tip ' + (idx + 1) + ' Content</label>' +
                     '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
                     '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
                     '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
@@ -5505,9 +5537,8 @@
             const contentId = prefix + 'spotlight-section-' + idx + '-content';
             const item = document.createElement('div');
             item.className = 'dynamic-field-item';
-            item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
-                '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
-                '<div class="field-group"><label class="field-label">Section ' + (idx + 1) + ' Content</label>' +
+            item.innerHTML = '<div class="field-group"><button class="field-group-remove-btn" onclick="removeFieldGroup(this)" title="Remove">&times;</button><label class="field-label">Section ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
+                '<div class="field-group"><button class="field-group-remove-btn" onclick="removeFieldGroup(this)" title="Remove">&times;</button><label class="field-label">Section ' + (idx + 1) + ' Content</label>' +
                 '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
                 '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
                 '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
@@ -5522,9 +5553,8 @@
             const contentId = prefix + 'tip-' + idx + '-content';
             const item = document.createElement('div');
             item.className = 'dynamic-field-item';
-            item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
-                '<div class="field-group"><label class="field-label">Tip ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
-                '<div class="field-group"><label class="field-label">Tip ' + (idx + 1) + ' Content</label>' +
+            item.innerHTML = '<div class="field-group"><button class="field-group-remove-btn" onclick="removeFieldGroup(this)" title="Remove">&times;</button><label class="field-label">Tip ' + (idx + 1) + ' Title</label><div class="editable editable-sm" contenteditable="true" id="' + titleId + '"></div></div>' +
+                '<div class="field-group"><button class="field-group-remove-btn" onclick="removeFieldGroup(this)" title="Remove">&times;</button><label class="field-label">Tip ' + (idx + 1) + ' Content</label>' +
                 '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + contentId + '\')" type="button">🔗 Insert Link</button></div>' +
                 '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
                 '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
