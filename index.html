@@ -5475,9 +5475,7 @@
         }
 
         function addSpotlightSection(prefix) {
-            console.log('[addSpotlightSection] called with prefix:', prefix);
             const container = document.getElementById(prefix + 'spotlight-sections-container');
-            console.log('[addSpotlightSection] container:', container);
             if (!container) return;
             const idx = container.querySelectorAll('.dynamic-field-item').length;
             const titleId = prefix + 'spotlight-section-' + idx + '-title';
