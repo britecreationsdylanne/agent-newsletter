@@ -915,6 +915,12 @@
             border-color: #018181;
         }
 
+        .editable[data-placeholder]:empty::before {
+            content: attr(data-placeholder);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+
         .editable-sm {
             min-height: 36px;
             padding: 8px 12px;
@@ -2285,7 +2291,7 @@
                     <div class="editable editable-sm" contenteditable="true" id="review-spotlight-subheader"></div>
                 </div>
                 <div class="dynamic-fields-container" id="review-spotlight-sections-container"></div>
-                <button type="button" class="btn-secondary btn" onclick="addSpotlightSection('review')" style="margin: 10px 0; font-size: 13px;">+ Add Section</button>
+                <button type="button" class="btn-secondary btn" onclick="addSpotlightSection('review-')" style="margin: 10px 0; font-size: 13px;">+ Add Section</button>
                 <div class="source-urls" id="review-spotlight-sources"></div>
             </div>
 
@@ -2644,7 +2650,7 @@
                     <div class="editable editable-sm" contenteditable="true" id="fc-spotlight-subheader"></div>
                 </div>
                 <div class="dynamic-fields-container" id="fc-spotlight-sections-container"></div>
-                <button type="button" class="btn-secondary btn" onclick="addSpotlightSection('fc')" style="margin: 10px 0; font-size: 13px;">+ Add Section</button>
+                <button type="button" class="btn-secondary btn" onclick="addSpotlightSection('fc-')" style="margin: 10px 0; font-size: 13px;">+ Add Section</button>
             </div>
 
             <div class="content-section">
@@ -5318,7 +5324,7 @@
             }
         }
 
-        // Helper: render source URLs into non-editable container
+        // Helper: render source URLs into editable container
         function renderSourceUrls(containerId, articles, singleArticle) {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -5326,12 +5332,36 @@
             const arts = singleArticle ? [singleArticle] : (articles || []);
             if (arts.length === 0) return;
             let html = '<strong>Source' + (arts.length > 1 ? 's' : '') + ':</strong>';
-            arts.forEach(art => {
+            arts.forEach((art, idx) => {
                 if (!art || !art.url) return;
                 const title = art.title || art.headline || 'Source Article';
-                html += '<div style="margin: 8px 0;"><a href="' + art.url + '" target="_blank">' + title + '</a><code>' + art.url + '</code></div>';
+                const inputId = containerId + '-' + idx;
+                html += '<div style="margin: 8px 0;">' +
+                    '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
+                        '<label style="font-size:12px;color:#666;min-width:36px;">Title:</label>' +
+                        '<input type="text" id="' + inputId + '-title" value="' + title.replace(/"/g, '&quot;') + '" ' +
+                            'style="flex:1;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;font-family:inherit;color:#018181;" />' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;gap:6px;">' +
+                        '<label style="font-size:12px;color:#666;min-width:36px;">URL:</label>' +
+                        '<input type="text" id="' + inputId + '-url" value="' + art.url.replace(/"/g, '&quot;') + '" ' +
+                            'style="flex:1;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;font-family:monospace;color:#555;" />' +
+                    '</div>' +
+                    '<a href="' + art.url + '" target="_blank" id="' + inputId + '-link" style="font-size:12px;margin-top:4px;display:inline-block;">Open link ↗</a>' +
+                '</div>';
             });
             container.innerHTML = html;
+
+            // Update link href when URL input changes
+            arts.forEach((art, idx) => {
+                if (!art || !art.url) return;
+                const inputId = containerId + '-' + idx;
+                const urlInput = document.getElementById(inputId + '-url');
+                const link = document.getElementById(inputId + '-link');
+                if (urlInput && link) {
+                    urlInput.addEventListener('input', () => { link.href = urlInput.value; });
+                }
+            });
         }
 
         // Helper: render dynamic bullet fields
@@ -5427,17 +5457,21 @@
 
         function addRoundupBullet(prefix) {
             const container = document.getElementById(prefix + 'roundup-bullets-container');
-            if (!container) return;
+            if (!container) { console.error('[addRoundupBullet] Container not found:', prefix + 'roundup-bullets-container'); return; }
             const idx = container.querySelectorAll('.dynamic-field-item').length;
             const bulletId = prefix + 'roundup-bullet-' + idx;
             const item = document.createElement('div');
             item.className = 'dynamic-field-item';
+            item.dataset.bulletIndex = idx;
             item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
                 '<div class="field-group"><label class="field-label">Bullet ' + (idx + 1) + '</label>' +
                 '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + bulletId + '\')" type="button">🔗 Insert Link</button></div>' +
                 '<div class="link-popover" id="lp-' + bulletId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + bulletId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + bulletId + '\')">Insert</button></div></div>' +
-                '<div class="editable" contenteditable="true" id="' + bulletId + '"></div></div>';
+                '<div class="editable" contenteditable="true" id="' + bulletId + '" data-placeholder="Enter news roundup bullet..." style="min-height: 60px;"></div></div>';
             container.appendChild(item);
+            console.log('[addRoundupBullet] Added bullet', idx, 'to', prefix);
+            var el = document.getElementById(bulletId);
+            if (el) el.focus();
         }
 
         function addSpotlightSection(prefix) {
@@ -11436,6 +11470,12 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             const claimsCopy = getHTML(prefix + 'claims-copy');
             if (claimsCopy) generatedClaimsContent = claimsCopy;
 
+            // Sync edited source URL/title back into selectedClaims
+            const claimsSourceTitle = document.getElementById('review-claims-sources-0-title');
+            const claimsSourceUrl = document.getElementById('review-claims-sources-0-url');
+            if (selectedClaims && claimsSourceTitle) selectedClaims.title = claimsSourceTitle.value;
+            if (selectedClaims && claimsSourceUrl) selectedClaims.url = claimsSourceUrl.value;
+
             // News Roundup - read dynamic bullets
             const roundupContainer = document.getElementById(prefix + 'roundup-bullets-container');
             if (roundupContainer) {
@@ -11447,6 +11487,14 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 });
                 if (bullets.length > 0) generatedRoundupContent = bullets;
             }
+
+            // Sync edited roundup source URLs back into selectedRoundup
+            selectedRoundup.forEach((art, idx) => {
+                const titleInput = document.getElementById('review-roundup-sources-' + idx + '-title');
+                const urlInput = document.getElementById('review-roundup-sources-' + idx + '-url');
+                if (titleInput) art.title = titleInput.value;
+                if (urlInput) art.url = urlInput.value;
+            });
 
             // Feature Spotlight - subheader + dynamic sections
             const spotlightSubheader = getText(prefix + 'spotlight-subheader');
@@ -11468,6 +11516,12 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 if (h3s.length > 0) generatedSpotlightContent = {subheader: spotlightSubheader, h3s: h3s};
             }
 
+            // Sync edited spotlight source URL back into selectedSpotlight
+            const spotSourceTitle = document.getElementById('review-spotlight-sources-0-title');
+            const spotSourceUrl = document.getElementById('review-spotlight-sources-0-url');
+            if (selectedSpotlight && spotSourceTitle) selectedSpotlight.title = spotSourceTitle.value;
+            if (selectedSpotlight && spotSourceUrl) selectedSpotlight.url = spotSourceUrl.value;
+
             // Agent Advantage - intro + dynamic tips
             const tipsIntro = getHTML(prefix + 'tips-intro');
             const tipsContainer = document.getElementById(prefix + 'tips-container');
@@ -11486,6 +11540,12 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 });
                 generatedTipsContent = {intro: tipsIntro, tips: tips};
             }
+
+            // Sync edited tips source URL back into selectedTips
+            const tipsSourceTitle = document.getElementById('review-tips-sources-0-title');
+            const tipsSourceUrl = document.getElementById('review-tips-sources-0-url');
+            if (selectedTips && tipsSourceTitle) selectedTips.title = tipsSourceTitle.value;
+            if (selectedTips && tipsSourceUrl) selectedTips.url = tipsSourceUrl.value;
 
             // Special section body
             const ssHtml = getHTML(onFinalCopy ? 'fc-specialSection' : 'specialSectionBody');
@@ -11875,6 +11935,25 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 setTimeout(function() {
                     checkbox.checked = item.classList.contains('selected');
                 }, 0);
+            }
+        }
+    });
+
+    // === BACKUP: Event delegation for Add Bullet buttons ===
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('button');
+        if (!btn) return;
+        var text = btn.textContent.trim();
+        if (text !== '+ Add Bullet') return;
+        var onclick = btn.getAttribute('onclick') || '';
+        var match = onclick.match(/add(RoundupBullet|BriteSpotBullet)\('([^']+)'\)/);
+        if (match) {
+            var fn = match[1] === 'RoundupBullet' ? window.addRoundupBullet : window.addBriteSpotBullet;
+            if (typeof fn === 'function') {
+                fn(match[2]);
+                console.log('[Delegation] Add Bullet fired:', match[1], match[2]);
+            } else {
+                console.error('[Delegation] Function not found:', match[1]);
             }
         }
     });
