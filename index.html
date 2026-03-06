@@ -1650,8 +1650,10 @@
                 <!-- Months will be generated here -->
             </div>
 
-            <div class="buttons">
-                <button class="btn" id="monthNextBtn" disabled onclick="showStep('2-spotlight')">Continue to Spotlight Selection →</button>
+            <div class="buttons" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <button class="btn" id="monthNextBtn" disabled onclick="isManualBuild = false; showStep('2-spotlight')">Continue to Spotlight Selection →</button>
+                <span style="color: #999; font-size: 14px;">or</span>
+                <button class="btn" onclick="skipToManualBuilder()" style="background: #6366f1;">Skip to Manual Builder →</button>
             </div>
         </div>
 
@@ -2205,8 +2207,8 @@
 
         <!-- Step 5: Review Content -->
         <div class="step" id="step5">
-            <h2>✏️ Review & Edit Content</h2>
-            <p>Your AI-generated newsletter is ready! Edit any section before continuing.</p>
+            <h2 id="step5Heading">✏️ Review & Edit Content</h2>
+            <p id="step5Description">Your AI-generated newsletter is ready! Edit any section before continuing.</p>
 
             <div class="content-section">
                 <h3>BriteCo Brief Intro</h3>
@@ -2468,7 +2470,7 @@
             <div id="draftAutoSaveStatus" style="text-align: center; font-size: 13px; color: #999; margin-bottom: 10px;"></div>
 
             <div class="buttons">
-                <button class="btn-secondary btn" onclick="showStep('2-research')">← Back</button>
+                <button class="btn-secondary btn" id="step5BackBtn" onclick="showStep(isManualBuild ? 1 : '2-research')">← Back</button>
                 <button class="btn" onclick="saveDraft(); this.textContent='✓ Saved'; setTimeout(() => this.textContent='💾 Save Draft', 2000);" style="background: #22c55e; padding: 10px 30px;">Save Draft</button>
                 <button class="btn" id="step5NextBtn" onclick="syncContentFromDOM(); populateFinalCopy(); showStep('7b');">Continue to Final Copy</button>
             </div>
@@ -3228,6 +3230,7 @@
         }
 
         // State
+        let isManualBuild = false;
         let selectedMonth = '';
         let selectedSeason = '';
 
@@ -3932,6 +3935,26 @@
             document.querySelectorAll('.month-card').forEach(card => card.classList.remove('selected'));
             element.classList.add('selected');
             document.getElementById('monthNextBtn').disabled = false;
+        }
+
+        function skipToManualBuilder() {
+            isManualBuild = true;
+
+            // Auto-select current month if none picked
+            if (!selectedMonth) {
+                const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+                const seasons = ['winter','winter','spring','spring','spring','summer','summer','summer','fall','fall','fall','winter'];
+                const now = new Date();
+                selectedMonth = months[now.getMonth()];
+                selectedSeason = seasons[now.getMonth()];
+            }
+
+            // Update step 5 UI for manual mode
+            document.getElementById('step5Heading').textContent = '✏️ Manual Newsletter Builder';
+            document.getElementById('step5Description').textContent = 'Build your newsletter from scratch. Fill in each section below.';
+            document.getElementById('step5BackBtn').textContent = '← Back to Month Selection';
+
+            showStep(5);
         }
 
         // ============================================================================
@@ -10770,6 +10793,19 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
             // Populate per-section editable divs when navigating to step 5 or 7b (e.g., from draft load)
             if (stepNum == 5 || stepNum === '5') {
+                // Update heading/description based on mode
+                const h = document.getElementById('step5Heading');
+                const d = document.getElementById('step5Description');
+                const bb = document.getElementById('step5BackBtn');
+                if (isManualBuild) {
+                    if (h) h.textContent = '✏️ Manual Newsletter Builder';
+                    if (d) d.textContent = 'Build your newsletter from scratch. Fill in each section below.';
+                    if (bb) bb.textContent = '← Back to Month Selection';
+                } else {
+                    if (h) h.textContent = '✏️ Review & Edit Content';
+                    if (d) d.textContent = 'Your AI-generated newsletter is ready! Edit any section before continuing.';
+                    if (bb) bb.textContent = '← Back';
+                }
                 // Only populate if divs are empty (not already populated by generateContent)
                 const introDiv = document.getElementById('review-headerIntro');
                 if (introDiv && !introDiv.innerHTML.trim()) {
@@ -11148,6 +11184,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         imagePrompts: basePrompts,  // Save image prompts
                         specialSection: specialSection,
                         skippedResearch: skippedResearch,
+                        isManualBuild: isManualBuild,
                         subjectLine: document.getElementById('finalSubjectLine')?.value || '',
                         preheader: document.getElementById('finalPreheader')?.value || '',
                         reviewHTML: reviewHTML,
@@ -11237,6 +11274,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
                 // Restore skipped research state
                 skippedResearch = d.skippedResearch || { claims: false, roundup: false, tips: false };
+                isManualBuild = d.isManualBuild || false;
 
                 // Restore image prompts and prevent regeneration
                 if (d.imagePrompts && Object.keys(d.imagePrompts).length > 0) {
