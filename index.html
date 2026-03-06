@@ -15,6 +15,9 @@
       defer
     ></script>
 
+    <!-- DOMPurify for HTML sanitization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"></script>
+
     <!-- Cropper.js for image upload crop -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" defer></script>
@@ -1511,7 +1514,7 @@
             const userInfo = document.createElement('div');
             userInfo.id = 'userInfo';
             userInfo.className = 'user-profile-container';
-            userInfo.innerHTML = `
+            userInfo.innerHTML = sanitizeHTML(`
                 <button class="user-avatar-btn" onclick="toggleUserDropdown(event)" aria-label="User menu">
                     ${avatarContent}
                 </button>
@@ -1526,7 +1529,7 @@
                         <a class="sign-out-link" onclick="signOut()">Sign out</a>
                     </div>
                 </div>
-            `;
+            `);
             header.appendChild(userInfo);
         }
 
@@ -3198,6 +3201,26 @@
         // API base URL
         const API_BASE = window.location.origin;
 
+        // Escape text for safe insertion into HTML (for error messages, etc.)
+        function escapeHTML(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Sanitize untrusted HTML (LLM output, API data) - strips scripts, allows safe markup
+        function sanitizeHTML(html) {
+            if (typeof DOMPurify !== 'undefined') {
+                return DOMPurify.sanitize(html, {
+                    ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'span', 'img', 'table', 'tr', 'td', 'th', 'tbody', 'thead', 'blockquote', 'pre', 'code', 'hr', 'sup', 'sub', 'button'],
+                    ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'style', 'class', 'id', 'width', 'height', 'colspan', 'rowspan', 'onclick', 'onmouseover', 'onmouseout'],
+                    ALLOW_DATA_ATTR: false
+                });
+            }
+            // Fallback: strip script tags if DOMPurify not loaded
+            return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        }
+
         // State
         let selectedMonth = '';
         let selectedSeason = '';
@@ -3396,7 +3419,7 @@
             item.setAttribute('data-section', section);
             item.setAttribute('data-preserved', 'true');
             item.setAttribute('onclick', 'handleItemClick(this)');
-            item.innerHTML = `
+            item.innerHTML = sanitizeHTML(`
                 <div class="research-result-header">
                     <span class="research-result-badge" style="background: #059669; color: white;">CUSTOM</span>
                     <div class="research-result-meta">
@@ -3412,7 +3435,7 @@
                         <p>${article.snippet.substring(0, 250)}${article.snippet.length > 250 ? '...' : ''}</p>
                     </div>
                 ` : ''}
-            `;
+            `);
 
             if (resultsDiv.firstChild) {
                 resultsDiv.insertBefore(item, resultsDiv.firstChild);
@@ -3465,7 +3488,7 @@
                 container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No saved articles yet. Save articles from search results or add a URL below.</p>';
                 return;
             }
-            container.innerHTML = savedArticlesCache.map((article, i) => `
+            container.innerHTML = sanitizeHTML(savedArticlesCache.map((article, i) => `
                 <div class="saved-article-card">
                     <div class="sa-info">
                         <div class="sa-title">${article.title || article.url}</div>
@@ -3476,7 +3499,7 @@
                         <button class="sa-delete-btn" onclick="deleteSavedArticle('${(article.url || '').replace(/'/g, "\\'")}')">&times;</button>
                     </div>
                 </div>
-            `).join('');
+            `).join(''));
         }
 
         function useSavedArticle(index) {
@@ -3563,7 +3586,7 @@
             item.setAttribute('data-preserved', 'true');
             item.dataset.url = article.url || '';
             item.setAttribute('onclick', 'handleItemClick(this)');
-            item.innerHTML = `
+            item.innerHTML = sanitizeHTML(`
                 <div class="research-result-header">
                     <span class="research-result-badge saved">SAVED</span>
                     <div class="research-result-meta">
@@ -3580,7 +3603,7 @@
                         <p>${article.snippet.substring(0, 250)}${article.snippet.length > 250 ? '...' : ''}</p>
                     </div>
                 ` : ''}
-            `;
+            `);
 
             if (resultsDiv.firstChild) {
                 resultsDiv.insertBefore(item, resultsDiv.firstChild);
@@ -3974,10 +3997,10 @@
                     headerIntroRewritten = data.rewritten;
                     resultText.textContent = data.rewritten;
                 } else {
-                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${data.error}</span>`;
+                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${escapeHTML(data.error)}</span>`;
                 }
             } catch (error) {
-                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${escapeHTML(error.message)}</span>`;
             }
         }
 
@@ -4016,10 +4039,10 @@
                     briteSpotIntroRewritten = data.rewritten;
                     resultText.textContent = data.rewritten;
                 } else {
-                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${data.error}</span>`;
+                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${escapeHTML(data.error)}</span>`;
                 }
             } catch (error) {
-                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${escapeHTML(error.message)}</span>`;
             }
         }
 
@@ -4059,10 +4082,10 @@
                     briteSpotBulletsRewritten = data.rewritten;
                     resultText.textContent = data.rewritten;
                 } else {
-                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${data.error}</span>`;
+                    resultText.innerHTML = `<span style="color: #dc2626;">Error: ${escapeHTML(data.error)}</span>`;
                 }
             } catch (error) {
-                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+                resultText.innerHTML = `<span style="color: #dc2626;">Error: ${escapeHTML(error.message)}</span>`;
             }
         }
 
@@ -4138,7 +4161,7 @@
                 results.style.display = 'block';
 
             } catch (err) {
-                loading.innerHTML = `<div style="color: #dc2626;">Error: ${err.message}</div>`;
+                loading.innerHTML = `<div style="color: #dc2626;">Error: ${escapeHTML(err.message)}</div>`;
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Discover Feature Themes';
@@ -4150,7 +4173,7 @@
         function renderSpotlightThemes(themes) {
             const list = document.getElementById('spotlightThemeList');
             const countText = `Found ${themes.length} feature angles. Click a theme to focus all 3 search cards:`;
-            list.innerHTML = `<div style="font-size: 13px; color: #0c4a6e; margin-bottom: 4px; font-weight: 500;">${countText}</div>` + themes.map((theme, i) => {
+            list.innerHTML = sanitizeHTML(`<div style="font-size: 13px; color: #0c4a6e; margin-bottom: 4px; font-weight: 500;">${countText}</div>` + themes.map((theme, i) => {
                 const isActive = spotlightActiveTheme?.headline === theme.headline;
                 return `
                 <div style="background: white; border: 2px solid ${isActive ? '#0ea5e9' : '#e2e8f0'}; border-radius: 8px; padding: 14px 16px; transition: all 0.15s;">
@@ -4163,7 +4186,7 @@
                         <button onclick="selectSpotlightTheme(${i})" class="btn" style="background: ${isActive ? '#059669' : '#0ea5e9'}; font-size: 12px; padding: 6px 14px;">${isActive ? '✓ Active' : 'Research this theme →'}</button>
                     </div>
                 </div>`;
-            }).join('');
+            }).join(''));
         }
 
         function selectSpotlightTheme(index) {
@@ -4261,7 +4284,7 @@
                 results.style.display = 'block';
 
             } catch (err) {
-                loading.innerHTML = `<div style="color: #dc2626;">Error: ${err.message}</div>`;
+                loading.innerHTML = `<div style="color: #dc2626;">Error: ${escapeHTML(err.message)}</div>`;
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Refine Themes from Results';
@@ -4342,7 +4365,7 @@
                     if (data.queries_used && data.queries_used.length > 0) {
                         const headerDiv = document.createElement('div');
                         headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
-                        headerDiv.innerHTML = `<strong>Queries:</strong> ${data.queries_used.join(' | ')}`;
+                        headerDiv.innerHTML = `<strong>Queries:</strong> ${escapeHTML(data.queries_used.join(' | '))}`;
                         resultsDiv.appendChild(headerDiv);
                     }
 
@@ -4363,11 +4386,11 @@
                         </div>`;
                     }
                     html += `<p style="text-align: center; color: #999; padding: 20px;">No articles found. Try a different search term.</p>`;
-                    resultsDiv.innerHTML = html;
+                    resultsDiv.innerHTML = sanitizeHTML(html);
                 }
             } catch (error) {
                 console.error('Perplexity search error:', error);
-                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${escapeHTML(error.message)}</p>`;
             }
         }
 
@@ -4409,7 +4432,7 @@
                     if (data.signals_searched && data.signals_searched.length > 0) {
                         const headerDiv = document.createElement('div');
                         headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
-                        headerDiv.innerHTML = `<strong>Signals scanned:</strong> ${data.signals_searched.join(', ')}`;
+                        headerDiv.innerHTML = `<strong>Signals scanned:</strong> ${escapeHTML(data.signals_searched.join(', '))}`;
                         resultsDiv.appendChild(headerDiv);
                     }
                     displaySpotlightResults(data.results, 'spotlightSignalsResults', true);
@@ -4418,7 +4441,7 @@
                 }
             } catch (error) {
                 console.error('Insights search error:', error);
-                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${escapeHTML(error.message)}</p>`;
             }
         }
 
@@ -4474,7 +4497,7 @@
                     if (data.queries_used && data.queries_used.length > 0) {
                         const headerDiv = document.createElement('div');
                         headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
-                        headerDiv.innerHTML = `<strong>Queries tried:</strong><br>${data.queries_used.join('<br>')}`;
+                        headerDiv.innerHTML = `<strong>Queries tried:</strong><br>${data.queries_used.map(q => escapeHTML(q)).join('<br>')}`;
                         resultsDiv.appendChild(headerDiv);
                     }
                     displaySpotlightResults(data.results, 'spotlightCuratedResults', true);
@@ -4486,11 +4509,11 @@
                         </div>`;
                     }
                     html += `<p style="text-align: center; color: #999; padding: 20px;">No articles found. Try a different search term.</p>`;
-                    resultsDiv.innerHTML = html;
+                    resultsDiv.innerHTML = sanitizeHTML(html);
                 }
             } catch (error) {
                 console.error('Sources search error:', error);
-                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${escapeHTML(error.message)}</p>`;
             }
         }
 
@@ -4872,7 +4895,7 @@
             // Headline - editable (convert **text** to bold)
             let headlineText = content.subheader || 'Untitled Spotlight';
             headlineText = headlineText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            document.getElementById('spotlightHeadlineEditable').innerHTML = headlineText;
+            document.getElementById('spotlightHeadlineEditable').innerHTML = sanitizeHTML(headlineText);
 
             // Build editable article body - flowing paragraphs without H3 section titles
             const bodyEditable = document.getElementById('spotlightBodyEditable');
@@ -4940,7 +4963,7 @@
 
             // Wrap in editable container if HTML content
             if (bodyHtml) {
-                bodyEditable.innerHTML = `<div contenteditable="true" style="outline: none;">${bodyHtml}</div>`;
+                bodyEditable.innerHTML = `<div contenteditable="true" style="outline: none;">${sanitizeHTML(bodyHtml)}</div>`;
             } else {
                 bodyEditable.innerHTML = '<p style="color: #999;">No content sections available.</p>';
             }
@@ -4951,9 +4974,9 @@
             // Sources - read only
             const sourcesEditable = document.getElementById('spotlightSourcesEditable');
             if (content.sources && content.sources.length > 0) {
-                sourcesEditable.innerHTML = content.sources.map(source =>
+                sourcesEditable.innerHTML = sanitizeHTML(content.sources.map(source =>
                     `<a href="${source.url}" target="_blank" style="color: #008181; text-decoration: none; margin-right: 15px;">${source.title || source.publisher} ↗</a>`
-                ).join('');
+                ).join(''));
             } else {
                 sourcesEditable.innerHTML = '<span style="color: #999;">No sources listed</span>';
             }
@@ -5114,12 +5137,12 @@
             tipTopics.forEach((topic, index) => {
                 const card = document.createElement('div');
                 card.className = 'topic-card';
-                card.innerHTML = `
+                card.innerHTML = sanitizeHTML(`
                     <div class="title">💡 ${topic.title}</div>
                     ${topic.age ? `<div style="color: #666; font-size: 0.85em; margin-top: 4px;">Published: ${topic.age}</div>` : ''}
                     <div class="description">${topic.description}</div>
                     ${topic.source_url ? `<a href="${topic.source_url}" target="_blank" class="source" onclick="event.stopPropagation()">Read source article →</a>` : ''}
-                `;
+                `);
                 card.onclick = () => selectTip(index, card);
                 container.appendChild(card);
             });
@@ -5133,46 +5156,12 @@
         }
 
         async function loadTrends() {
+            // Feature disabled - no backend endpoint exists
             showStep(5);
-            const trendSeasonText = document.getElementById('trendSeasonText');
-            if (trendSeasonText) trendSeasonText.textContent = `Loading ${selectedSeason} trends...`;
-
-            try {
-                const response = await fetch(`${API_BASE}/api/get-trends`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        month: selectedMonth,
-                        exclude_titles: shownTrendArticles
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    trendTopics = data.trends;
-                    // Track these articles
-                    trendTopics.forEach(trend => {
-                        if (!shownTrendArticles.includes(trend.title)) {
-                            shownTrendArticles.push(trend.title);
-                        }
-                    });
-                    selectedSeason = data.season; // Update from server
-                    const label = document.getElementById('trendSeasonLabel');
-                    if (label) label.textContent = `Seasonal trends for ${selectedSeason}`;
-                    displayTrends();
-                    showStep(5);
-                } else {
-                    throw new Error(data.error || 'Failed to load trends');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                const trendErr = document.getElementById('trendError');
-                if (trendErr) {
-                    trendErr.textContent = `Error: ${error.message}`;
-                    trendErr.style.display = 'block';
-                }
-                showStep(5);
+            const trendErr = document.getElementById('trendError');
+            if (trendErr) {
+                trendErr.textContent = 'Trends feature is not currently available.';
+                trendErr.style.display = 'block';
             }
         }
 
@@ -5183,12 +5172,12 @@
             trendTopics.forEach((topic, index) => {
                 const card = document.createElement('div');
                 card.className = 'topic-card';
-                card.innerHTML = `
+                card.innerHTML = sanitizeHTML(`
                     <div class="title">📈 ${topic.title}</div>
                     ${topic.age ? `<div style="color: #666; font-size: 0.85em; margin-top: 4px;">Published: ${topic.age}</div>` : ''}
                     <div class="description">${topic.description}</div>
                     ${topic.source_url ? `<a href="${topic.source_url}" target="_blank" class="source" onclick="event.stopPropagation()">Read source article →</a>` : ''}
-                `;
+                `);
                 card.onclick = () => selectTrend(index, card);
                 container.appendChild(card);
             });
@@ -5365,7 +5354,7 @@
                     '<div class="link-popover" id="lp-' + bulletId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + bulletId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + bulletId + '\')">Insert</button></div></div>' +
                     '<div class="editable" contenteditable="true" id="' + bulletId + '"></div></div>';
                 container.appendChild(item);
-                document.getElementById(bulletId).innerHTML = text;
+                document.getElementById(bulletId).innerHTML = sanitizeHTML(text);
             });
         }
 
@@ -5388,7 +5377,7 @@
                     '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
                 container.appendChild(item);
                 document.getElementById(titleId).textContent = s.title || s.h3 || '';
-                document.getElementById(contentId).innerHTML = s.body || s.content || s.text || '';
+                document.getElementById(contentId).innerHTML = sanitizeHTML(s.body || s.content || s.text || '');
             });
         }
 
@@ -5411,7 +5400,7 @@
                     '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
                 container.appendChild(item);
                 document.getElementById(titleId).textContent = tip.title || '';
-                document.getElementById(contentId).innerHTML = tip.tip || tip.content || '';
+                document.getElementById(contentId).innerHTML = sanitizeHTML(tip.tip || tip.content || '');
             });
         }
 
@@ -5538,7 +5527,7 @@
             const headerIntroEl = document.getElementById('review-headerIntro');
             if (headerIntroEl) {
                 const headerIntroDisplay = headerIntroContent || generatedIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
-                headerIntroEl.innerHTML = styleLinksBlue(headerIntroDisplay) || '<p style="color:#999;">No intro content</p>';
+                headerIntroEl.innerHTML = sanitizeHTML(styleLinksBlue(headerIntroDisplay) || '<p style="color:#999;">No intro content</p>');
             }
 
             // 2. Brite Spot - paragraph + dynamic bullets (use AI-generated as fallback)
@@ -5548,7 +5537,7 @@
                 if (!bsText && generatedBriteSpotContent) {
                     bsText = typeof generatedBriteSpotContent === 'string' ? generatedBriteSpotContent : (generatedBriteSpotContent.paragraph || generatedBriteSpotContent.body || generatedBriteSpotContent.content || '');
                 }
-                bsParagraphEl.innerHTML = styleLinksBlue(bsText);
+                bsParagraphEl.innerHTML = sanitizeHTML(styleLinksBlue(bsText));
             }
             let bsBullets = briteSpotBullets || [];
             if (bsBullets.length === 0 && generatedBriteSpotContent) {
@@ -5570,7 +5559,7 @@
                 if (claimsCopyEl) {
                     let content = generatedClaimsContent || '';
                     if (typeof content === 'object') content = content.body || content.content || content.text || JSON.stringify(content);
-                    claimsCopyEl.innerHTML = styleLinksBlue(content);
+                    claimsCopyEl.innerHTML = sanitizeHTML(styleLinksBlue(content));
                 }
                 renderSourceUrls('review-claims-sources', null, selectedClaims);
             }
@@ -5661,7 +5650,7 @@
                 const tipsIntroEl = document.getElementById('review-tips-intro');
                 let tips = [];
                 if (generatedTipsContent && generatedTipsContent.intro) {
-                    if (tipsIntroEl) tipsIntroEl.innerHTML = styleLinksBlue(generatedTipsContent.intro);
+                    if (tipsIntroEl) tipsIntroEl.innerHTML = sanitizeHTML(styleLinksBlue(generatedTipsContent.intro));
                     tips = (generatedTipsContent.tips || []).map(t => ({
                         title: t.title || '',
                         tip: t.tip || t.content || ''
@@ -5673,7 +5662,7 @@
                         tip: t.tip || t.content || (typeof t === 'string' ? t : '')
                     }));
                 } else {
-                    if (tipsIntroEl) tipsIntroEl.innerHTML = styleLinksBlue(generatedTipsContent || '');
+                    if (tipsIntroEl) tipsIntroEl.innerHTML = sanitizeHTML(styleLinksBlue(generatedTipsContent || ''));
                 }
                 renderDynamicTips('review-', tips);
                 renderSourceUrls('review-tips-sources', null, selectedTips);
@@ -6339,7 +6328,7 @@
             if (toggle) toggle.checked = specialSection.enabled;
             toggleSpecialSection();
             document.getElementById('specialSectionTitle').value = specialSection.title || '';
-            document.getElementById('specialSectionBody').innerHTML = specialSection.body || '';
+            document.getElementById('specialSectionBody').innerHTML = sanitizeHTML(specialSection.body || '');
             document.getElementById('specialSectionCtaText').value = specialSection.ctaText || '';
             document.getElementById('specialSectionCtaUrl').value = specialSection.ctaUrl || '';
             const posEl = document.getElementById('specialSectionPosition');
@@ -6371,7 +6360,7 @@
                 });
                 const data = await response.json();
                 if (data.success && data.rewritten) {
-                    document.getElementById('specialSectionBody').innerHTML = data.rewritten.replace(/\n/g, '<br>');
+                    document.getElementById('specialSectionBody').innerHTML = sanitizeHTML(data.rewritten.replace(/\n/g, '<br>'));
                 } else {
                     alert('Generation failed: ' + (data.error || 'Unknown error'));
                 }
@@ -6396,7 +6385,7 @@
                 });
                 const data = await response.json();
                 if (data.success && data.rewritten) {
-                    document.getElementById('specialSectionBody').innerHTML = data.rewritten.replace(/\n/g, '<br>');
+                    document.getElementById('specialSectionBody').innerHTML = sanitizeHTML(data.rewritten.replace(/\n/g, '<br>'));
                 } else {
                     alert('Rewrite failed: ' + (data.error || 'Unknown error'));
                 }
@@ -6430,7 +6419,7 @@
                     preview.innerHTML = '<p style="color:#dc2626;">Image generation failed. Try again.</p>';
                 }
             } catch (e) {
-                preview.innerHTML = `<p style="color:#dc2626;">Error: ${e.message}</p>`;
+                preview.innerHTML = `<p style="color:#dc2626;">Error: ${escapeHTML(e.message)}</p>`;
             }
             btn.disabled = false; btn.textContent = 'Generate Image';
         }
@@ -6483,7 +6472,7 @@
             if (step5bSelect) step5bSelect.value = newPosition;
             // Re-render the preview
             const html = generateNewsletterHTML();
-            document.getElementById('newsletterPreview').innerHTML = html;
+            document.getElementById('newsletterPreview').innerHTML = sanitizeHTML(html);
             // Make content editable again
             document.querySelectorAll('#newsletterPreview td, #newsletterPreview th, #newsletterPreview p, #newsletterPreview h1, #newsletterPreview h2, #newsletterPreview h3').forEach(el => {
                 if (!el.closest('table[role="presentation"]')?.querySelector('img')) {
@@ -7229,220 +7218,18 @@
         }
 
         async function generateMemePrompt(forceRegenerate = false) {
-            // Check if meme concept already exists and we're not forcing regeneration
-            if (memeConceptGenerated && !forceRegenerate && memeConceptData.scene) {
-                console.log('[Navigation] Meme concept already generated, showing existing concept');
-                showStep('10_5');
-                // Restore the saved values
-                document.getElementById('memeScenePrompt').value = memeConceptData.scene;
-                document.getElementById('memeTopText').value = memeConceptData.topText;
-                document.getElementById('memeBottomText').value = memeConceptData.bottomText;
-                return;
-            }
-
-            try {
-                // Show loading screen first
-                showStep('10_4'); // Generating Meme Concept loading
-
-                // Wait a tiny bit for UI to update
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                // Gather newsletter content
-                const newsContent = extractContentText(cleanContent(generatedNewsContent));
-                const tipContent = extractContentText(cleanContent(generatedTipContent));
-                const trendContent = extractContentText(cleanContent(generatedTrendContent));
-
-                console.log('Calling Claude API to generate meme concept...');
-                console.log('News content:', newsContent.substring(0, 100));
-
-                const response = await fetch(`${API_BASE}/api/generate-meme-prompt`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sections: {
-                            news: { content: newsContent },
-                            tip: { content: tipContent },
-                            trend: { content: trendContent }
-                        },
-                        month: selectedMonth
-                    })
-                });
-
-                console.log('Response status:', response.status);
-                const data = await response.json();
-                console.log('Response data:', data);
-
-                if (data.success) {
-                    console.log('✓ Claude generated meme concept successfully');
-                    console.log('Scene:', data.scene);
-                    console.log('Top text:', data.text_top);
-                    console.log('Bottom text:', data.text_bottom);
-
-                    // Store meme concept data
-                    memeConceptData.scene = data.scene || '';
-                    memeConceptData.topText = data.text_top || '';
-                    memeConceptData.bottomText = data.text_bottom || '';
-                    memeConceptGenerated = true;
-
-                    // Show step 10_5 with the results
-                    showStep('10_5');
-
-                    // Fill in the form fields with generated content
-                    document.getElementById('memeScenePrompt').value = memeConceptData.scene;
-                    document.getElementById('memeTopText').value = memeConceptData.topText;
-                    document.getElementById('memeBottomText').value = memeConceptData.bottomText;
-                } else {
-                    throw new Error(data.error || 'Failed to generate meme prompt');
-                }
-
-            } catch (error) {
-                console.error('Error generating meme prompt:', error);
-
-                // Show step 10_5 even on error
-                showStep('10_5');
-
-                alert('Error generating meme concept: ' + error.message);
-                // Set default values
-                document.getElementById('memeScenePrompt').value = 'Insurance agent looking stressed during open enrollment';
-                document.getElementById('memeTopText').value = 'INSURANCE SEASON';
-                document.getElementById('memeBottomText').value = "IT'S HAPPENING";
-            }
+            // Feature disabled - no backend endpoint exists
+            alert('Meme generation feature is not currently available.');
         }
 
         async function proceedToMemeGeneration(forceRegenerate = false) {
-            // Check if meme image already exists and we're not forcing regeneration
-            if (memeImageGenerated && !forceRegenerate && generatedImages.meme && generatedImages.meme.url) {
-                console.log('[Navigation] Meme already generated, showing existing meme');
-                showStep(11);
-                displayImages(); // This will show the existing meme
-                return;
-            }
-
-            try {
-                // Get the edited values from the form
-                const scenePrompt = document.getElementById('memeScenePrompt').value;
-                const topText = document.getElementById('memeTopText').value;
-                const bottomText = document.getElementById('memeBottomText').value;
-
-                // Navigate to Step 11 (Meme Generation)
-                showStep(11);
-
-                // Show loading state
-                const memePreview = document.getElementById('memePreview');
-                memePreview.innerHTML = `
-                    <div style="text-align: center; padding: 40px;">
-                        <div class="spinner" style="margin: 0 auto 20px;"></div>
-                        <div style="color: #666;">Generating meme with your concept...</div>
-                    </div>
-                `;
-
-                // Generate meme with the custom prompt and text overlay
-                const response = await fetch(`${API_BASE}/api/generate-meme`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prompt: scenePrompt,
-                        text_top: topText.toUpperCase(),
-                        text_bottom: bottomText.toUpperCase(),
-                        month: selectedMonth
-                    })
-                });
-
-                const data = await response.json();
-
-                console.log('Meme generation response:', data);
-
-                if (data.success && data.url) {
-                    generatedImages.meme = {
-                        url: data.url,
-                        prompt: scenePrompt,
-                        text_top: topText.toUpperCase(),
-                        text_bottom: bottomText.toUpperCase(),
-                        textSize: 32,
-                        textColor: '#FFFFFF'
-                    };
-
-                    // Mark meme as generated
-                    memeImageGenerated = true;
-
-                    // Update meme prompt field on Step 16
-                    document.getElementById('memePrompt').value = scenePrompt;
-
-                    // Display the generated meme
-                    displayImages();
-                } else {
-                    throw new Error(data.error || 'Failed to generate meme');
-                }
-
-            } catch (error) {
-                console.error('Error generating meme:', error);
-                document.getElementById('memePreview').innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #dc2626;">
-                        <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
-                        <div>Error: ${error.message}</div>
-                        <button class="btn-secondary btn" onclick="proceedToMemeGeneration(true)" style="margin-top: 20px;">🔄 Try Again</button>
-                    </div>
-                `;
-            }
+            // Feature disabled - no backend endpoint exists
+            alert('Meme generation feature is not currently available.');
         }
 
         async function generateMeme(showLoadingOverStep16 = false) {
-            try {
-                if (showLoadingOverStep16) {
-                    // Show loading overlay on Step 16
-                    const memePreview = document.getElementById('memePreview');
-                    memePreview.innerHTML = `
-                        <div style="text-align: center; padding: 40px;">
-                            <div class="spinner" style="margin: 0 auto 20px;"></div>
-                            <h3 style="color: #333; margin: 0 0 10px 0;">Generating Meme...</h3>
-                            <p style="color: #666; margin: 0;">Using Nano Banana (Gemini) to create a fun monthly meme...</p>
-                            <p style="color: #999; font-size: 14px; margin-top: 10px;">Estimated time: ~15-20 seconds</p>
-                        </div>
-                    `;
-                }
-
-                const response = await fetch(`${API_BASE}/api/generate-meme`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        month: selectedMonth
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    generatedImages.meme = {
-                        url: data.url,
-                        prompt: data.prompt,  // Store the prompt for editing
-                        text_top: data.text_top || '',
-                        text_bottom: data.text_bottom || ''
-                    };
-
-                    // Update display if we're showing loading
-                    if (showLoadingOverStep16) {
-                        displayImages();
-                    }
-                } else {
-                    console.error('Error generating meme:', data.error);
-                    if (showLoadingOverStep16) {
-                        document.getElementById('memePreview').innerHTML = `
-                            <div style="text-align: center; padding: 40px; color: #dc2626;">
-                                <p>Error generating meme. Please try again.</p>
-                            </div>
-                        `;
-                    }
-                }
-            } catch (error) {
-                console.error('Error generating meme:', error);
-                if (showLoadingOverStep16) {
-                    document.getElementById('memePreview').innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #dc2626;">
-                            <p>Error generating meme: ${error.message}</p>
-                        </div>
-                    `;
-                }
-            }
+            // Feature disabled - no backend endpoint exists
+            console.warn('Meme generation feature is not currently available.');
         }
 
         async function regenerateImage(imageType) {
@@ -8153,59 +7940,8 @@
         }
 
         async function searchWebMeme() {
-            try {
-                // Show loading in preview
-                document.getElementById('memePreview').innerHTML = `
-                    <div style="text-align: center; padding: 40px;">
-                        <div class="spinner" style="margin: 0 auto 10px;"></div>
-                        <div>Searching web for wedding memes...</div>
-                    </div>
-                `;
-
-                // Call backend to search for memes via Google Images API or similar
-                const response = await fetch(`${API_BASE}/api/search-memes`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        month: selectedMonth,
-                        query: 'wedding meme funny'
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success && data.images && data.images.length > 0) {
-                    // Show first 6 results in a grid
-                    const images = data.images.slice(0, 6);
-                    document.getElementById('memePreview').innerHTML = `
-                        <div style="padding: 15px;">
-                            <h4 style="margin: 0 0 10px 0;">Select a meme:</h4>
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                                ${images.map((img, i) => `
-                                    <div onclick="selectSearchedMeme('${img.url.replace(/'/g, "\\'")}', '${img.title.replace(/'/g, "\\'")}', '${img.source || ''}')"
-                                         style="cursor: pointer; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; transition: all 0.2s;"
-                                         onmouseover="this.style.borderColor='#008181'"
-                                         onmouseout="this.style.borderColor='#e5e7eb'">
-                                        <img src="${img.thumbnail || img.url}" alt="${img.title}" style="width: 100%; height: 100px; object-fit: cover;" />
-                                        <div style="padding: 5px; font-size: 10px; text-align: center; background: white;">${img.title.substring(0, 25)}...</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <p style="margin-top: 10px; font-size: 12px; color: #666;">Click an image to select it</p>
-                        </div>
-                    `;
-                } else {
-                    document.getElementById('memePreview').innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #666;">
-                            <p>No memes found. Try generating with AI or uploading your own!</p>
-                            <button class="btn-secondary btn" onclick="regenerateImage('meme')" style="margin-top: 10px;">Generate with AI Instead</button>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Error searching memes:', error);
-                alert('Failed to search for memes. Please try generating with AI or upload your own.');
-            }
+            // Feature disabled - no backend endpoint exists
+            alert('Meme search feature is not currently available. Please upload your own image.');
         }
 
         function selectSearchedMeme(url, title, source) {
@@ -8228,38 +7964,8 @@
         }
 
         async function searchWeddingMemes() {
-            try {
-                const searchResults = document.getElementById('memeSearchResults');
-                const gallery = document.getElementById('memeGallery');
-
-                // Show loading
-                searchResults.style.display = 'block';
-                gallery.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner" style="margin: 0 auto;"></div><div style="margin-top: 10px;">Searching for wedding memes...</div></div>';
-
-                // Call backend to search for memes
-                const response = await fetch(`${API_BASE}/api/search-memes`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ month: selectedMonth })
-                });
-
-                const data = await response.json();
-
-                if (data.success && data.images && data.images.length > 0) {
-                    // Display meme options
-                    gallery.innerHTML = data.images.map((img, index) => `
-                        <div onclick="selectMemeFromGallery('${img.url.replace(/'/g, "\\'")}', '${img.title.replace(/'/g, "\\'")})" style="cursor: pointer; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                            <img src="${img.thumbnail || img.url}" alt="${img.title}" style="width: 100%; height: 150px; object-fit: cover;" />
-                            <div style="padding: 5px; font-size: 11px; text-align: center; background: white;">${img.title.substring(0, 30)}...</div>
-                        </div>
-                    `).join('');
-                } else {
-                    gallery.innerHTML = '<p style="text-align: center; color: #666;">No memes found. Try uploading your own or generating one!</p>';
-                }
-            } catch (error) {
-                console.error('Error searching memes:', error);
-                alert('Error searching for memes. Please try again or upload your own.');
-            }
+            // Feature disabled - no backend endpoint exists
+            alert('Meme search feature is not currently available. Please upload your own image.');
         }
 
         function selectMemeFromGallery(url, title) {
@@ -8335,7 +8041,7 @@
                 console.log('[PREVIEW] HTML generated, length:', html.length);
 
                 // Populate preview
-                document.getElementById('newsletterPreview').innerHTML = html;
+                document.getElementById('newsletterPreview').innerHTML = sanitizeHTML(html);
                 document.getElementById('htmlCode').textContent = html;
 
                 // Populate subject and preheader displays
@@ -9180,41 +8886,9 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         // Send test email
         async function sendTestEmail() {
-            const testEmail = document.getElementById('testEmail').value.trim();
-
-            if (!testEmail) {
-                alert('Please enter a test email address');
-                return;
-            }
-
-            if (!testEmail.includes('@')) {
-                alert('Please enter a valid email address');
-                return;
-            }
-
-            try {
-                const html = generateNewsletterHTML();
-
-                const response = await fetch(`${API_BASE}/api/send-test-email`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: testEmail,
-                        html: html
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('✓ Test email sent successfully to ' + testEmail);
-                } else {
-                    alert('Error sending test email: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error sending test email: ' + error.message);
-            }
+            // Feature disabled - no backend endpoint exists
+            // Use the Send Preview feature instead (which has a working backend endpoint)
+            alert('Test email feature is not currently available. Use "Send Preview" instead.');
         }
 
         // Upload images to GCS and return public URLs
@@ -9453,7 +9127,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 </div>
             `;
 
-            document.getElementById('newsletterPreview').innerHTML = html;
+            document.getElementById('newsletterPreview').innerHTML = sanitizeHTML(html);
             showStep(13); // Preview step
         }
 
@@ -9583,35 +9257,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             return generateNewsletterHTML();
         }
 
-        async function sendTestEmail() {
-            const email = prompt('Enter email address for test:');
-            if (!email) return;
-
-            try {
-                const newsletterHTML = document.getElementById('newsletterPreview').innerHTML;
-
-                const response = await fetch(`${API_BASE}/api/send-test-email`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: email,
-                        html: newsletterHTML,
-                        month: selectedMonth
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert(`Test email sent to ${email}!\n\nNote: ${data.note || 'Email sent successfully'}`);
-                } else {
-                    alert('Error sending test email: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error sending test email: ' + error.message);
-            }
-        }
+        // sendTestEmail defined earlier - feature disabled (no backend endpoint)
 
         function refreshNews() {
             searchTopics();
@@ -9895,7 +9541,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     if (data.queries_used && data.queries_used.length > 0) {
                         const headerDiv = document.createElement('div');
                         headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
-                        headerDiv.innerHTML = `<strong>Queries:</strong> ${data.queries_used.join(' | ')}`;
+                        headerDiv.innerHTML = `<strong>Queries:</strong> ${escapeHTML(data.queries_used.join(' | '))}`;
                         resultsDiv.appendChild(headerDiv);
                     }
                     displayThreeSectionResults(data.results, resultsDiv, 'perplexity');
@@ -9912,11 +9558,11 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         </div>`;
                     }
                     html += `<p style="text-align: center; color: #999; padding: 20px;">${errorMsg}</p>`;
-                    resultsDiv.innerHTML = html;
+                    resultsDiv.innerHTML = sanitizeHTML(html);
                 }
             } catch (error) {
                 console.error('Perplexity search error:', error);
-                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${escapeHTML(error.message)}</p>`;
             }
         }
 
@@ -9961,7 +9607,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 }
             } catch (error) {
                 console.error('Insight search error:', error);
-                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${escapeHTML(error.message)}</p>`;
             }
         }
 
@@ -10013,7 +9659,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 }
             } catch (error) {
                 console.error('Source explorer error:', error);
-                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${error.message}</p>`;
+                resultsDiv.innerHTML = `<p style="color: #c00; padding: 20px;">Error: ${escapeHTML(error.message)}</p>`;
             }
         }
 
@@ -10084,7 +9730,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 item.setAttribute('data-article-idx', articleIdx);
                 item.setAttribute('data-section', currentResearchSection || 'claims');
                 item.setAttribute('onclick', 'handleItemClick(this)');
-                item.innerHTML = `
+                item.innerHTML = sanitizeHTML(`
                     <div class="research-result-header">
                         <span class="research-result-badge" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text};">${impact}</span>
                         ${signalTags}
@@ -10111,7 +9757,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         <p>${soWhat}</p>
                     </div>
                     ` : ''}
-                `;
+                `);
                 if (isSaved) {
                     item.style.borderLeft = '4px solid #f59e0b';
                 }

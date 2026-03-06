@@ -87,6 +87,60 @@ def get_current_user():
     """Get current user from session"""
     return session.get('user')
 
+# Auth-exempt paths (no login required)
+AUTH_EXEMPT_PATHS = {'/health', '/auth/login', '/auth/callback', '/auth/logout', '/api/user'}
+
+@app.before_request
+def require_auth():
+    """Enforce authentication on all /api/* routes except exempted paths"""
+    if request.path in AUTH_EXEMPT_PATHS:
+        return None
+    if request.path.startswith('/api/'):
+        if 'user' not in session:
+            return jsonify({'error': 'Authentication required'}), 401
+    return None
+
+def validate_gcs_filename(filename, allowed_prefixes):
+    """Validate GCS blob filename to prevent path traversal and unauthorized access"""
+    if not filename:
+        return False
+    if '..' in filename:
+        return False
+    return any(filename.startswith(prefix) for prefix in allowed_prefixes)
+
+
+def validate_url(url):
+    """Validate a URL to prevent SSRF attacks. Returns (is_valid, error_message)."""
+    from urllib.parse import urlparse
+    import ipaddress
+    import socket
+
+    if not url:
+        return False, 'URL is required'
+
+    parsed = urlparse(url)
+
+    # Only allow http and https schemes
+    if parsed.scheme not in ('http', 'https'):
+        return False, f'Invalid URL scheme: {parsed.scheme}. Only http and https are allowed.'
+
+    hostname = parsed.hostname
+    if not hostname:
+        return False, 'Invalid URL: no hostname'
+
+    # Resolve hostname to IP and check for private/reserved ranges
+    try:
+        resolved_ips = socket.getaddrinfo(hostname, None)
+        for family, type_, proto, canonname, sockaddr in resolved_ips:
+            ip = ipaddress.ip_address(sockaddr[0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                return False, 'URLs pointing to private/internal networks are not allowed'
+    except (socket.gaierror, ValueError):
+        return False, f'Cannot resolve hostname: {hostname}'
+
+    return True, None
+
+
 # Helper function to safely print Unicode content on Windows
 def safe_print(text):
     """Print text with proper encoding handling for Windows console"""
@@ -1196,7 +1250,7 @@ def discover_spotlight_themes():
 
         # Step 1: Run a broad Perplexity discovery search
         discovery_query = (
-            f"P&C insurance industry major trends breaking news investigative topics {month} 2026 "
+            f"P&C insurance industry major trends breaking news investigative topics {month} {datetime.now().year} "
             "homeowners rate changes catastrophe losses auto insurance trends "
             "commercial insurance market regulatory changes InsurTech innovation "
             "claims trends reinsurance market climate risk independent agent challenges "
@@ -1670,6 +1724,10 @@ def fetch_article_metadata():
         if not url:
             return jsonify({'title': '', 'description': '', 'publisher': ''}), 200
 
+        is_valid, error = validate_url(url)
+        if not is_valid:
+            return jsonify({'title': '', 'description': '', 'publisher': '', 'error': error}), 200
+
         session = requests.Session()
         session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -1685,8 +1743,11 @@ def fetch_article_metadata():
             'Cache-Control': 'max-age=0',
         })
 
-        resp = session.get(url, timeout=10)
+        resp = session.get(url, timeout=10, allow_redirects=True)
         resp.raise_for_status()
+        # Cap response size to 2MB to prevent DoS
+        if len(resp.content) > 2 * 1024 * 1024:
+            return jsonify({'title': '', 'description': '', 'publisher': '', 'error': 'Response too large'}), 200
         soup = BeautifulSoup(resp.text, 'html.parser')
 
         # Title
@@ -1732,6 +1793,10 @@ def fetch_article():
 
         if not url:
             return jsonify({'success': False, 'error': 'URL is required'}), 400
+
+        is_valid, error = validate_url(url)
+        if not is_valid:
+            return jsonify({'success': False, 'error': error}), 400
 
         print(f"\n[API] Fetching article from URL: {url}")
         print(f"  - Section: {section}")
@@ -1967,7 +2032,7 @@ def search_news():
 
         # Build search query for P&C insurance news
         sources_list = ' OR '.join([f'site:{s}' for s in INSURANCE_NEWS_SOURCES])
-        search_query = f"P&C insurance news {month} 2026 ({sources_list})"
+        search_query = f"P&C insurance news {month} {datetime.now().year} ({sources_list})"
 
         try:
             search_results = openai_client.search_web(
@@ -2117,7 +2182,7 @@ def search_tips():
         print(f"\n[API] Searching for agent tips (month: {month})...")
 
         # Build search query for practical agent job tips
-        search_query = f"independent insurance agent practical tips actionable advice how to help clients {month} 2026"
+        search_query = f"independent insurance agent practical tips actionable advice how to help clients {month} {datetime.now().year}"
 
         try:
             search_results = openai_client.search_web(
@@ -2172,7 +2237,7 @@ def search_roundup():
 
         # Build search query for general P&C news
         sources_list = ' OR '.join([f'site:{s}' for s in INSURANCE_NEWS_SOURCES])
-        search_query = f"property casualty insurance news trends regulations {month} 2026 ({sources_list})"
+        search_query = f"property casualty insurance news trends regulations {month} {datetime.now().year} ({sources_list})"
 
         try:
             search_results = openai_client.search_web(
@@ -2227,7 +2292,7 @@ def search_spotlight():
 
         # Build search query for major insurance news
         sources_list = ' OR '.join([f'site:{s}' for s in INSURANCE_NEWS_SOURCES])
-        search_query = f"major insurance news breaking P&C industry {month} 2026 ({sources_list})"
+        search_query = f"major insurance news breaking P&C industry {month} {datetime.now().year} ({sources_list})"
 
         try:
             search_results = openai_client.search_web(
@@ -3504,18 +3569,15 @@ def send_preview():
 
                 if response.status_code in [200, 201, 202]:
                     sent_count += 1
-                    safe_print(f"[API] Email sent successfully to: {recipient}")
+                    safe_print(f"[API] Email sent successfully")
                 else:
-                    error_msg = f"SendGrid returned status {response.status_code} for {recipient}"
+                    error_msg = f"SendGrid returned status {response.status_code}"
                     safe_print(f"[API] {error_msg}")
                     errors.append(error_msg)
 
             except Exception as email_error:
-                error_msg = f"Failed to send to {recipient}: {str(email_error)}"
+                error_msg = f"Failed to send email: {str(email_error)}"
                 safe_print(f"[API] {error_msg}")
-                # Log more details for debugging
-                if hasattr(email_error, 'body'):
-                    safe_print(f"[API] Error body: {email_error.body}")
                 errors.append(error_msg)
 
         if sent_count == len(recipients):
@@ -3569,11 +3631,7 @@ def export_to_docs():
         # Try both variable names for compatibility (with and without underscore prefix)
         creds_json = os.environ.get('GOOGLE_DOCS_CREDENTIALS') or os.environ.get('_GOOGLE_DOCS_CREDENTIALS')
 
-        # Debug logging
-        safe_print(f"[API] GOOGLE_DOCS_CREDENTIALS exists: {bool(os.environ.get('GOOGLE_DOCS_CREDENTIALS'))}")
-        safe_print(f"[API] _GOOGLE_DOCS_CREDENTIALS exists: {bool(os.environ.get('_GOOGLE_DOCS_CREDENTIALS'))}")
-        if creds_json:
-            safe_print(f"[API] Credentials length: {len(creds_json)} chars, starts with: {creds_json[:50]}...")
+        safe_print(f"[API] Google Docs credentials configured: {bool(creds_json)}")
 
         if not creds_json:
             return jsonify({
@@ -3584,14 +3642,12 @@ def export_to_docs():
         # Parse credentials
         try:
             creds_data = json.loads(creds_json)
-            safe_print(f"[API] Parsed credentials, project_id: {creds_data.get('project_id', 'unknown')}")
             credentials = service_account.Credentials.from_service_account_info(
                 creds_data,
                 scopes=['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
             )
         except json.JSONDecodeError as e:
-            safe_print(f"[API] JSON parse error: {e}")
-            safe_print(f"[API] Credentials value (first 100 chars): {creds_json[:100] if creds_json else 'None'}")
+            safe_print(f"[API] JSON parse error in credentials: {e}")
             return jsonify({
                 "success": False,
                 "error": f"Invalid JSON in credentials: {str(e)}"
@@ -3914,14 +3970,14 @@ def export_to_docs():
 
                             if response.status_code in [200, 201, 202]:
                                 emails_sent.append(recipient)
-                                safe_print(f"[API] Email sent to {recipient}")
+                                safe_print(f"[API] Email sent successfully")
                             else:
-                                error_msg = f"SendGrid returned status {response.status_code} for {recipient}"
+                                error_msg = f"SendGrid returned status {response.status_code}"
                                 email_errors.append(error_msg)
                                 safe_print(f"[API] {error_msg}")
 
                         except Exception as email_error:
-                            error_msg = f"Failed to send to {recipient}: {str(email_error)}"
+                            error_msg = f"Failed to send email: {str(email_error)}"
                             email_errors.append(error_msg)
                             safe_print(f"[API] {error_msg}")
                 else:
@@ -3974,16 +4030,10 @@ def send_doc_email():
         from_email = os.environ.get('SENDGRID_FROM_EMAIL') or os.environ.get('_SENDGRID_FROM_EMAIL') or 'marketing@brite.co'
         from_name = os.environ.get('SENDGRID_FROM_NAME') or os.environ.get('_SENDGRID_FROM_NAME') or 'BriteCo Brief'
 
-        # Debug logging
-        safe_print(f"[API] SendGrid API key length: {len(sendgrid_api_key) if sendgrid_api_key else 0}")
-        safe_print(f"[API] SendGrid from: {from_email} ({from_name})")
-        safe_print(f"[API] Recipients: {recipients}")
+        safe_print(f"[API] SendGrid configured: {bool(sendgrid_api_key)}, sending to {len(recipients)} recipient(s)")
 
         if not sendgrid_api_key:
             return jsonify({"success": False, "error": "SendGrid API key not configured"}), 500
-
-        if len(sendgrid_api_key) < 20:
-            safe_print(f"[API] WARNING: SendGrid API key appears too short ({len(sendgrid_api_key)} chars)")
 
         sg = sendgrid.SendGridAPIClient(api_key=sendgrid_api_key)
 
@@ -4017,12 +4067,10 @@ def send_doc_email():
                 )
 
                 response = sg.send(message)
-                safe_print(f"[API] Email sent to {recipient}, status: {response.status_code}")
+                safe_print(f"[API] Email sent successfully, status: {response.status_code}")
                 emails_sent.append(recipient)
             except Exception as email_error:
-                import traceback
-                safe_print(f"[API] Failed to send to {recipient}: {email_error}")
-                safe_print(f"[API] Email error traceback: {traceback.format_exc()}")
+                safe_print(f"[API] Failed to send email: {email_error}")
                 email_errors.append(str(email_error))
 
         if emails_sent:
@@ -4118,7 +4166,10 @@ def track_not_good_fit():
         blob = bucket.blob(NOT_GOOD_FIT_BLOB)
 
         entries = []
+        generation = 0
         if blob.exists():
+            blob.reload()
+            generation = blob.generation
             data = json.loads(blob.download_as_text())
             entries = data.get('entries', [])
 
@@ -4129,7 +4180,11 @@ def track_not_good_fit():
                 'publisher': article.get('publisher', ''),
                 'markedAt': datetime.now(CHICAGO_TZ).isoformat()
             })
-            blob.upload_from_string(json.dumps({'entries': entries}), content_type='application/json')
+            blob.upload_from_string(
+                json.dumps({'entries': entries}),
+                content_type='application/json',
+                if_generation_match=generation
+            )
 
         return jsonify({'success': True, 'count': len(entries)})
 
@@ -4279,6 +4334,8 @@ def load_draft():
         filename = request.args.get('file')
         if not filename:
             return jsonify({'success': False, 'error': 'No file specified'}), 400
+        if not validate_gcs_filename(filename, ['drafts/']):
+            return jsonify({'success': False, 'error': 'Invalid filename'}), 400
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blob = bucket.blob(filename)
         if not blob.exists():
@@ -4302,6 +4359,8 @@ def publish_draft():
         filename = request.json.get('file')
         if not filename:
             return jsonify({'success': False, 'error': 'No file specified'}), 400
+        if not validate_gcs_filename(filename, ['drafts/']):
+            return jsonify({'success': False, 'error': 'Invalid filename'}), 400
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         source_blob = bucket.blob(filename)
         if not source_blob.exists():
@@ -4357,6 +4416,8 @@ def load_published():
         filename = request.args.get('file')
         if not filename:
             return jsonify({'success': False, 'error': 'No file specified'}), 400
+        if not validate_gcs_filename(filename, ['published/']):
+            return jsonify({'success': False, 'error': 'Invalid filename'}), 400
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blob = bucket.blob(filename)
         if not blob.exists():
@@ -4380,6 +4441,8 @@ def delete_draft():
         filename = request.json.get('file')
         if not filename:
             return jsonify({'success': False, 'error': 'No file specified'}), 400
+        if not validate_gcs_filename(filename, ['drafts/']):
+            return jsonify({'success': False, 'error': 'Invalid filename'}), 400
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blob = bucket.blob(filename)
         if blob.exists():
@@ -4399,6 +4462,8 @@ def delete_published():
         filename = request.json.get('file')
         if not filename:
             return jsonify({'success': False, 'error': 'No file specified'}), 400
+        if not validate_gcs_filename(filename, ['published/']):
+            return jsonify({'success': False, 'error': 'Invalid filename'}), 400
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blob = bucket.blob(filename)
         if blob.exists():
@@ -4450,7 +4515,10 @@ def add_saved_article():
         blob = bucket.blob(SAVED_ARTICLES_BLOB)
 
         articles = []
+        generation = 0
         if blob.exists():
+            blob.reload()
+            generation = blob.generation
             data = json.loads(blob.download_as_text())
             if isinstance(data, list):
                 articles = data
@@ -4465,7 +4533,11 @@ def add_saved_article():
         article['dateSaved'] = datetime.now(CHICAGO_TZ).isoformat()
         articles.insert(0, article)
 
-        blob.upload_from_string(json.dumps({'articles': articles}), content_type='application/json')
+        blob.upload_from_string(
+            json.dumps({'articles': articles}),
+            content_type='application/json',
+            if_generation_match=generation
+        )
         return jsonify({'success': True, 'articles': articles})
 
     except Exception as e:
@@ -4487,7 +4559,10 @@ def delete_saved_article():
         blob = bucket.blob(SAVED_ARTICLES_BLOB)
 
         articles = []
+        generation = 0
         if blob.exists():
+            blob.reload()
+            generation = blob.generation
             data = json.loads(blob.download_as_text())
             if isinstance(data, list):
                 articles = data
@@ -4495,7 +4570,11 @@ def delete_saved_article():
                 articles = data.get('articles', [])
 
         articles = [a for a in articles if a.get('url') != url]
-        blob.upload_from_string(json.dumps({'articles': articles}), content_type='application/json')
+        blob.upload_from_string(
+            json.dumps({'articles': articles}),
+            content_type='application/json',
+            if_generation_match=generation
+        )
         return jsonify({'success': True, 'articles': articles})
 
     except Exception as e:
@@ -4538,11 +4617,18 @@ def track_selection():
         blob = bucket.blob(blob_name)
 
         existing = ''
+        generation = 0
         if blob.exists():
+            blob.reload()
+            generation = blob.generation
             existing = blob.download_as_text()
 
         new_content = existing + json.dumps(selection) + '\n'
-        blob.upload_from_string(new_content, content_type='application/jsonl')
+        blob.upload_from_string(
+            new_content,
+            content_type='application/jsonl',
+            if_generation_match=generation
+        )
 
         return jsonify({'success': True})
     except Exception as e:
