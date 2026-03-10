@@ -3452,23 +3452,23 @@
             item.setAttribute('data-section', section);
             item.setAttribute('data-preserved', 'true');
             item.setAttribute('onclick', 'handleItemClick(this)');
-            item.innerHTML = sanitizeHTML(`
+            item.innerHTML = `
                 <div class="research-result-header">
                     <span class="research-result-badge" style="background: #059669; color: white;">CUSTOM</span>
                     <div class="research-result-meta">
-                        <span>${article.publisher}</span>
-                        <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>
+                        <span>${escapeHTML(article.publisher || '')}</span>
+                        <a href="${escapeHTML(article.url || '')}" target="_blank" onclick="event.stopPropagation()">Source →</a>
                         <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                     </div>
                 </div>
-                <div class="research-result-title">${article.headline}</div>
+                <div class="research-result-title">${escapeHTML(article.headline || '')}</div>
                 ${article.snippet ? `
                     <div class="research-result-keydata">
                         <div class="research-result-keydata-label">SUMMARY</div>
-                        <p>${article.snippet.substring(0, 250)}${article.snippet.length > 250 ? '...' : ''}</p>
+                        <p>${escapeHTML(article.snippet.substring(0, 250))}${article.snippet.length > 250 ? '...' : ''}</p>
                     </div>
                 ` : ''}
-            `);
+            `;
 
             if (resultsDiv.firstChild) {
                 resultsDiv.insertBefore(item, resultsDiv.firstChild);
@@ -3619,24 +3619,24 @@
             item.setAttribute('data-preserved', 'true');
             item.dataset.url = article.url || '';
             item.setAttribute('onclick', 'handleItemClick(this)');
-            item.innerHTML = sanitizeHTML(`
+            item.innerHTML = `
                 <div class="research-result-header">
                     <span class="research-result-badge saved">SAVED</span>
                     <div class="research-result-meta">
-                        <span>${article.publisher}</span>
-                        <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>
+                        <span>${escapeHTML(article.publisher || '')}</span>
+                        <a href="${escapeHTML(article.url || '')}" target="_blank" onclick="event.stopPropagation()">Source →</a>
                         <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                         <button class="dots-btn" style="color: #f59e0b;" onclick="event.stopPropagation(); toggleDotsMenu(this, ${savedArticleIdx})">⋮</button>
                     </div>
                 </div>
-                <div class="research-result-title">${article.headline}</div>
+                <div class="research-result-title">${escapeHTML(article.headline || '')}</div>
                 ${article.snippet ? `
                     <div class="research-result-keydata">
                         <div class="research-result-keydata-label">SUMMARY</div>
-                        <p>${article.snippet.substring(0, 250)}${article.snippet.length > 250 ? '...' : ''}</p>
+                        <p>${escapeHTML(article.snippet.substring(0, 250))}${article.snippet.length > 250 ? '...' : ''}</p>
                     </div>
                 ` : ''}
-            `);
+            `;
 
             if (resultsDiv.firstChild) {
                 resultsDiv.insertBefore(item, resultsDiv.firstChild);
@@ -9616,22 +9616,30 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 const data = await response.json();
 
                 if (data.success && data.results.length > 0) {
-                    researchResults.perplexity = data.results;
+                    // Merge with custom links for this tab (custom links come first, like spotlight does)
+                    const customLinksForTab = researchCustomLinks[currentTab] || [];
+                    const mergedResults = [...customLinksForTab, ...data.results];
+
+                    researchResults.perplexity = mergedResults;
                     // Store results for this specific tab
-                    tabSearchState[currentTab].results.perplexity = data.results;
+                    tabSearchState[currentTab].results.perplexity = mergedResults;
 
                     // Show queries header then three-section results
-                    // Preserve saved/custom article cards before clearing
-                    const preservedCards = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
                     resultsDiv.innerHTML = '';
-                    preservedCards.forEach(card => resultsDiv.appendChild(card));
                     if (data.queries_used && data.queries_used.length > 0) {
                         const headerDiv = document.createElement('div');
                         headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
                         headerDiv.innerHTML = `<strong>Queries:</strong> ${escapeHTML(data.queries_used.join(' | '))}`;
                         resultsDiv.appendChild(headerDiv);
                     }
-                    displayThreeSectionResults(data.results, resultsDiv, 'perplexity');
+                    // Show custom links indicator if any
+                    if (customLinksForTab.length > 0) {
+                        const customLinksDiv = document.createElement('div');
+                        customLinksDiv.style.cssText = 'font-size: 12px; color: #059669; background: #d1fae5; padding: 8px 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #10b981;';
+                        customLinksDiv.innerHTML = `<strong>📎 ${customLinksForTab.length} custom link${customLinksForTab.length > 1 ? 's' : ''} added</strong> (shown first)`;
+                        resultsDiv.appendChild(customLinksDiv);
+                    }
+                    displayThreeSectionResults(mergedResults, resultsDiv, 'perplexity');
                     updateAllResults();
 
                     // Cache the HTML for this tab
@@ -9817,34 +9825,36 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 item.setAttribute('data-article-idx', articleIdx);
                 item.setAttribute('data-section', currentResearchSection || 'claims');
                 item.setAttribute('onclick', 'handleItemClick(this)');
-                item.innerHTML = sanitizeHTML(`
+                // Note: Do NOT wrap in sanitizeHTML() — DOMPurify 3.x strips input tags and onclick handlers,
+                // which breaks checkboxes and selection. Use escapeHTML() on data values instead.
+                item.innerHTML = `
                     <div class="research-result-header">
-                        <span class="research-result-badge" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text};">${impact}</span>
+                        <span class="research-result-badge" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text};">${escapeHTML(impact)}</span>
                         ${signalTags}
                         <div class="research-result-meta">
-                            <span>${result.publisher || ''}</span>
-                            ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
+                            <span>${escapeHTML(result.publisher || '')}</span>
+                            ${result.url ? `<a href="${escapeHTML(result.url)}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
                             <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                             <button class="dots-btn" ${isSaved ? 'style="color: #f59e0b;"' : ''} onclick="event.stopPropagation(); toggleDotsMenu(this, ${articleIdx})">⋮</button>
                         </div>
                     </div>
 
-                    <div class="research-result-title">${headline}</div>
+                    <div class="research-result-title">${escapeHTML(headline)}</div>
 
                     ${industryData ? `
                     <div class="research-result-keydata">
                         <div class="research-result-keydata-label">KEY DATA</div>
-                        <p>${industryData.substring(0, 250)}${industryData.length > 250 ? '...' : ''}</p>
+                        <p>${escapeHTML(industryData.substring(0, 250))}${industryData.length > 250 ? '...' : ''}</p>
                     </div>
                     ` : ''}
 
                     ${soWhat ? `
                     <div class="research-result-action">
                         <div class="research-result-action-label">ACTION</div>
-                        <p>${soWhat}</p>
+                        <p>${escapeHTML(soWhat)}</p>
                     </div>
                     ` : ''}
-                `);
+                `;
                 if (isSaved) {
                     item.style.borderLeft = '4px solid #f59e0b';
                 }
