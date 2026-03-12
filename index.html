@@ -5603,7 +5603,7 @@
         function displayGeneratedContent() {
             // Helper functions (keep existing cleanContentForDisplay, styleLinksBlue, etc.)
             function styleLinksBlue(text) {
-                if (!text) return '';
+                if (!text || typeof text !== 'string') return '';
                 text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
                 text = text.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
                 text = text.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
@@ -8440,7 +8440,7 @@ ${introTextHero ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px;">
+<td style="padding:15px 15px 0 15px;font-size:0;line-height:0;">
 <img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
 </td>
 </tr>
@@ -8633,7 +8633,7 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px;">
+<td style="padding:0 15px;font-size:0;line-height:0;">
 <img alt="Feature Spotlight" src="${spotlightImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
 </td>
 </tr>
@@ -8644,13 +8644,19 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px 15px 15px;">
+<td style="padding:8px 15px 15px 15px;">
 ${(() => {
     let t = spotlightText || '';
     // Always strip leading h4 from spotlight copy (headline already shown above image)
     t = t.replace(/^\s*<h4[^>]*>[\s\S]*?<\/h4>\s*/i, '');
-    if (!t.trim()) return '';
-    return restyleParagraphs(t.includes('<p') ? t : '<p>' + t.trim() + '</p>');
+    // Strip empty/whitespace-only paragraphs
+    t = t.replace(/<p[^>]*>(\s|&nbsp;|\u00a0)*<\/p>/gi, '').trim();
+    if (!t) return '';
+    let html = restyleParagraphs(t.includes('<p') ? t : '<p>' + t + '</p>');
+    // Remove bottom margin from last paragraph to avoid extra space at bottom of box
+    const lastMarginIdx = html.lastIndexOf('margin:0 0 16px 0');
+    if (lastMarginIdx !== -1) html = html.substring(0, lastMarginIdx) + 'margin:0 0 0 0' + html.substring(lastMarginIdx + 'margin:0 0 16px 0'.length);
+    return html;
 })()}
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const title = stripMarkdownHeaders(section.h3 || section.title || '').trim();
@@ -8659,10 +8665,12 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const a = strip(title);
     const b = strip(spotlightSubheader);
     return a !== b && !a.includes(b) && !b.includes(a);
-}).map((section, idx, arr) => `
-<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
-<p class="dark-text-secondary" style="margin:0 0 ${idx === arr.length - 1 ? '0' : '16'}px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${section.body || section.content || ''}</p>
-`).join('') : ''}
+}).map((section, idx, arr) => {
+    // Strip trailing <br> tags that browsers insert into contenteditable divs
+    const body = (section.body || section.content || '').replace(/(<br\s*\/?>\s*)+$/, '').trim();
+    return `<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
+<p class="dark-text-secondary" style="margin:0 0 ${idx === arr.length - 1 ? '0' : '16'}px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${body}</p>`;
+}).join('') : ''}
 </td>
 </tr>
 </tbody>
@@ -8782,7 +8790,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 <w:anchorlock/><center style="color:#ffffff;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;">${ctaText.toUpperCase()}</center>
 </v:roundrect><![endif]-->
 <!--[if !mso]><!-->
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" align="center" style="margin:0 auto;">
+<tr><td align="center" bgcolor="#FE8916" style="border-radius:10px;">
 <a href="${ctaUrl}" style="display:inline-block;padding:11px 29px;background-color:#FE8916;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;text-transform:uppercase;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;">${ctaText.toUpperCase()}</a>
+</td></tr></table>
 <!--<![endif]-->
 </td></tr></table>
 <!--[if mso]>
