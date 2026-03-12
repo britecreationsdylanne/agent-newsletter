@@ -2265,6 +2265,36 @@
                 </div>
                 <div class="dynamic-fields-container" id="review-britespot-bullets-container"></div>
                 <button type="button" class="btn-secondary btn" onclick="addBriteSpotBullet('review-')" style="margin: 10px 0; font-size: 13px;">+ Add Bullet</button>
+
+                <!-- AI Rewrite Assist for Brite Spot -->
+                <div style="margin-top:16px;border:2px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                    <button type="button" onclick="toggleBriteSpotAIAssist()" style="width:100%;text-align:left;padding:10px 16px;background:#f9fafb;border:none;cursor:pointer;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;">
+                        <span id="britespot-assist-toggle-icon">▶</span> ✨ AI Rewrite Assist
+                    </button>
+                    <div id="britespot-assist-panel" style="display:none;padding:16px;">
+                        <p style="margin:0 0 12px 0;font-size:13px;color:#666;">Paste article URL(s) or notes for context — AI rewrites your paragraph using them as reference.</p>
+                        <label class="field-label">Reference Articles / Notes</label>
+                        <textarea id="britespot-review-reference" rows="4" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:6px;font-size:14px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;" placeholder="Paste article URL(s), key facts, or notes here..."></textarea>
+                        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+                            <label style="font-size:13px;font-weight:600;">Tone:</label>
+                            <select id="britespot-review-tone" style="padding:8px;border:2px solid #e5e7eb;border-radius:6px;font-size:13px;">
+                                <option value="friendly">Friendly</option>
+                                <option value="informative">Informative</option>
+                                <option value="witty">Witty</option>
+                                <option value="exciting">Exciting</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                            <button type="button" class="btn" style="padding:8px 16px;font-size:13px;" onclick="rewriteBriteSpotInReview()">✨ Rewrite</button>
+                        </div>
+                        <div id="britespot-review-result" style="display:none;background:#f0fdf4;border:2px solid #22c55e;border-radius:8px;padding:14px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span style="font-weight:600;color:#15803d;font-size:13px;">AI Rewritten Version</span>
+                                <button type="button" class="btn" style="padding:6px 12px;font-size:12px;" onclick="useBriteSpotReviewRewrite()">Use This Version</button>
+                            </div>
+                            <div id="britespot-review-result-text" style="color:#166534;line-height:1.6;font-size:14px;white-space:pre-wrap;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="content-section">
@@ -4147,6 +4177,57 @@
                 document.getElementById('briteSpotBulletsInput').value = briteSpotBulletsRewritten;
                 updateBriteSpotWordCount();
                 document.getElementById('briteSpotRewriteResult').style.display = 'none';
+            }
+        }
+
+        // Brite Spot AI Rewrite Assist in Review Step
+        function toggleBriteSpotAIAssist() {
+            const panel = document.getElementById('britespot-assist-panel');
+            const icon = document.getElementById('britespot-assist-toggle-icon');
+            const isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+            icon.textContent = isOpen ? '▶' : '▼';
+        }
+
+        async function rewriteBriteSpotInReview() {
+            const paraEl = document.getElementById('review-britespot-paragraph');
+            const currentContent = paraEl ? paraEl.innerText.trim() : '';
+            const reference = document.getElementById('britespot-review-reference')?.value.trim() || '';
+            const tone = document.getElementById('britespot-review-tone')?.value || 'friendly';
+            const resultDiv = document.getElementById('britespot-review-result');
+            const resultText = document.getElementById('britespot-review-result-text');
+
+            if (!currentContent && !reference) {
+                alert('Enter content in the Brite Spot paragraph or paste reference notes first.');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultText.innerHTML = '<div class="spinner" style="margin:8px auto;"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/rewrite-britespot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: currentContent || reference, reference_text: reference, tone })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window._briteSpotReviewRewritten = data.rewritten;
+                    resultText.textContent = data.rewritten;
+                } else {
+                    resultText.innerHTML = `<span style="color:#dc2626;">Error: ${escapeHTML(data.error)}</span>`;
+                }
+            } catch (e) {
+                resultText.innerHTML = `<span style="color:#dc2626;">Error: ${escapeHTML(e.message)}</span>`;
+            }
+        }
+
+        function useBriteSpotReviewRewrite() {
+            if (window._briteSpotReviewRewritten) {
+                const el = document.getElementById('review-britespot-paragraph');
+                if (el) el.innerHTML = sanitizeHTML(window._briteSpotReviewRewritten);
+                document.getElementById('britespot-review-result').style.display = 'none';
             }
         }
 
@@ -8800,10 +8881,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 <w:anchorlock/><center style="color:#ffffff;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;">${ctaText.toUpperCase()}</center>
 </v:roundrect><![endif]-->
 <!--[if !mso]><!-->
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" align="center" style="margin:0 auto;">
-<tr><td align="center" bgcolor="#FE8916" style="border-radius:10px;">
-<a href="${ctaUrl}" style="display:inline-block;padding:11px 29px;background-color:#FE8916;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;text-transform:uppercase;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;">${ctaText.toUpperCase()}</a>
-</td></tr></table>
+<div style="text-align:center;"><a href="${ctaUrl}" style="display:inline-block;padding:11px 29px;background-color:#FE8916;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;text-transform:uppercase;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;">${ctaText.toUpperCase()}</a></div>
 <!--<![endif]-->
 </td></tr></table>
 <!--[if mso]>

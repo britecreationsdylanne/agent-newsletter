@@ -1036,9 +1036,10 @@ def rewrite_britespot():
         data = request.json
         content = data.get('content', '')
         tone = data.get('tone', 'informative')
+        reference_text = data.get('reference_text', '')
 
-        if not content:
-            return jsonify({'success': False, 'error': 'Content required'}), 400
+        if not content and not reference_text:
+            return jsonify({'success': False, 'error': 'Content or reference required'}), 400
 
         print(f"\n[API] Rewriting Brite Spot content ({tone} tone)...")
 
@@ -1070,8 +1071,11 @@ VOICE:
         rewrite_bs_prompt = f"""Rewrite this content for "The Brite Spot" section.
 
 ORIGINAL CONTENT:
-{content}
-
+{content or '(none — write from the reference material below)'}
+{f'''
+REFERENCE ARTICLES / NOTES (use for context, facts, and story angle):
+{reference_text}
+''' if reference_text else ''}
 REQUIREMENTS:
 - Maximum 100 words
 - {tone_instructions.get(tone, 'Professional but approachable')}
