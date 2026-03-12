@@ -5462,7 +5462,9 @@
                     '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
                     '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
                 container.appendChild(item);
-                document.getElementById(titleId).textContent = s.title || s.h3 || '';
+                // Strip markdown header prefixes (# ## ###) and bold markers from section titles
+                const rawTitle = s.title || s.h3 || '';
+                document.getElementById(titleId).textContent = rawTitle.replace(/^\s*\*{1,2}\s*#{1,6}\s*/, '').replace(/^\s*#{1,6}\s*/, '').replace(/\*{1,2}\s*$/, '').trim();
                 document.getElementById(contentId).innerHTML = sanitizeHTML(s.body || s.content || s.text || '');
             });
         }
@@ -5610,21 +5612,21 @@
                 return text;
             }
 
-            // 1. BriteCo Brief Intro (use AI-generated intro as fallback)
+            // 1. BriteCo Brief Intro — AI brite spot content serves as newsletter intro
             const headerIntroEl = document.getElementById('review-headerIntro');
             if (headerIntroEl) {
-                const headerIntroDisplay = headerIntroContent || generatedIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
+                // Use saved manual intro first; otherwise use AI brite spot as intro text
+                const aiBriteSpotAsIntro = typeof generatedBriteSpotContent === 'string'
+                    ? generatedBriteSpotContent
+                    : (generatedBriteSpotContent?.paragraph || generatedBriteSpotContent?.body || generatedBriteSpotContent?.content || '');
+                const headerIntroDisplay = headerIntroContent || aiBriteSpotAsIntro || generatedIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
                 headerIntroEl.innerHTML = sanitizeHTML(styleLinksBlue(headerIntroDisplay) || '<p style="color:#999;">No intro content</p>');
             }
 
-            // 2. Brite Spot - paragraph + dynamic bullets (use AI-generated as fallback)
+            // 2. Brite Spot - manually populated; only restore saved content, no AI pre-fill
             const bsParagraphEl = document.getElementById('review-britespot-paragraph');
             if (bsParagraphEl) {
-                let bsText = briteSpotContent || '';
-                if (!bsText && generatedBriteSpotContent) {
-                    bsText = typeof generatedBriteSpotContent === 'string' ? generatedBriteSpotContent : (generatedBriteSpotContent.paragraph || generatedBriteSpotContent.body || generatedBriteSpotContent.content || '');
-                }
-                bsParagraphEl.innerHTML = sanitizeHTML(styleLinksBlue(bsText));
+                bsParagraphEl.innerHTML = sanitizeHTML(styleLinksBlue(briteSpotContent || ''));
             }
             let bsBullets = briteSpotBullets || [];
             if (bsBullets.length === 0 && generatedBriteSpotContent) {
@@ -8307,10 +8309,10 @@ ${items.map((item, index) => `<tr>
                 `).join('');
             };
 
-            // Helper to strip markdown headers (## or ###) from text
+            // Helper to strip markdown headers (## or ###) and bold markers from text
             const stripMarkdownHeaders = (text) => {
                 if (!text) return '';
-                return text.replace(/^#{1,3}\s*/, '').trim();
+                return text.replace(/^\s*\*{1,2}\s*#{1,6}\s*/, '').replace(/^\s*#{1,6}\s*/, '').replace(/\*{1,2}\s*$/, '').trim();
             };
 
             // Helper to generate spotlight H2 sections (using H3 content from generated spotlight)
@@ -8436,11 +8438,19 @@ ${introTextHero ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><th align="center" class="section-header" style="background:#008182 url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png') repeat center / 400px auto;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">The Brite Spot</span></font></th></tr></table>
 
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
 <!-- Image -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:15px 15px 0 15px;font-size:0;line-height:0;">
+<td style="padding:0 15px;font-size:0;line-height:0;">
 <img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
 </td>
 </tr>
@@ -8730,7 +8740,7 @@ ${tipsIntro ? `<p class="dark-text-secondary" style="margin:0;font-family:Montse
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px;">
+<td style="padding:0 15px;font-size:0;line-height:0;">
 <img alt="The Agent Advantage" src="${tipsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
 </td>
 </tr>
