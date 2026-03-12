@@ -4349,7 +4349,7 @@ def load_draft():
 
 @app.route('/api/publish-draft', methods=['POST'])
 def publish_draft():
-    """Move a draft from drafts/ to published/ in GCS"""
+    """Copy a draft from drafts/ to published/ in GCS with a versioned timestamp name"""
     user = get_current_user()
     if not user:
         return jsonify({'success': False, 'error': 'Not authenticated'}), 401
@@ -4365,9 +4365,12 @@ def publish_draft():
         source_blob = bucket.blob(filename)
         if not source_blob.exists():
             return jsonify({'success': False, 'error': 'Draft not found'}), 404
-        published_name = filename.replace('drafts/', 'published/', 1)
+        # Use timestamped filename so each Ontraport push saves a new version
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        base_name = filename.replace('drafts/', '', 1).replace('.json', '')
+        published_name = f'published/{base_name}-{timestamp}.json'
         bucket.copy_blob(source_blob, bucket, published_name)
-        source_blob.delete()
+        # Keep the draft file intact so it can be reloaded/edited
         safe_print(f"[DRAFT] Published {filename} -> {published_name}")
         return jsonify({'success': True, 'file': published_name})
     except Exception as e:
