@@ -8397,12 +8397,12 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
 
 <table cellpadding="0" cellspacing="0" style="background-color:#DFE7F0;" width="100%">
 <tr><td align="center" style="padding:20px 10px;">
-<table cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;" width="600" class="email-container">
+<table align="center" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;margin:0 auto;" width="600" class="email-container">
 
 <!-- HEADER WITH LOGO -->
 <tr>
 <td align="center" class="header-bg" style="padding:35px 20px;background-color:#272D3F;">
-<img alt="BriteCo Logo" src="${assets.logo}" style="display:block;max-width:301px;width:100%;height:auto;" width="301" />
+<img alt="BriteCo Logo" src="${assets.logo}" style="display:block;max-width:301px;width:100%;height:auto;margin:0 auto;" width="301" />
 </td>
 </tr>
 
@@ -8640,19 +8640,11 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 </tbody>
 </table>
 
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
-<td height="8" style="font-size:1px;line-height:1px;">&nbsp;</td>
-</tr>
-</tbody>
-</table>
-
 <!-- Copy -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px;">
+<td style="padding:0 15px 15px 15px;">
 ${(() => {
     let t = spotlightText || '';
     // Always strip leading h4 from spotlight copy (headline already shown above image)
@@ -8669,7 +8661,7 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     return a !== b && !a.includes(b) && !b.includes(a);
 }).map((section, idx, arr) => `
 <h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
-<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${section.body || section.content || ''}</p>
+<p class="dark-text-secondary" style="margin:0 0 ${idx === arr.length - 1 ? '0' : '16'}px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${section.body || section.content || ''}</p>
 `).join('') : ''}
 </td>
 </tr>
@@ -8783,8 +8775,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 <v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
 <![endif]-->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="cta-padding" style="padding:120px 20px;">
-<h2 style="color:#ffffff;font-size:32px;margin:0 0 15px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-weight:600;">Wait Before You Go...</h2>
-<p style="color:#ffffff;font-size:18px;margin:0 0 30px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;">${ctaBodyText}</p>
+<h2 style="color:#ffffff;font-size:32px;margin:0 0 15px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-weight:600;text-align:center;">Wait Before You Go...</h2>
+<p style="color:#ffffff;font-size:18px;margin:0 0 30px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;text-align:center;">${ctaBodyText}</p>
 <!--[if mso]>
 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:48px;v-text-anchor:middle;width:250px;" arcsize="20%" strokecolor="#FE8916" fillcolor="#FE8916">
 <w:anchorlock/><center style="color:#ffffff;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;">${ctaText.toUpperCase()}</center>
