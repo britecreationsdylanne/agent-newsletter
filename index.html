@@ -11519,6 +11519,9 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     if (basePrompts.claims) document.getElementById('claimsImagePromptText').value = basePrompts.claims;
                     if (basePrompts.spotlight) document.getElementById('spotlightImagePromptText').value = basePrompts.spotlight;
                     if (basePrompts.tips) document.getElementById('tipsImagePromptText').value = basePrompts.tips;
+                    // Show prompt editing UI (not the "Generating..." spinner)
+                    document.getElementById('promptGenerationLoading').style.display = 'none';
+                    document.getElementById('promptEditing').style.display = 'block';
                 }
 
                 // Restore image flags to prevent regeneration
