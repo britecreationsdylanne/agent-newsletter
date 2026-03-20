@@ -2882,22 +2882,59 @@
                 <h3 style="margin: 0 0 10px 0;">✨ Brite Spot Image</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="briteSpotImageTitle">For your Brite Spot section</p>
 
-                <div id="briteSpotImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
-                    <div style="text-align: center; color: #999;">
-                        <div class="spinner" style="margin: 0 auto 10px;"></div>
-                        <div>Generating image...</div>
-                    </div>
+                <!-- Layout Selector -->
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Image Layout:</label>
+                    <select id="briteSpotLayoutSelect" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updateBriteSpotLayout(this.value)">
+                        <option value="wide">Wide (16:9) — Default / AI Generated</option>
+                        <option value="square">Square (1:1) — Upload</option>
+                        <option value="two-squares">Two Squares Side-by-Side — Upload</option>
+                        <option value="portrait">Portrait (9:16) — Upload</option>
+                    </select>
+                    <p id="briteSpotLayoutHint" style="margin: 6px 0 0; font-size: 12px; color: #888; display: none;">Upload an image to use this layout. AI generation uses the default wide format.</p>
                 </div>
 
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">Image Prompt:</label>
-                    <textarea id="briteSpotPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
+                <!-- Single image preview (wide / square / portrait) -->
+                <div id="briteSpotSingleImageContainer">
+                    <div id="briteSpotImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                        <div style="text-align: center; color: #999;">
+                            <div class="spinner" style="margin: 0 auto 10px;"></div>
+                            <div>Generating image...</div>
+                        </div>
+                    </div>
+
+                    <div id="briteSpotPromptContainer" style="margin-bottom: 10px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px;">Image Prompt:</label>
+                        <textarea id="briteSpotPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
+                    </div>
+                    <span id="briteSpotRegenBtn"><button class="btn-secondary btn" onclick="regenerateImage('briteSpot')" style="margin-right: 10px;">🔄 Regenerate</button></span>
+                    <button class="btn-secondary btn" onclick="exportImage('briteSpot')" style="margin-right: 10px;">📥 Export</button>
+                    <button class="btn-secondary btn" onclick="resizeImage('briteSpot')" style="margin-right: 10px;">🔍 Resize</button>
+                    <input type="file" id="briteSpotUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpot', this)">
+                    <button class="btn-secondary btn" onclick="document.getElementById('briteSpotUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
                 </div>
-                <button class="btn-secondary btn" onclick="regenerateImage('briteSpot')" style="margin-right: 10px;">🔄 Regenerate</button>
-                <button class="btn-secondary btn" onclick="exportImage('briteSpot')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('briteSpot')" style="margin-right: 10px;">🔍 Resize</button>
-                <input type="file" id="briteSpotUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpot', this)">
-                <button class="btn-secondary btn" onclick="document.getElementById('briteSpotUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
+
+                <!-- Two Squares container (hidden by default) -->
+                <div id="briteSpotTwoSquaresContainer" style="display: none;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px;">Left Image</label>
+                            <div id="briteSpotLeftPreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                                <div style="text-align: center; color: #999; font-size: 13px;">Click upload below</div>
+                            </div>
+                            <input type="file" id="briteSpotLeftUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpotLeft', this)">
+                            <button class="btn-secondary btn" onclick="document.getElementById('briteSpotLeftUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;margin-top:8px;font-size:12px;">📤 Upload Left</button>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px;">Right Image</label>
+                            <div id="briteSpotRightPreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                                <div style="text-align: center; color: #999; font-size: 13px;">Click upload below</div>
+                            </div>
+                            <input type="file" id="briteSpotRightUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpotRight', this)">
+                            <button class="btn-secondary btn" onclick="document.getElementById('briteSpotRightUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;margin-top:8px;font-size:12px;">📤 Upload Right</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Claims Image -->
@@ -6383,11 +6420,14 @@
         let generatedImages = {
             meme: null,
             briteSpot: null,
+            briteSpotLeft: null,
+            briteSpotRight: null,
             claims: null,
             spotlight: null,
             tips: null,
             specialSection: null
         };
+        let briteSpotLayout = 'wide'; // 'wide' | 'square' | 'two-squares' | 'portrait'
 
         // ============================================================================
         // SPECIAL SECTION FUNCTIONS
@@ -7666,7 +7706,9 @@
 
         // Cropper.js configuration - target dimensions per section
         const SECTION_CROP_CONFIG = {
-            briteSpot:  { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Brite Spot' },
+            briteSpot:  { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Brite Spot (16:9)' },
+            briteSpotLeft:  { width: 270, height: 270, aspectRatio: 1, label: 'Brite Spot Left (1:1)' },
+            briteSpotRight: { width: 270, height: 270, aspectRatio: 1, label: 'Brite Spot Right (1:1)' },
             claims:     { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Claims Corner' },
             spotlight:  { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Spotlight' },
             tips:       { width: 480, height: 175, aspectRatio: 480 / 175, label: 'Agent Advantage' },
@@ -7676,6 +7718,46 @@
 
         let activeCropper = null;
         let activeCropSection = null;
+
+        // Brite Spot layout switcher
+        function updateBriteSpotLayout(layout) {
+            briteSpotLayout = layout;
+            const singleContainer = document.getElementById('briteSpotSingleImageContainer');
+            const twoContainer = document.getElementById('briteSpotTwoSquaresContainer');
+            const promptContainer = document.getElementById('briteSpotPromptContainer');
+            const regenBtn = document.getElementById('briteSpotRegenBtn');
+            const hint = document.getElementById('briteSpotLayoutHint');
+
+            if (layout === 'two-squares') {
+                singleContainer.style.display = 'none';
+                twoContainer.style.display = 'block';
+                hint.style.display = 'block';
+            } else {
+                singleContainer.style.display = 'block';
+                twoContainer.style.display = 'none';
+                if (layout === 'wide') {
+                    promptContainer.style.display = 'block';
+                    regenBtn.style.display = '';
+                    hint.style.display = 'none';
+                } else {
+                    promptContainer.style.display = 'none';
+                    regenBtn.style.display = 'none';
+                    hint.style.display = 'block';
+                }
+            }
+
+            // Update crop config for briteSpot based on layout
+            if (layout === 'wide') {
+                SECTION_CROP_CONFIG.briteSpot = { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Brite Spot (16:9)' };
+            } else if (layout === 'square') {
+                SECTION_CROP_CONFIG.briteSpot = { width: 400, height: 400, aspectRatio: 1, label: 'Brite Spot (1:1)' };
+            } else if (layout === 'portrait') {
+                SECTION_CROP_CONFIG.briteSpot = { width: 320, height: 570, aspectRatio: 9 / 16, label: 'Brite Spot (9:16)' };
+            }
+
+            const sel = document.getElementById('briteSpotLayoutSelect');
+            if (sel) sel.value = layout;
+        }
 
         // Upload custom image for a section — opens Cropper.js modal
         function handleImageUpload(section, input) {
@@ -7773,8 +7855,10 @@
             if (!generatedImages[section]) generatedImages[section] = {};
             generatedImages[section].url = croppedUrl;
 
-            // Update preview for article sections
-            const previewDiv = document.getElementById(section + 'ImagePreview');
+            // Update preview for article sections (handle briteSpotLeft/Right)
+            const previewIdMap = { 'briteSpotLeft': 'briteSpotLeftPreview', 'briteSpotRight': 'briteSpotRightPreview' };
+            const previewId = previewIdMap[section] || (section + 'ImagePreview');
+            const previewDiv = document.getElementById(previewId);
             if (previewDiv) {
                 previewDiv.innerHTML = '<img id="' + section + 'UploadedImg" src="' + croppedUrl + '" style="max-width:100%;border-radius:8px;" alt="' + section + ' image">';
             }
@@ -8243,6 +8327,9 @@
                 introCTAText = 'Learn More',
                 briteSpotText = '',
                 briteSpotImage = '',
+                briteSpotLeftImage = '',
+                briteSpotRightImage = '',
+                briteSpotLayout = 'wide',
                 briteSpotBullets = [],
                 claimsTitle = '',
                 claimsText = '',
@@ -8467,6 +8554,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
     .email-container { width: 100% !important; max-width: 100% !important; }
     .mobile-padding { padding-left: 16px !important; padding-right: 16px !important; }
     .mobile-full-width { width: 100% !important; max-width: 100% !important; }
+    .mobile-stack-block { display: block !important; width: 100% !important; padding: 0 15px 8px !important; }
     h1 { font-size: 28px !important; line-height: 34px !important; }
     h2 { font-size: 20px !important; line-height: 26px !important; }
     h3 { font-size: 18px !important; line-height: 26px !important; }
@@ -8527,16 +8615,26 @@ ${introTextHero ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,
 </tbody>
 </table>
 
-<!-- Image -->
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
+<!-- Image (layout-aware) -->
+${briteSpotLayout === 'two-squares' ? `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr>
+<td width="50%" align="center" style="padding:0 4px 0 15px;" class="mobile-stack-block"><img src="${briteSpotLeftImage || assets.blankImage}" alt="The Brite Spot" width="263" style="display:block;width:100%;max-width:263px;height:auto;border-radius:4px;"></td>
+<td width="50%" align="center" style="padding:0 15px 0 4px;" class="mobile-stack-block"><img src="${briteSpotRightImage || assets.blankImage}" alt="The Brite Spot" width="263" style="display:block;width:100%;max-width:263px;height:auto;border-radius:4px;"></td>
+</tr></table>` :
+briteSpotLayout === 'square' ? `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr>
+<td align="center" style="padding:0 15px;font-size:0;line-height:0;">
+<img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" width="400" style="display:block;width:400px;max-width:100%;height:auto;border-radius:4px;" />
+</td></tr></tbody></table>` :
+briteSpotLayout === 'portrait' ? `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr>
+<td align="center" style="padding:0 15px;font-size:0;line-height:0;">
+<img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" width="320" style="display:block;width:320px;max-width:100%;height:auto;border-radius:4px;" />
+</td></tr></tbody></table>` : `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr>
 <td style="padding:0 15px;font-size:0;line-height:0;">
 <img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
-</td>
-</tr>
-</tbody>
-</table>
+</td></tr></tbody></table>`}
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
@@ -9029,6 +9127,9 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 introCTAText: 'Learn More',
                 briteSpotText: convertMarkdownLinksToHTML(briteSpotTextForTemplate),
                 briteSpotImage: generatedImages.briteSpot?.url || '',
+                briteSpotLeftImage: generatedImages.briteSpotLeft?.url || '',
+                briteSpotRightImage: generatedImages.briteSpotRight?.url || '',
+                briteSpotLayout: briteSpotLayout || 'wide',
                 briteSpotBullets: briteSpotBulletsForTemplate.map(b => convertMarkdownLinksToHTML(b)),
                 claimsTitle: claimsTitle,
                 claimsText: convertMarkdownLinksToHTML(claimsText),
@@ -11313,6 +11414,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         },
                         generatedImages: generatedImages,
                         imagePrompts: basePrompts,  // Save image prompts
+                        briteSpotLayout: briteSpotLayout,
                         specialSection: specialSection,
                         skippedResearch: skippedResearch,
                         isManualBuild: isManualBuild,
@@ -11394,7 +11496,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 generatedSpotlightSubheader = gc.spotlightSubheader || '';
                 generatedTipsContent = gc.tips || '';
                 generatedIntroContent = gc.intro || '';
-                generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null, specialSection: null };
+                generatedImages = d.generatedImages || { meme: null, briteSpot: null, briteSpotLeft: null, briteSpotRight: null, claims: null, spotlight: null, tips: null, specialSection: null };
+                briteSpotLayout = d.briteSpotLayout || 'wide';
 
                 // Restore selected articles
                 const sa = d.selectedArticles || {};
@@ -11423,7 +11526,18 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     imagesAlreadyGenerated = true;
                     // Display saved images so they show on step 10
                     displayImages();
+                    // Restore two-squares previews if present
+                    if (generatedImages.briteSpotLeft?.url) {
+                        const lp = document.getElementById('briteSpotLeftPreview');
+                        if (lp) lp.innerHTML = `<img src="${generatedImages.briteSpotLeft.url}" style="max-width:100%;border-radius:8px;">`;
+                    }
+                    if (generatedImages.briteSpotRight?.url) {
+                        const rp = document.getElementById('briteSpotRightPreview');
+                        if (rp) rp.innerHTML = `<img src="${generatedImages.briteSpotRight.url}" style="max-width:100%;border-radius:8px;">`;
+                    }
                 }
+                // Restore Brite Spot layout selector
+                updateBriteSpotLayout(briteSpotLayout);
                 if (generatedImages && generatedImages.meme) {
                     memeConceptGenerated = true;
                     memeImageGenerated = true;

@@ -4282,6 +4282,7 @@ def save_draft():
             'generatedContent': data.get('generatedContent'),
             'generatedImages': data.get('generatedImages'),
             'imagePrompts': data.get('imagePrompts'),
+            'briteSpotLayout': data.get('briteSpotLayout', 'wide'),
             'selectedArticles': data.get('selectedArticles'),
             'specialSection': data.get('specialSection'),
             'subjectLine': data.get('subjectLine'),
