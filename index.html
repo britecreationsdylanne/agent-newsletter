@@ -8480,7 +8480,12 @@ ${items.map((item, index) => `<tr>
             // Helper to strip markdown headers (## or ###) and bold markers from text
             const stripMarkdownHeaders = (text) => {
                 if (!text) return '';
-                return text.replace(/^\s*\*{1,2}\s*#{1,6}\s*/, '').replace(/^\s*#{1,6}\s*/, '').replace(/\*{1,2}\s*$/, '').trim();
+                // Strip markdown # headers: handle leading HTML tags, bold markers, whitespace
+                return text
+                    .replace(/^(\s*(<[^>]+>)?\s*)*\*{0,2}\s*#{1,6}\s+/i, '')  // leading # with optional tags/bold
+                    .replace(/\*{1,2}\s*$/, '')  // trailing bold markers
+                    .replace(/^#+ /, '')  // plain # at start (fallback)
+                    .trim();
             };
 
             // Helper to generate spotlight H2 sections (using H3 content from generated spotlight)
@@ -8829,11 +8834,13 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 </tbody>
 </table>
 
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
+
 <!-- Copy -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:8px 15px 15px 15px;">
+<td style="padding:0 15px 15px 15px;">
 ${(() => {
     let t = spotlightText || '';
     // Always strip leading h4 from spotlight copy (headline already shown above image)
