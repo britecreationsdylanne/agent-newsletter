@@ -2177,25 +2177,30 @@ def search_claims():
         print(f"\n[API] Searching for curious claims stories (month: {month})...")
 
         # Multiple search queries to find interesting, specific claims stories
-        # Focus on narrative stories with names, places, dollar amounts — not generic industry trends
+        # Based on real past Curious Claims: bizarre incidents (bald eagle drops cat on car),
+        # coverage questions (contaminated gas — is it covered?), fraud arrests (170 felony charges),
+        # court rulings (grandson not covered under grandma's policy), major litigation (Meta loses coverage)
         CLAIMS_SEARCH_QUERIES = [
-            # Specific narrative stories with real details
-            'insurance claim story bizarre unusual 2025 2026',
-            'weird insurance claim animal wildlife car home',
-            'insurance fraud caught arrested convicted sentenced 2025 2026',
-            'insurance lawsuit verdict million dollar settlement 2026',
-            # Specific incident types that make great "Curious Claims" stories
-            'sinkhole tornado lightning insurance claim homeowner',
-            'stolen jewelry art car recovered insurance payout',
-            'celebrity insurance claim unusual coverage policy',
-            'insurance denied claim court overturned ruling',
+            # Coverage disputes and "is it covered?" stories
+            'insurance coverage dispute denied "is it covered" unusual damage 2025 2026',
+            'homeowners insurance claim denied court ruled coverage dispute',
+            'auto insurance claim unusual damage covered policy question',
+            # Fraud and criminal cases with specifics
+            'insurance fraud arrested charged felony convicted 2025 2026',
+            'insurance scam scheme caught sentenced prison',
+            # Bizarre real incidents
+            'bizarre insurance claim animal wildlife freak accident 2025 2026',
+            'unusual insurance claim viral story weird incident',
+            'strange property damage insurance claim storm weather',
+            # Court rulings and coverage decisions
+            'insurer "duty to defend" ruling court decision 2026',
+            'insurance policy exclusion court ruled coverage denied upheld',
             # Best sources for claims stories
-            'site:claimsjournal.com unusual claim story 2025 2026',
-            'site:claimsjournal.com verdict settlement million',
-            'site:insurancejournal.com weird bizarre claim',
-            # Specific narrative hooks
-            '"filed a claim" after unusual incident accident story',
-            'insurance dispute neighbor property damage lawsuit outcome'
+            'site:claimsjournal.com coverage dispute ruling 2025 2026',
+            'site:insurancejournal.com claim fraud bizarre unusual 2025 2026',
+            'site:propertycasualty360.com "is it covered" insurance claim',
+            # Big litigation / notable cases
+            'major insurance litigation ruling million billion coverage dispute'
         ]
 
         all_results = []
@@ -2728,24 +2733,27 @@ def generate_content():
             print("  - Generating Introduction...")
             intro_system = f"""You are the copywriter for BriteCo Brief, a newsletter for independent insurance agents.
 
-=== REAL EXAMPLES FROM PAST ISSUES (match this conversational voice) ===
+=== REAL EXAMPLES FROM PAST ISSUES (match this structure and voice exactly) ===
 
-"Thank you to everyone who completed our annual independent agent survey and vied for the chance to win a $200 gift card. We have now picked our winners. Keep reading to find out if you are a recipient and get the latest on the homeowners insurance crisis that's still wreaking havoc on the industry."
+BEST EXAMPLE (use as default model):
+"AI continues to be the hot topic in the insurance industry. This month, we take a look at the latest developments impacting both large insurers and independent agencies. Plus, we offer five tips for discussing higher deductibles with clients without losing business."
 
-"It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history and had an astronomical impact on insurance. We look at how the industry is better prepared today, provide tips on retaining small business customers, and examine the curious world of alien abduction insurance."
+"The survey results are in! We've published the findings from our 2025 independent agent survey where homeowners takes the focus for the year ahead. Get your copy of the report here. Plus, keep reading for the latest developments in the auto insurance sector and get five tips for wading through underwriting changes."
 
-"From all of us at BriteCo, we are wishing you a very happy holiday season! As you make your list and check it twice, we wanted to remind you of one important item to not forget: filling out our brief Independent Agent Survey."
-
-"We want to hear from you about how the homeowners insurance crisis is impacting your business. Fill out our brief Independent Agent Survey and you could be one of three winners to get a $200 gift card. Keep reading for the latest industry developments and learn how agents have an advantage."
+"It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history. We look at how the industry is better prepared today, provide tips on retaining small business customers, and examine the curious world of alien abduction insurance."
 
 === END EXAMPLES ===
 
+STRUCTURE TO FOLLOW:
+1. Open with a timely hook (a trend, stat, or specific topic — NOT "Welcome to" or "In this month's edition")
+2. Tease 2-3 SPECIFIC topics from the newsletter content provided below ("we take a look at...", "Plus, we offer tips on...", "and examine...")
+3. Keep it 2-4 sentences, max 75 words
+
 VOICE:
-- Conversational and warm -- like writing to a colleague
-- Use contractions naturally (it's, we're, you'll)
-- AVOID generic openings like "Welcome to another edition" or "In this month's newsletter"
-- Start with something SPECIFIC -- a stat, a question, a timely reference, or a direct address
-- AVOID: "landscape", "navigate", "leverage", "robust", "comprehensive", "in today's ever-evolving"
+- Conversational and warm — like writing to a colleague
+- Use contractions naturally (it's, we're, you'll, we've)
+- AVOID: "landscape", "navigate", "leverage", "robust", "comprehensive", "in today's ever-evolving", "Welcome to another edition"
+- LIMIT em dashes to at most 1. Prefer commas.
 
 {style_guide}"""
 
@@ -3384,16 +3392,22 @@ def generate_subject_options():
 
         tone_desc = tone_guidelines.get(tone, tone_guidelines['professional'])
 
-        # Build content summary for subject lines
+        # Build content summary for subject lines — read nested structure from frontend
         content_topics = []
-        if content.get('spotlight_title'):
-            content_topics.append(f"Feature Spotlight: {content['spotlight_title']}")
-        if content.get('claims_title'):
-            content_topics.append(f"Curious Claims: {content['claims_title']}")
-        if content.get('roundup_topics'):
-            content_topics.append(f"News topics: {content['roundup_topics']}")
-        if content.get('tips_topic'):
-            content_topics.append(f"Agent tips: {content['tips_topic']}")
+        spotlight = content.get('spotlight', {})
+        if isinstance(spotlight, dict) and spotlight.get('title'):
+            content_topics.append(f"Feature Spotlight: {spotlight['title']}")
+        claims = content.get('claims', {})
+        if isinstance(claims, dict) and claims.get('title'):
+            content_topics.append(f"Curious Claims: {claims['title']}")
+        roundup = content.get('roundup', {})
+        if isinstance(roundup, dict) and roundup.get('content'):
+            content_topics.append(f"News Roundup: {str(roundup['content'])[:120]}")
+        tips = content.get('tips', {})
+        if isinstance(tips, dict) and tips.get('content'):
+            tip_str = str(tips['content'])[:120] if tips['content'] else ''
+            if tip_str:
+                content_topics.append(f"Agent tips: {tip_str}")
         content_summary = "\n".join(f"- {t}" for t in content_topics) if content_topics else "- P&C insurance industry news and insights for independent agents"
 
         # Generate subject lines

@@ -576,12 +576,13 @@ SECTION_TONE_CALIBRATION = {
         ]
     },
     "introduction": {
-        "tone": "Warm, inviting, with a hook",
+        "tone": "Warm, conversational, like writing to a colleague",
         "rules": [
-            "Open with something unexpected or clever to pull readers in",
-            "Use 'we' to create partnership feel",
-            "Keep it brief (2-3 sentences)",
-            "A light quip about the season or news cycle sets a friendly tone"
+            "Open with a specific hook — a trend, stat, timely reference, or direct address. Never 'Welcome to another edition'",
+            "MUST tease 2-3 specific topics from the newsletter: 'Keep reading for...', 'Plus, we offer tips on...', 'and learn how...'",
+            "Use contractions naturally (we've, you'll, it's) and 'we' to create partnership feel",
+            "Keep it 2-4 sentences, max 75 words",
+            "Match this structure: [Hook sentence about timely topic]. [Tease 2-3 specific stories/sections]. [Optional CTA or forward-looking line]."
         ]
     }
 }
@@ -594,7 +595,7 @@ HUMANIZATION_EXAMPLES = {
     },
     "intro": {
         "ai_style": "Welcome to this month's edition of The BriteCo Brief. In this issue, we will be exploring various important topics that are relevant to insurance professionals in today's ever-changing market environment.",
-        "human_style": "It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history. We look at how the industry is better prepared today, provide tips on retaining small business customers, and examine the curious world of alien abduction insurance."
+        "human_style": "AI continues to be the hot topic in the insurance industry. This month, we take a look at the latest developments impacting both large insurers and independent agencies. Plus, we offer five tips for discussing higher deductibles with clients without losing business."
     },
     "curious_claims": {
         "ai_style": "In an interesting development in the insurance world, a unique claim has emerged that showcases the diverse nature of insurance cases.",
