@@ -52,6 +52,18 @@ from config.model_config import get_model_for_task
 # Chicago timezone for timestamps
 CHICAGO_TZ = pytz.timezone('America/Chicago')
 
+
+def fix_em_dashes(text):
+    """Ensure spaces around em dashes per style guide."""
+    import re
+    if not text or not isinstance(text, str):
+        return text
+    # Add space before/after em dashes that are missing them
+    text = re.sub(r'(\S)—(\S)', r'\1 — \2', text)
+    text = re.sub(r'(\S)—', r'\1 —', text)
+    text = re.sub(r'—(\S)', r'— \1', text)
+    return text
+
 app = Flask(__name__, static_folder='.')
 CORS(app)
 
@@ -1094,7 +1106,7 @@ Output ONLY the rewritten content, no labels or explanations."""
 
         return jsonify({
             'success': True,
-            'rewritten': result['content'].strip(),
+            'rewritten': fix_em_dashes(result['content'].strip()),
             'original': content,
             'tone': tone
         })
@@ -1227,7 +1239,7 @@ Output ONLY the content, no labels or explanations."""
 
         return jsonify({
             'success': True,
-            'rewritten': result['content'].strip(),
+            'rewritten': fix_em_dashes(result['content'].strip()),
             'original': content,
             'section': section
         })
@@ -1654,7 +1666,7 @@ Output as plain text - headline on first line, then paragraphs separated by blan
             max_tokens=2000
         )
 
-        content_text = result['content'].strip()
+        content_text = fix_em_dashes(result['content'].strip())
         print(f"[API] Spotlight response length: {len(content_text)}")
 
         # Parse plain text response: first line is subheader, rest is body
@@ -2485,7 +2497,7 @@ Output ONLY the bullet text, nothing else."""
                     max_tokens=150
                 )
                 roundup_items.append({
-                    'summary': roundup_result['content'].strip(),
+                    'summary': fix_em_dashes(roundup_result['content'].strip()),
                     'url': url,
                     'source': source_name
                 })
@@ -2691,11 +2703,41 @@ VOICE:
 
 {style_guide}"""
 
+            # Build content summary so intro can reference actual newsletter topics
+            content_teasers = []
+            if research.get('curious_claims'):
+                claims_data = research['curious_claims']
+                claims_title = claims_data.get('title', claims_data.get('headline', '')) if isinstance(claims_data, dict) else str(claims_data)[:80]
+                if claims_title:
+                    content_teasers.append(f"Curious Claims: {claims_title}")
+            if research.get('spotlight'):
+                spot = research['spotlight']
+                spot_title = spot.get('subheader', '') if isinstance(spot, dict) else ''
+                if spot_title:
+                    content_teasers.append(f"Feature Spotlight: {spot_title}")
+            if research.get('roundup') and isinstance(research['roundup'], list):
+                topics = [item.get('headline', item.get('summary', ''))[:60] for item in research['roundup'][:3] if isinstance(item, dict)]
+                if topics:
+                    content_teasers.append(f"News Roundup topics: {'; '.join(topics)}")
+            if research.get('tips'):
+                tips_data = research['tips']
+                if isinstance(tips_data, dict) and tips_data.get('tips'):
+                    tip_titles = [t.get('title', '')[:40] for t in tips_data['tips'][:2] if isinstance(t, dict)]
+                    if tip_titles:
+                        content_teasers.append(f"Agent tips: {', '.join(tip_titles)}")
+
+            content_summary = "\n".join(f"- {t}" for t in content_teasers) if content_teasers else "General P&C insurance industry topics"
+
             intro_prompt = f"""Write a brief, welcoming introduction for the {month.capitalize()} edition.
+
+THIS MONTH'S NEWSLETTER CONTAINS:
+{content_summary}
 
 Requirements:
 - 2-4 sentences, maximum 75 words
-- Reference something specific happening this month or tease specific content inside
+- MUST reference or tease 2-3 specific topics from the content list above
+- Match the examples: "We look at [topic], provide tips on [topic], and examine [topic]"
+- Do NOT be generic — name the actual stories
 
 Output ONLY the introduction text, no labels or formatting."""
 
@@ -2706,7 +2748,7 @@ Output ONLY the introduction text, no labels or formatting."""
                 temperature=0.7,
                 max_tokens=150
             )
-            sections['introduction'] = intro_result['content'].strip()
+            sections['introduction'] = fix_em_dashes(intro_result['content'].strip())
 
         # Generate Brite Spot (max 100 words) - auto-generate if no topic provided
         if not brite_spot_topic:
@@ -2872,7 +2914,7 @@ Output ONLY the paragraphs in <p> tags, no title or labels."""
                 temperature=0.65,
                 max_tokens=400
             )
-            sections['curious_claims'] = claims_result['content'].strip()
+            sections['curious_claims'] = fix_em_dashes(claims_result['content'].strip())
 
         # News Roundup is already formatted as bullet points from research
         if research.get('roundup'):

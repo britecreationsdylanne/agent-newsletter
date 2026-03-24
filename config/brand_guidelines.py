@@ -513,7 +513,8 @@ HUMAN_WRITING_PATTERNS = {
         "Use contractions (don't, won't, it's) - real humans use them",
         "Start some sentences with 'And' or 'But' for flow",
         "Use occasional sentence fragments for emphasis",
-        "Ask rhetorical questions to engage readers"
+        "Ask rhetorical questions to engage readers",
+        "LIMIT em dashes: use at most 1-2 per section. Prefer commas, periods, or colons instead. When you do use an em dash, put a space before and after it ( — not —)"
     ],
     "specificity_rules": [
         "Use specific names, dates, and places",
@@ -631,9 +632,15 @@ def get_humanization_guidelines(section_type=None):
 
     # Natural writing patterns
     guide += "### DO USE THESE (Human Patterns):\n"
-    for pattern in HUMAN_WRITING_PATTERNS['sentence_variety'][:4]:
+    for pattern in HUMAN_WRITING_PATTERNS['sentence_variety'][:6]:
         guide += f"- {pattern}\n"
     guide += "\n"
+
+    # Em dash rules
+    guide += "### EM DASH RULES:\n"
+    guide += "- ALWAYS put a space before and after em dashes: ' — ' not '—'\n"
+    guide += "- Use em dashes SPARINGLY (max 1-2 per section). Prefer commas, periods, or colons.\n"
+    guide += "- Overuse of em dashes is one of the biggest AI tells. A simple comma usually works better.\n\n"
 
     # Specificity
     guide += "### BE SPECIFIC:\n"
