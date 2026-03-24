@@ -53,6 +53,48 @@ from config.model_config import get_model_for_task
 CHICAGO_TZ = pytz.timezone('America/Chicago')
 
 
+PAYWALL_DOMAINS = [
+    'wsj.com', 'bloomberg.com', 'nytimes.com', 'ft.com', 'businessinsider.com',
+    'washingtonpost.com', 'economist.com', 'barrons.com', 'thetimes.co.uk',
+    'telegraph.co.uk', 'latimes.com', 'bostonglobe.com'
+]
+
+
+def filter_paywalled(results):
+    """Remove results from known paywalled domains."""
+    from urllib.parse import urlparse
+    filtered = []
+    for r in results:
+        url = r.get('url', '')
+        try:
+            domain = urlparse(url).netloc.lower().replace('www.', '')
+            if not any(domain == pw or domain.endswith('.' + pw) for pw in PAYWALL_DOMAINS):
+                filtered.append(r)
+        except Exception:
+            filtered.append(r)
+    return filtered
+
+
+def filter_by_recency(results, time_window='30d'):
+    """Filter out articles older than the requested time window."""
+    days_map = {'7d': 7, '30d': 30}
+    max_days = days_map.get(time_window, 30)
+    cutoff = datetime.now() - timedelta(days=max_days)
+    filtered = []
+    for r in results:
+        date_str = r.get('published_date') or r.get('published_at') or ''
+        if not date_str:
+            filtered.append(r)
+            continue
+        try:
+            pub_date = datetime.strptime(date_str[:10], '%Y-%m-%d')
+            if pub_date >= cutoff:
+                filtered.append(r)
+        except (ValueError, TypeError):
+            filtered.append(r)
+    return filtered
+
+
 def fix_em_dashes(text):
     """Ensure spaces around em dashes per style guide."""
     import re
@@ -845,9 +887,11 @@ def v2_search_perplexity():
             max_results=8
         )
 
-        # Filter out excluded URLs
+        # Filter out excluded URLs, paywalled sources, and stale articles
         if exclude_urls:
             search_results = [r for r in search_results if r.get('url') not in exclude_urls]
+        search_results = filter_paywalled(search_results)
+        search_results = filter_by_recency(search_results, time_window)
 
         # Take top 8 results for more options
         results = search_results[:8]
@@ -2132,24 +2176,26 @@ def search_claims():
 
         print(f"\n[API] Searching for curious claims stories (month: {month})...")
 
-        # Multiple search queries to find interesting claims stories
-        # Focus on specific types of stories that make good "Curious Claims" content
+        # Multiple search queries to find interesting, specific claims stories
+        # Focus on narrative stories with names, places, dollar amounts — not generic industry trends
         CLAIMS_SEARCH_QUERIES = [
-            # Unusual/strange claims
-            '"unusual claim" OR "strange claim" OR "bizarre claim" insurance',
-            '"insurance claim" lawsuit settlement verdict',
-            'insurance fraud case caught convicted',
-            '"filed a claim" "insurance company" story',
-            # Specific incident types that make good stories
-            'homeowner insurance claim damage unusual',
-            'auto insurance claim accident story',
-            'liability insurance claim lawsuit ruling',
-            # Claims Journal specific searches (great source for claims stories)
-            'site:claimsjournal.com claim story',
-            'site:claimsjournal.com insurance lawsuit verdict',
-            # Court cases and settlements
-            '"insurance dispute" "court ruled" OR settlement',
-            'property damage claim "insurance paid" OR denied'
+            # Specific narrative stories with real details
+            'insurance claim story bizarre unusual 2025 2026',
+            'weird insurance claim animal wildlife car home',
+            'insurance fraud caught arrested convicted sentenced 2025 2026',
+            'insurance lawsuit verdict million dollar settlement 2026',
+            # Specific incident types that make great "Curious Claims" stories
+            'sinkhole tornado lightning insurance claim homeowner',
+            'stolen jewelry art car recovered insurance payout',
+            'celebrity insurance claim unusual coverage policy',
+            'insurance denied claim court overturned ruling',
+            # Best sources for claims stories
+            'site:claimsjournal.com unusual claim story 2025 2026',
+            'site:claimsjournal.com verdict settlement million',
+            'site:insurancejournal.com weird bizarre claim',
+            # Specific narrative hooks
+            '"filed a claim" after unusual incident accident story',
+            'insurance dispute neighbor property damage lawsuit outcome'
         ]
 
         all_results = []
@@ -3338,21 +3384,35 @@ def generate_subject_options():
 
         tone_desc = tone_guidelines.get(tone, tone_guidelines['professional'])
 
+        # Build content summary for subject lines
+        content_topics = []
+        if content.get('spotlight_title'):
+            content_topics.append(f"Feature Spotlight: {content['spotlight_title']}")
+        if content.get('claims_title'):
+            content_topics.append(f"Curious Claims: {content['claims_title']}")
+        if content.get('roundup_topics'):
+            content_topics.append(f"News topics: {content['roundup_topics']}")
+        if content.get('tips_topic'):
+            content_topics.append(f"Agent tips: {content['tips_topic']}")
+        content_summary = "\n".join(f"- {t}" for t in content_topics) if content_topics else "- P&C insurance industry news and insights for independent agents"
+
         # Generate subject lines
-        subject_prompt = f"""Create 4 email subject line options for the BriteCo Brief newsletter ({month.capitalize()} edition).
+        subject_prompt = f"""Create 4 VERY DIFFERENT email subject line options for the BriteCo Brief newsletter ({month.capitalize()} edition).
 
 Tone: {tone_desc}
 
-Newsletter sections include:
-- Curious Claims (unusual insurance claims stories)
-- Insurance News Roundup (P&C industry news)
-- Feature Spotlight (deep dive on trending topic)
-- Agent Advantage Tips (actionable advice for agents)
+THIS MONTH'S ACTUAL CONTENT:
+{content_summary}
 
 Requirements:
 - Each subject line should be 40-60 characters
-- Make them engaging but not clickbait
-- Reference the month or a key topic when appropriate
+- Each option must use a DIFFERENT approach:
+  1. Lead with the most compelling specific topic or statistic
+  2. Ask a provocative question related to the content
+  3. Use a bold statement or surprising fact from the newsletter
+  4. Reference the month with a specific content tease
+- Do NOT use generic phrases like "Your Monthly Update" or "What You Need to Know"
+- Each line should feel distinctly different from the others — vary structure, word choice, and hook type
 - Match the {tone} tone throughout
 
 Output EXACTLY 4 subject lines, one per line, numbered 1-4. No other text."""
@@ -3384,14 +3444,18 @@ Output EXACTLY 4 subject lines, one per line, numbered 1-4. No other text."""
             ]
 
         # Generate preheaders
-        preheader_prompt = f"""Create 4 email preheader (preview text) options to complement subject lines for the BriteCo Brief newsletter.
+        preheader_prompt = f"""Create 4 VERY DIFFERENT email preheader (preview text) options for BriteCo Brief.
 
 Tone: {tone_desc}
 
+THIS MONTH'S CONTENT:
+{content_summary}
+
 Requirements:
 - Each preheader should be 60-90 characters
-- Tease content to encourage opening
-- Complement subject lines without repeating them
+- Reference SPECIFIC topics from the content above — not generic newsletter language
+- Each must use a different approach: tease a stat, pose a question, highlight a story, create curiosity
+- Do NOT use: "industry insights", "what you need to know", "this month's highlights"
 - Match the {tone} tone
 
 Output EXACTLY 4 preheader options, one per line, numbered 1-4. No other text."""
