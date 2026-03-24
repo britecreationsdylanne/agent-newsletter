@@ -1685,16 +1685,44 @@ Output as plain text - headline on first line, then paragraphs separated by blan
                 text
             )
 
-        # Build HTML body with proper paragraph tags and spacing
+        # Build structured h3 sections from markdown headers
+        h3s = []
+        current_title = ''
+        current_body_parts = []
+
+        for p in paragraphs:
+            header_match = re.match(r'^#{1,3}\s+(.+)', p.strip())
+            if header_match:
+                # Save previous section
+                if current_title or current_body_parts:
+                    h3s.append({
+                        'title': current_title,
+                        'body': ''.join(f'<p style="margin: 0 0 16px 0; line-height: 1.7;">{convert_links(bp)}</p>' for bp in current_body_parts)
+                    })
+                current_title = header_match.group(1).strip()
+                current_body_parts = []
+            else:
+                current_body_parts.append(p)
+
+        # Save last section
+        if current_title or current_body_parts:
+            h3s.append({
+                'title': current_title,
+                'body': ''.join(f'<p style="margin: 0 0 16px 0; line-height: 1.7;">{convert_links(bp)}</p>' for bp in current_body_parts)
+            })
+
+        # Build HTML body (fallback for non-structured rendering)
         html_body = ''
         for p in paragraphs:
-            p_with_links = convert_links(p)
+            p_clean = re.sub(r'^#{1,3}\s+', '', p.strip())
+            p_with_links = convert_links(p_clean)
             html_body += f'<p style="margin: 0 0 16px 0; line-height: 1.7;">{p_with_links}</p>'
 
-        # Build simple structure - body as HTML
+        # Build structure with both body and h3s
         spotlight_content = {
             'subheader': subheader,
             'body': html_body,
+            'h3s': h3s if h3s else [],
             'agent_takeaway': agent_takeaway or 'Review these developments and consider their impact on your clients.'
         }
 
@@ -3729,6 +3757,8 @@ def export_to_docs():
             text = text.replace('&nbsp;', ' ')
             # Remove ** markdown bold markers
             text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+            # Remove markdown # headers (keep the text after #)
+            text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
             # Clean up whitespace
             text = re.sub(r'\n{3,}', '\n\n', text)
             return text.strip()
@@ -3822,8 +3852,9 @@ def export_to_docs():
                     requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': link_text}})
                     requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + len(link_text)}, 'textStyle': {'link': {'url': link_url}, 'foregroundColor': {'color': {'rgbColor': {'red': 0.0, 'green': 0.506, 'blue': 0.506}}}}, 'fields': 'link,foregroundColor'}})
                     offset[0] += len(link_text)
-            # Add newline
+            # Add newline and reset text color to black so link color doesn't bleed
             requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': '\n'}})
+            requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + 1}, 'textStyle': {'foregroundColor': {'color': {'rgbColor': {'red': 0.0, 'green': 0.0, 'blue': 0.0}}}, 'link': None}, 'fields': 'foregroundColor,link'}})
             offset[0] += 1
 
         # Add newsletter sections

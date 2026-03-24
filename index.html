@@ -2490,12 +2490,8 @@
                                 <span>John Ortbal (john.ortbal@brite.co)</span>
                             </label>
                             <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Stef Lynn (stef.lynn@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Selena Fragassi (selena.fragassi@brite.co)</span>
+                                <input type="checkbox" class="docRecipientCheckbox" value="stephanie.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Stephanie Lynn (stephanie.lynn@brite.co)</span>
                             </label>
                             <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
                                 <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
@@ -8845,6 +8841,8 @@ ${(() => {
     let t = spotlightText || '';
     // Always strip leading h4 from spotlight copy (headline already shown above image)
     t = t.replace(/^\s*<h4[^>]*>[\s\S]*?<\/h4>\s*/i, '');
+    // Strip markdown # headers from body text
+    t = t.replace(/^#{1,6}\s+/gm, '');
     // Strip empty/whitespace-only paragraphs
     t = t.replace(/<p[^>]*>(\s|&nbsp;|\u00a0)*<\/p>/gi, '').trim();
     if (!t) return '';
@@ -8862,8 +8860,11 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const b = strip(spotlightSubheader);
     return a !== b && !a.includes(b) && !b.includes(a);
 }).map((section, idx, arr) => {
-    // Strip trailing <br> tags that browsers insert into contenteditable divs
-    const body = (section.body || section.content || '').replace(/(<br\s*\/?>\s*)+$/, '').trim();
+    // Strip trailing <br> tags and markdown # headers from body text
+    const body = (section.body || section.content || '')
+        .replace(/(<br\s*\/?>\s*)+$/, '')
+        .replace(/^#{1,6}\s+/gm, '')
+        .trim();
     return `<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
 <p class="dark-text-secondary" style="margin:0 0 ${idx === arr.length - 1 ? '0' : '16'}px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${body}</p>`;
 }).join('') : ''}

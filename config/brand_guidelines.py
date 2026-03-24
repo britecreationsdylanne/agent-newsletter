@@ -65,8 +65,7 @@ ONTRAPORT_CONFIG = {
 # Team members for preview emails
 TEAM_MEMBERS = [
     {"name": "John Ortbal", "email": "john.ortbal@brite.co"},
-    {"name": "Stef Lynn", "email": "stef.lynn@brite.co"},
-    {"name": "Selena Fragassi", "email": "selena.fragassi@brite.co"}
+    {"name": "Stephanie Lynn", "email": "stephanie.lynn@brite.co"}
 ]
 
 # Brand voice for AI content generation
