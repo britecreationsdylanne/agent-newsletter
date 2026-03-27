@@ -2523,15 +2523,14 @@ Output the complete story as flowing prose, not as labeled sections."""
 
 STYLE: Title Case throughout, one punchy sentence, with specific stats/numbers. Naturally embed a hyperlink.
 
-REAL EXAMPLES (match this exact style):
-"According to a New Survey, 83% of Americans Say They Would Drop Their Insurance Company After One Bad Claims Experience"
-"Auto Insurance Rates Are Falling Due to Fewer Claims, with the National Average Down By 2% and Even Up to 6.6% in Some Markets"
-"Insured Losses for Natural Disasters Hit $108 Billion Globally in 2025, Down from $147 Billion in 2024 Due to Less US Hurricane Landfalls"
-"Most Property Owners Are Now Paying 7% of Their Total Monthly Costs Towards Home Insurance, While Some Areas Like Miami Are Paying 13.1%"
-"As Driverless Cars Become More Common & Human Error Decreases, Expect Fewer Auto Claims -- About 30-40% Less"
-"Small Hail Stones Are Leading to More Home Insurance Claims; Stones Measuring Even 1 Inch Can Cause Damage and Premature Aging of Roofs"
+REAL EXAMPLES (match this exact style, all are 20 words or fewer):
+"83% of Americans Would Drop Their Insurer After One Bad Claims Experience, New Survey Finds"
+"Auto Insurance Rates Down 2% Nationally, Up to 6.6% in Some Markets Due to Fewer Claims"
+"Insured Losses for Natural Disasters Hit $108 Billion Globally in 2025, Down from $147 Billion in 2024"
+"Small Hail Stones as Small as 1 Inch Are Causing More Home Insurance Claims and Roof Damage"
+"Driverless Cars Could Reduce Auto Claims by 30-40% as Human Error Declines"
 
-RULES: Title Case. ONE sentence. Include specific numbers/percentages/dollar amounts. Never generic. Embed hyperlink as [Source Name](URL)."""
+RULES: Title Case. ONE sentence. Include specific numbers/percentages/dollar amounts. Never generic. Embed hyperlink as [Source Name](URL). HARD MAXIMUM: 20 words — count before responding."""
 
                 roundup_prompt = f"""Write a headline-style news bullet for this article. Embed a hyperlink to [{source_name}]({url}).
 
@@ -2547,8 +2546,29 @@ Output ONLY the bullet text, nothing else."""
                     temperature=0.5,
                     max_tokens=150
                 )
+                raw_summary = fix_em_dashes(roundup_result['content'].strip())
+                # Enforce 20-word display maximum
+                def truncate_headline(text, max_words=20):
+                    import re
+                    result, display_count, i = [], 0, 0
+                    while i < len(text) and display_count < max_words:
+                        lm = re.match(r'\[([^\]]+)\]\([^)]+\)', text[i:])
+                        if lm:
+                            wc = len(lm.group(1).split())
+                            if display_count + wc <= max_words:
+                                result.append(lm.group(0)); display_count += wc; i += lm.end()
+                            else:
+                                break
+                        elif text[i] == ' ':
+                            result.append(' '); i += 1
+                        else:
+                            end = i
+                            while end < len(text) and text[end] not in (' ', '['):
+                                end += 1
+                            result.append(text[i:end]); display_count += 1; i = end
+                    return ''.join(result).rstrip(',.;:- ')
                 roundup_items.append({
-                    'summary': fix_em_dashes(roundup_result['content'].strip()),
+                    'summary': truncate_headline(raw_summary),
                     'url': url,
                     'source': source_name
                 })

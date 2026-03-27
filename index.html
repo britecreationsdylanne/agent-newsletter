@@ -5084,11 +5084,11 @@
                 text = text.replace(/^###\s*(.+)$/gm, '<strong style="display: block; font-size: 16px; color: #272D3F; margin: 16px 0 8px 0;">$1</strong>');
                 text = text.replace(/(?:>|\n)###\s*([^\n<]+)/g, '$&'.replace(/###\s*([^\n<]+)/, '<strong style="display: block; font-size: 16px; color: #272D3F; margin: 16px 0 8px 0;">$1</strong>'));
                 // Then handle ## headers - at line start
-                text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #272D3F; margin: 0 0 10px 0;">$1</strong>');
                 // Handle ## after newlines
-                text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="display: block; font-size: 17px; color: #272D3F; margin: 0 0 10px 0;">$1</strong>');
                 // Handle ## after closing HTML tags like </p>## or ><p>##
-                text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="display: block; font-size: 17px; color: #272D3F; margin: 0 0 10px 0;">$1</strong>');
                 // Convert markdown bold **text** to <strong> (must have content between)
                 text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
                 // Clean up any stray ** that weren't part of a proper pair
@@ -8549,8 +8549,8 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right:12px; vertical-align: top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
-                        <td style="padding-bottom: ${index === items.length - 1 ? '0' : '18px'}; vertical-align: top;" valign="top">
+                        <td style="padding-right:12px;vertical-align:top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
+                        <td style="padding-bottom:${index === items.length - 1 ? '0' : '18px'};padding-top:19px;vertical-align:top;" valign="top">
                             <p class="dark-text" style="margin: 0 0 4px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 22px; font-weight: 600; color: #008182;">${item.title || ''}</p>
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
                         </td>
@@ -8883,7 +8883,7 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 </tbody>
 </table>
 
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="8" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
 
 <!-- Copy -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
