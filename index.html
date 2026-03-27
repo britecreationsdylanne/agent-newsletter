@@ -2251,6 +2251,10 @@
             <div class="content-section">
                 <h3>Brite Spot</h3>
                 <div class="field-group">
+                    <label class="field-label">Title <span style="font-weight:400;font-size:11px;color:#999;">(optional — clear to remove)</span></label>
+                    <div class="editable editable-sm" contenteditable="true" id="review-britespot-title"></div>
+                </div>
+                <div class="field-group">
                     <label class="field-label">Paragraph</label>
                     <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-britespot-paragraph')" type="button">🔗 Insert Link</button></div>
                     <div class="link-popover" id="lp-review-britespot-paragraph">
@@ -2651,6 +2655,10 @@
 
             <div class="content-section">
                 <h3>Brite Spot</h3>
+                <div class="field-group">
+                    <label class="field-label">Title <span style="font-weight:400;font-size:11px;color:#999;">(optional — clear to remove)</span></label>
+                    <div class="editable editable-sm" contenteditable="true" id="fc-britespot-title"></div>
+                </div>
                 <div class="field-group">
                     <label class="field-label">Paragraph</label>
                     <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-britespot-paragraph')" type="button">🔗 Insert Link</button></div>
@@ -5365,6 +5373,7 @@
         let generatedSpotlightSubheader = null;  // Spotlight subheader from Step 2B
         let generatedTipsContent = null;  // Array of 5 tip items
         let generatedBriteSpotContent = null;
+        let generatedBriteSpotTitle = '';
 
         // Track what has been generated to avoid re-triggering on back navigation
         let promptsAlreadyGenerated = false;
@@ -5465,6 +5474,7 @@
                     generatedTipsContent = data.content.agent_tips;
                     // Use backend-generated brite_spot (auto-generated when no topic provided)
                     generatedBriteSpotContent = data.content.brite_spot || null;
+                    generatedBriteSpotTitle = data.content.brite_spot_title || '';
 
                     console.log('Generated content sections:', Object.keys(data.content));
 
@@ -5579,7 +5589,10 @@
                 // Strip markdown header prefixes (# ## ###) and bold markers from section titles
                 const rawTitle = s.title || s.h3 || '';
                 document.getElementById(titleId).textContent = rawTitle.replace(/^\s*\*{1,2}\s*#{1,6}\s*/, '').replace(/^\s*#{1,6}\s*/, '').replace(/\*{1,2}\s*$/, '').trim();
-                document.getElementById(contentId).innerHTML = sanitizeHTML(s.body || s.content || s.text || '');
+                const rawBody = (s.body || s.content || s.text || '')
+                    .replace(/^#{1,6}\s+/gm, '')
+                    .replace(/<p([^>]*)>\s*#{1,6}\s+/g, '<p$1>');
+                document.getElementById(contentId).innerHTML = sanitizeHTML(rawBody);
             });
         }
 
@@ -5738,6 +5751,8 @@
             }
 
             // 2. Brite Spot - manually populated; only restore saved content, no AI pre-fill
+            const bsTitleEl2 = document.getElementById('review-britespot-title');
+            if (bsTitleEl2) bsTitleEl2.textContent = generatedBriteSpotTitle || '';
             const bsParagraphEl = document.getElementById('review-britespot-paragraph');
             if (bsParagraphEl) {
                 bsParagraphEl.innerHTML = sanitizeHTML(styleLinksBlue(briteSpotContent || ''));
@@ -6471,6 +6486,32 @@
         // Initialize auto-save listeners after DOM is ready
         document.addEventListener('DOMContentLoaded', setupDraftAutoSave);
 
+        // Strip formatting on paste for Brite Spot fields (prevent Google Doc style bleed)
+        function stripFormattingPaste(e) {
+            e.preventDefault();
+            const html = e.clipboardData.getData('text/html');
+            const text = e.clipboardData.getData('text/plain');
+            if (html) {
+                let clean = html
+                    .replace(/<span[^>]*>/gi, '').replace(/<\/span>/gi, '')
+                    .replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '')
+                    .replace(/<b\b[^>]*>/gi, '<strong>').replace(/<\/b>/gi, '</strong>')
+                    .replace(/<i\b[^>]*>/gi, '<em>').replace(/<\/i>/gi, '</em>')
+                    .replace(/<strong[^>]*>/gi, '<strong>').replace(/<em[^>]*>/gi, '<em>')
+                    .replace(/<div[^>]*>/gi, '<p>').replace(/<\/div>/gi, '</p>')
+                    .replace(/<p[^>]*>/gi, '<p>');
+                document.execCommand('insertHTML', false, clean);
+            } else {
+                document.execCommand('insertText', false, text);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            ['review-britespot-title','review-britespot-paragraph','fc-britespot-title','fc-britespot-paragraph'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('paste', stripFormattingPaste);
+            });
+        });
+
         // Auto-save on page close/navigate away
         window.addEventListener('beforeunload', (e) => {
             if (selectedMonth && !isLoadingDraft) {
@@ -6479,7 +6520,7 @@
                 syncContentFromDOM();
                 const reviewHTML = { _layout: 'labeled' };
                 const prefix = document.querySelector('.step.active')?.id === 'step7b' ? 'fc-' : 'review-';
-                ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
                     const el = document.getElementById(prefix + field);
                     if (el) reviewHTML[field] = el.innerHTML;
                 });
@@ -6487,7 +6528,7 @@
                     month: selectedMonth,
                     year: new Date().getFullYear(),
                     currentStep: document.querySelector('.step.active')?.id || '',
-                    generatedContent: { headerIntro: headerIntroContent, briteSpot: briteSpotContent, briteSpotBullets: briteSpotBullets, claims: generatedClaimsContent, roundup: generatedRoundupContent, spotlight: generatedSpotlightContent, spotlightSubheader: generatedSpotlightSubheader, tips: generatedTipsContent, intro: generatedIntroContent },
+                    generatedContent: { headerIntro: headerIntroContent, briteSpot: briteSpotContent, briteSpotTitle: generatedBriteSpotTitle, briteSpotBullets: briteSpotBullets, claims: generatedClaimsContent, roundup: generatedRoundupContent, spotlight: generatedSpotlightContent, spotlightSubheader: generatedSpotlightSubheader, tips: generatedTipsContent, intro: generatedIntroContent },
                     selectedArticles: { claims: selectedClaims, spotlight: selectedSpotlight, roundup: selectedRoundup, tips: selectedTips },
                     generatedImages: generatedImages,
                     imagePrompts: basePrompts,
@@ -8321,6 +8362,7 @@
                 introTextHero = '',
                 introCTAUrl = 'https://brite.co/agents',
                 introCTAText = 'Learn More',
+                briteSpotTitle = '',
                 briteSpotText = '',
                 briteSpotImage = '',
                 briteSpotLeftImage = '',
@@ -8431,6 +8473,11 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 // Strip list elements (bullets handled separately)
                 text = text.replace(/<ul[^>]*>[\s\S]*?<\/ul>/gi, '').replace(/<ol[^>]*>[\s\S]*?<\/ol>/gi, '').replace(/<li[^>]*>[\s\S]*?<\/li>/gi, '').replace(/^\s+|\s+$/g, '');
                 if (!text.trim()) return '';
+                // Strip inline formatting that overrides our styles (Google Doc paste artifacts)
+                text = text.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+                text = text.replace(/<font[^>]*>([\s\S]*?)<\/font>/gi, '$1');
+                text = text.replace(/<strong[^>]*>/gi, '<strong>').replace(/<em[^>]*>/gi, '<em>').replace(/<b[^>]*>/gi, '<strong>').replace(/<\/b>/gi, '</strong>').replace(/<i[^>]*>/gi, '<em>').replace(/<\/i>/gi, '</em>');
+                text = text.replace(/<div[^>]*>/gi, '<p>').replace(/<\/div>/gi, '</p>');
                 // If text has <p> tags, restyle them with full inline styles
                 if (text.includes('<p')) {
                     return restyleParagraphs(text);
@@ -8502,8 +8549,8 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right:12px;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
-                        <td style="padding-bottom: ${index === items.length - 1 ? '0' : '18px'};" valign="top">
+                        <td style="padding-right:12px; vertical-align: top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
+                        <td style="padding-bottom: ${index === items.length - 1 ? '0' : '18px'}; vertical-align: top;" valign="top">
                             <p class="dark-text" style="margin: 0 0 4px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 22px; font-weight: 600; color: #008182;">${item.title || ''}</p>
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
                         </td>
@@ -8615,6 +8662,12 @@ ${introTextHero ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,
 </tr>
 </tbody>
 </table>
+
+<!-- Optional Title -->
+${briteSpotTitle ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody><tr><td style="padding:0 15px;">
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#272D3F;">${briteSpotTitle}</h2>
+</td></tr></tbody></table>` : ''}
 
 <!-- Image (layout-aware) -->
 ${briteSpotLayout === 'two-squares' ? `
@@ -8830,7 +8883,7 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 </tbody>
 </table>
 
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="8" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
 
 <!-- Copy -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
@@ -8860,10 +8913,11 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const b = strip(spotlightSubheader);
     return a !== b && !a.includes(b) && !b.includes(a);
 }).map((section, idx, arr) => {
-    // Strip trailing <br> tags and markdown # headers from body text
+    // Strip trailing <br> tags and markdown # headers from body text (both plain and inside <p>)
     const body = (section.body || section.content || '')
         .replace(/(<br\s*\/?>\s*)+$/, '')
         .replace(/^#{1,6}\s+/gm, '')
+        .replace(/<p([^>]*)>\s*#{1,6}\s+/g, '<p$1>')
         .trim();
     return `<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
 <p class="dark-text-secondary" style="margin:0 0 ${idx === arr.length - 1 ? '0' : '16'}px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${body}</p>`;
@@ -9039,6 +9093,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
             // --- Read from labeled sub-fields (FC preferred, then Review) ---
 
+            // Brite Spot title (optional)
+            const bsTitleReadEl = document.getElementById('fc-britespot-title') || document.getElementById('review-britespot-title');
+            const briteSpotTitleForTemplate = bsTitleReadEl ? bsTitleReadEl.textContent.trim() : (generatedBriteSpotTitle || '');
+
             // Brite Spot paragraph
             const bsParagraphEl = document.getElementById('fc-britespot-paragraph') || document.getElementById('review-britespot-paragraph');
             const briteSpotTextForTemplate = bsParagraphEl ? bsParagraphEl.innerHTML : (briteSpotContent || '');
@@ -9133,6 +9191,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 introTextHero: convertMarkdownLinksToHTML(introText).replace(/color:\s*#[0-9a-fA-F]{6}/g, 'color: #ffffff'),
                 introCTAUrl: 'https://brite.co/agents',
                 introCTAText: 'Learn More',
+                briteSpotTitle: briteSpotTitleForTemplate,
                 briteSpotText: convertMarkdownLinksToHTML(briteSpotTextForTemplate),
                 briteSpotImage: generatedImages.briteSpot?.url || '',
                 briteSpotLeftImage: generatedImages.briteSpotLeft?.url || '',
@@ -11271,6 +11330,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 const gc = d.generatedContent || {};
                 headerIntroContent = gc.headerIntro || '';
                 briteSpotContent = gc.briteSpot || '';
+                generatedBriteSpotTitle = gc.briteSpotTitle || '';
                 briteSpotBullets = gc.briteSpotBullets || [];
                 generatedClaimsContent = gc.claims || '';
                 generatedRoundupContent = gc.roundup || '';
@@ -11333,7 +11393,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             const prefix = onFinalCopy ? 'fc-' : 'review-';
 
             // Simple fields
-            ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+            ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
                 const el = document.getElementById(prefix + field);
                 if (el) reviewHTML[field] = el.innerHTML;
             });
@@ -11497,6 +11557,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 const gc = d.generatedContent || {};
                 headerIntroContent = gc.headerIntro || '';
                 briteSpotContent = gc.briteSpot || '';
+                generatedBriteSpotTitle = gc.briteSpotTitle || '';
                 briteSpotBullets = gc.briteSpotBullets || [];
                 generatedClaimsContent = gc.claims || '';
                 generatedRoundupContent = gc.roundup || '';
@@ -11576,7 +11637,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 if (savedHTML._layout === 'labeled') {
                     console.log('[Draft] Restoring from labeled reviewHTML');
                     // Simple fields
-                    ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                    ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
                         const el = document.getElementById('review-' + field);
                         if (el && savedHTML[field] !== undefined) el.innerHTML = savedHTML[field];
                     });
@@ -11746,6 +11807,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             if (introHtml) headerIntroContent = introHtml;
 
             // Brite Spot
+            const bsTitle = getText(prefix + 'britespot-title');
+            if (bsTitle !== undefined) generatedBriteSpotTitle = bsTitle;
             const bsPara = getHTML(prefix + 'britespot-paragraph');
             if (bsPara) { briteSpotContent = bsPara; briteSpotRewritten = bsPara; generatedBriteSpotContent = bsPara; }
             // Read bullets from container
@@ -11859,6 +11922,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
             // Simple fields
             copyField('review-headerIntro', 'fc-headerIntro');
+            copyField('review-britespot-title', 'fc-britespot-title');
             copyField('review-britespot-paragraph', 'fc-britespot-paragraph');
             copyField('review-claims-title', 'fc-claims-title');
             copyField('review-claims-copy', 'fc-claims-copy');

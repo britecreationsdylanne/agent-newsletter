@@ -2832,12 +2832,14 @@ VOICE:
             auto_bs_prompt = f"""Write a brief "Brite Spot" section for the {month.capitalize()} edition thanking agents for their partnership and highlighting BriteCo's value.
 
 Requirements:
-- Maximum 75 words
+- Maximum 75 words for the body
 - Warm, genuine tone
 - Mention partnership and supporting clients
 - Include a subtle call to action
 
-Output ONLY the text, no title or labels."""
+Output in this exact format:
+TITLE: [Short descriptive title, 4-8 words, no punctuation at end]
+BODY: [The paragraph text]"""
 
             try:
                 auto_bs_result = claude_client.generate_content(
@@ -2845,13 +2847,21 @@ Output ONLY the text, no title or labels."""
                     system_prompt=auto_bs_system,
                     model="claude-opus-4-5-20251101",
                     temperature=0.6,
-                    max_tokens=150
+                    max_tokens=200
                 )
-                sections['brite_spot'] = auto_bs_result['content'].strip()
+                raw = auto_bs_result['content'].strip()
+                bs_title, bs_body = '', raw
+                if 'TITLE:' in raw:
+                    parts = raw.split('BODY:', 1)
+                    bs_title = parts[0].replace('TITLE:', '').strip()
+                    bs_body = parts[1].strip() if len(parts) > 1 else raw
+                sections['brite_spot'] = bs_body
+                sections['brite_spot_title'] = bs_title
                 print(f"    Auto-generated Brite Spot: {len(sections['brite_spot'].split())} words")
             except Exception as e:
                 print(f"    Error auto-generating Brite Spot: {e}")
                 sections['brite_spot'] = f"Thank you for your continued partnership with BriteCo. We're committed to helping you and your clients protect what matters most. Reach out to your BriteCo rep anytime — we're here to help."
+                sections['brite_spot_title'] = 'A Note From BriteCo'
 
         if brite_spot_topic:
             print("  - Generating Brite Spot...")
@@ -2888,21 +2898,30 @@ VOICE:
             brite_spot_prompt = f"""Write the "Brite Spot" section about: {brite_spot_topic}
 
 Requirements:
-- Maximum 100 words
+- Maximum 100 words for the body
 - Lead with the benefit to agents or a specific fact/stat
 - Include a clear call to action
 - Be SPECIFIC about benefits (exact percentages, features, names)
 
-Output ONLY the Brite Spot text, no title or labels."""
+Output in this exact format:
+TITLE: [Short descriptive title, 4-8 words, no punctuation at end]
+BODY: [The paragraph text]"""
 
             brite_spot_result = claude_client.generate_content(
                 prompt=brite_spot_prompt,
                 system_prompt=brite_spot_system,
                 model="claude-opus-4-5-20251101",
                 temperature=0.6,
-                max_tokens=200
+                max_tokens=250
             )
-            sections['brite_spot'] = brite_spot_result['content'].strip()
+            raw_bs = brite_spot_result['content'].strip()
+            bs_title_t, bs_body_t = '', raw_bs
+            if 'TITLE:' in raw_bs:
+                parts_bs = raw_bs.split('BODY:', 1)
+                bs_title_t = parts_bs[0].replace('TITLE:', '').strip()
+                bs_body_t = parts_bs[1].strip() if len(parts_bs) > 1 else raw_bs
+            sections['brite_spot'] = bs_body_t
+            sections['brite_spot_title'] = bs_title_t
 
         # Generate Curious Claims from research
         if research.get('curious_claims'):
