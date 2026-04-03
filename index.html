@@ -2521,6 +2521,25 @@
                 </div>
             </div>
 
+            <!-- Attach to ClickUp Section -->
+            <div id="clickupSection" style="display: none; margin-top: 20px; padding: 20px; background: #f8f9fa; border: 2px solid #e5e7eb; border-radius: 8px;">
+                <h3 style="margin: 0 0 10px 0; color: #7b68ee;">Attach Draft to ClickUp</h3>
+                <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">Link your exported Google Doc to the ClickUp task.</p>
+
+                <button class="btn" onclick="searchClickUpTasks()" id="clickupSearchBtn" style="background: #7b68ee;">
+                    <span id="clickupSearchBtnText">Search ClickUp Tasks</span>
+                </button>
+
+                <div id="clickupResults" style="display: none; margin-top: 15px;">
+                    <div id="clickupTaskList" style="margin-bottom: 15px;"></div>
+                    <button class="btn" onclick="attachDraftToClickUp()" id="clickupAttachBtn" style="background: #22c55e; display: none;">
+                        Attach Draft Link
+                    </button>
+                </div>
+
+                <div id="clickupStatus" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px;"></div>
+            </div>
+
             <div id="draftAutoSaveStatus" style="text-align: center; font-size: 13px; color: #999; margin-bottom: 10px;"></div>
 
             <div class="buttons">
@@ -6832,6 +6851,92 @@
         let lastExportedMonth = '';
         let lastExportedYear = '';
 
+        // ── ClickUp Integration ──────────────────────
+        let selectedClickUpTaskId = null;
+
+        async function searchClickUpTasks() {
+            const btn = document.getElementById('clickupSearchBtn');
+            const btnText = document.getElementById('clickupSearchBtnText');
+            const resultsDiv = document.getElementById('clickupResults');
+            const taskList = document.getElementById('clickupTaskList');
+            const statusDiv = document.getElementById('clickupStatus');
+
+            btn.disabled = true;
+            btnText.textContent = 'Searching...';
+            statusDiv.style.display = 'none';
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/clickup/search-tasks`);
+                const data = await resp.json();
+
+                btnText.textContent = 'Search ClickUp Tasks';
+                btn.disabled = false;
+
+                if (data.success && data.tasks.length > 0) {
+                    resultsDiv.style.display = 'block';
+                    selectedClickUpTaskId = null;
+                    document.getElementById('clickupAttachBtn').style.display = 'none';
+
+                    taskList.innerHTML = data.tasks.map(t => `
+                        <label style="display: block; padding: 10px; margin-bottom: 8px; background: white; border: 2px solid #e5e7eb; border-radius: 6px; cursor: pointer;">
+                            <input type="radio" name="clickupTask" value="${t.id}" onchange="selectedClickUpTaskId='${t.id}'; document.getElementById('clickupAttachBtn').style.display='inline-block';" style="margin-right: 10px;">
+                            ${t.name}
+                        </label>
+                    `).join('');
+                } else {
+                    resultsDiv.style.display = 'block';
+                    taskList.innerHTML = '<p style="color: #666;">No matching tasks found in ClickUp.</p>';
+                }
+            } catch (err) {
+                btnText.textContent = 'Search ClickUp Tasks';
+                btn.disabled = false;
+                resultsDiv.style.display = 'block';
+                taskList.innerHTML = `<p style="color: #dc2626;">Error searching ClickUp: ${err.message}</p>`;
+            }
+        }
+
+        async function attachDraftToClickUp() {
+            if (!selectedClickUpTaskId || !lastExportedDocUrl) {
+                alert('Please export to Google Docs first and select a task.');
+                return;
+            }
+
+            const btn = document.getElementById('clickupAttachBtn');
+            const statusDiv = document.getElementById('clickupStatus');
+            btn.disabled = true;
+            btn.textContent = 'Attaching...';
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/clickup/attach-draft`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ task_id: selectedClickUpTaskId, doc_url: lastExportedDocUrl })
+                });
+                const data = await resp.json();
+
+                btn.textContent = 'Attach Draft Link';
+                btn.disabled = false;
+                statusDiv.style.display = 'block';
+
+                if (data.success) {
+                    statusDiv.style.background = '#d1fae5';
+                    statusDiv.style.border = '2px solid #10b981';
+                    statusDiv.innerHTML = '<p style="margin:0; color:#065f46; font-weight:600;">Draft link attached to ClickUp task!</p>';
+                } else {
+                    statusDiv.style.background = '#fee2e2';
+                    statusDiv.style.border = '2px solid #ef4444';
+                    statusDiv.innerHTML = `<p style="margin:0; color:#dc2626;">Error: ${data.error}</p>`;
+                }
+            } catch (err) {
+                btn.textContent = 'Attach Draft Link';
+                btn.disabled = false;
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#fee2e2';
+                statusDiv.style.border = '2px solid #ef4444';
+                statusDiv.innerHTML = `<p style="margin:0; color:#dc2626;">Error: ${err.message}</p>`;
+            }
+        }
+
         async function exportToGoogleDocs() {
             // Sync any edits from active contenteditable divs before exporting
             syncContentFromDOM();
@@ -6933,6 +7038,7 @@
 
                     // Show the email section
                     emailSection.style.display = 'block';
+                    document.getElementById('clickupSection').style.display = 'block';
                 } else {
                     resultDiv.style.display = 'block';
                     resultDiv.style.background = '#fee2e2';

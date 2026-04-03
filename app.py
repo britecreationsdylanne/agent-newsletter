@@ -125,6 +125,11 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
+# ClickUp configuration
+CLICKUP_API_TOKEN = os.environ.get('CLICKUP_API_TOKEN') or os.environ.get('_CLICKUP_API_TOKEN')
+CLICKUP_LIST_ID = os.environ.get('CLICKUP_LIST_ID') or os.environ.get('_CLICKUP_LIST_ID')
+CLICKUP_LINK_FIELD_ID = 'e4129c72-f566-490d-a939-9aff1726fabc'
+
 # Allowed email domain
 ALLOWED_DOMAIN = 'brite.co'
 
@@ -4777,6 +4782,70 @@ def delete_saved_article():
 
     except Exception as e:
         safe_print(f"[SAVED ARTICLES] Error deleting: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/clickup/search-tasks', methods=['GET'])
+@login_required
+def clickup_search_tasks():
+    """Search ClickUp for Agent Newsletter tasks with status 'to do'"""
+    if not CLICKUP_API_TOKEN or not CLICKUP_LIST_ID:
+        return jsonify({'success': False, 'error': 'ClickUp not configured'}), 500
+
+    try:
+        headers = {'Authorization': CLICKUP_API_TOKEN}
+        resp = requests.get(
+            f'https://api.clickup.com/api/v2/list/{CLICKUP_LIST_ID}/task',
+            headers=headers,
+            params={'subtasks': 'false', 'statuses[]': 'to do'}
+        )
+        resp.raise_for_status()
+        tasks = resp.json().get('tasks', [])
+
+        # Filter to tasks whose name starts with "Agent Newsletter"
+        filtered = [
+            {'id': t['id'], 'name': t['name']}
+            for t in tasks
+            if t.get('name', '').lower().startswith('agent newsletter')
+        ]
+
+        return jsonify({'success': True, 'tasks': filtered})
+
+    except Exception as e:
+        safe_print(f"[CLICKUP] Error searching tasks: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/clickup/attach-draft', methods=['POST'])
+@login_required
+def clickup_attach_draft():
+    """Attach a Google Doc URL to a ClickUp task's Link custom field"""
+    if not CLICKUP_API_TOKEN:
+        return jsonify({'success': False, 'error': 'ClickUp not configured'}), 500
+
+    try:
+        data = request.json
+        task_id = data.get('task_id')
+        doc_url = data.get('doc_url')
+
+        if not task_id or not doc_url:
+            return jsonify({'success': False, 'error': 'task_id and doc_url are required'}), 400
+
+        headers = {
+            'Authorization': CLICKUP_API_TOKEN,
+            'Content-Type': 'application/json'
+        }
+        resp = requests.post(
+            f'https://api.clickup.com/api/v2/task/{task_id}/field/{CLICKUP_LINK_FIELD_ID}',
+            headers=headers,
+            json={'value': doc_url}
+        )
+        resp.raise_for_status()
+
+        return jsonify({'success': True, 'message': 'Draft link attached to ClickUp task'})
+
+    except Exception as e:
+        safe_print(f"[CLICKUP] Error attaching draft: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
