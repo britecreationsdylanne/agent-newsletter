@@ -2492,7 +2492,7 @@ A federal appeals court affirmed that just because one insured party commits fra
             claims_prompt = f"""Write an engaging STORY about this claims case. Target: 350-400 words.
 
 Article: {curious_claims_topic.get('title', 'Unknown')}
-Source: {curious_claims_topic.get('url', 'N/A')}
+Source URL: {curious_claims_topic.get('url', 'N/A')}
 Initial Summary: {curious_claims_topic.get('description', '')}
 
 Structure your story as:
@@ -2502,6 +2502,9 @@ Structure your story as:
 4. THE TWIST (2-3 sentences) - what made it interesting
 5. THE RESOLUTION (2-3 sentences) - insurance outcome
 6. AGENT TAKEAWAY (2-3 sentences) - lesson for agents
+
+CRITICAL — SOURCE LINK REQUIREMENT:
+You MUST embed the Source URL as a markdown link [link text](url) naturally within the story. Pick a meaningful 2-5 word phrase from your story and turn it into the link. Good options: a key detail, a person's name, the publication name (e.g., "as reported by [WLOS](url)"), or a descriptive phrase like "the [bizarre incident](url)". Place it where it reads naturally — usually in THE SETUP, THE INCIDENT, or THE RESOLUTION section. Do NOT add a separate "Read more" line or "Source:" footer — the link must be inline and feel organic to the prose. Use this exact source URL: {curious_claims_topic.get('url', 'N/A')}
 
 Output the complete story as flowing prose, not as labeled sections."""
 

@@ -8466,7 +8466,7 @@
                 subjectLine = 'The BriteCo Brief',
                 introText = '',
                 introTextHero = '',
-                introCTAUrl = 'https://brite.co/agents',
+                introCTAUrl = 'https://brite.co/agent/',
                 introCTAText = 'Learn More',
                 briteSpotTitle = '',
                 briteSpotText = '',
@@ -8486,7 +8486,7 @@
                 tipsImage = '',
                 tipsIntro = '',
                 tipsItems = [],
-                ctaUrl = 'https://brite.co/agents',
+                ctaUrl = 'https://brite.co/agent/',
                 ctaText = 'Partner With Us',
                 ctaBodyText = 'Earn 12% recurring commissions on every policy',
                 specialSection: ssData = null
@@ -8530,7 +8530,7 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
 
             // WordPress hosted assets - matching Ontraport template
             const assets = {
-                logo: 'https://storage.googleapis.com/stay-in-the-loupe-images/assets/briteco-logo-solid-color.png',
+                logo: 'https://storage.googleapis.com/stay-in-the-loupe-images/assets/briteco-logo-2026.png',
                 logoFooter: 'https://brite.co/wp-content/uploads/2025/09/footer-logo.png',
                 heroBg: 'https://brite.co/wp-content/uploads/2025/09/section-1-bg.png',
                 briteSpotBanner: 'https://brite.co/wp-content/uploads/2025/09/brite-spot-1.png',
@@ -9295,7 +9295,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 subjectLine,
                 introText: convertMarkdownLinksToHTML(introText),
                 introTextHero: convertMarkdownLinksToHTML(introText).replace(/color:\s*#[0-9a-fA-F]{6}/g, 'color: #ffffff'),
-                introCTAUrl: 'https://brite.co/agents',
+                introCTAUrl: 'https://brite.co/agent/',
                 introCTAText: 'Learn More',
                 briteSpotTitle: briteSpotTitleForTemplate,
                 briteSpotText: convertMarkdownLinksToHTML(briteSpotTextForTemplate),
@@ -9323,7 +9323,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     title: tip.title,
                     tip: convertMarkdownLinksToHTML(tip.tip)
                 })),
-                ctaUrl: 'https://brite.co/agents',
+                ctaUrl: 'https://brite.co/agent/',
                 ctaText: getCtaButtonText(),
                 ctaBodyText: getCtaBodyText(),
                 specialSection: specialSection.enabled ? {
