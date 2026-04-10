@@ -9426,6 +9426,69 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 console.log('[ONTRAPORT] Getting final newsletter HTML...');
                 let html = getFinalNewsletterHTML();
 
+                // ── Re-wrap document structure if lost from preview editing ──
+                if (!html.includes('<!DOCTYPE') && !html.includes('<html')) {
+                    console.log('[ONTRAPORT] Re-wrapping with document structure (lost from preview innerHTML)');
+                    const preheaderText = document.getElementById('finalPreheader')?.value || '';
+                    html = `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>The BriteCo Brief</title>
+<!--[if mso]>
+<noscript>
+<xml>
+<o:OfficeDocumentSettings>
+<o:AllowPNG/>
+<o:PixelsPerInch>96</o:PixelsPerInch>
+</o:OfficeDocumentSettings>
+</xml>
+</noscript>
+<![endif]-->
+<!--[if !mso]><!-->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<!--<![endif]-->
+<style>
+body { margin: 0; padding: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; background-color: #DFE7F0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+table { border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+.ExternalClass { width: 100%; }
+.ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+.ReadMsgBody { width: 100%; }
+a { color: #008182; }
+a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+.section-header, .section-header font, .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+@media (prefers-color-scheme: dark) {
+    .section-header, .section-header font, .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+}
+[data-ogsc] .section-header, [data-ogsc] .section-header font, [data-ogsc] .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+u + .body .section-header, u + .body .section-header font, u + .body .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+@media only screen and (max-width: 600px) {
+    .email-container { width: 100% !important; max-width: 100% !important; }
+    .mobile-padding { padding-left: 16px !important; padding-right: 16px !important; }
+    .mobile-full-width { width: 100% !important; max-width: 100% !important; }
+    .mobile-stack-block { display: block !important; width: 100% !important; padding: 0 15px 8px !important; }
+    h1 { font-size: 28px !important; line-height: 34px !important; }
+    h2 { font-size: 20px !important; line-height: 26px !important; }
+    h3 { font-size: 18px !important; line-height: 26px !important; }
+    .cta-padding { padding-top: 60px !important; padding-bottom: 60px !important; }
+}
+</style>
+</head>
+<body>
+<div style="display:none;max-height:0;overflow:hidden;">${preheaderText}</div>
+<div style="display:none;max-height:0;overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+` + html + `
+</body>
+</html>`;
+                }
+
                 // ── Editing artifact cleanup ──
                 html = html.replace(/\s*contenteditable="[^"]*"/gi, '');
                 html = html.replace(/cursor:\s*text;?\s*/gi, '');
