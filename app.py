@@ -4018,6 +4018,8 @@ def export_to_docs():
                         link_text = link_url
                     requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': link_text}})
                     requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + len(link_text)}, 'textStyle': {'link': {'url': link_url}, 'foregroundColor': {'color': {'rgbColor': {'red': 0.0, 'green': 0.506, 'blue': 0.506}}}}, 'fields': 'link,foregroundColor'}})
+                    if bold:
+                        requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + len(link_text)}, 'textStyle': {'bold': True}, 'fields': 'bold'}})
                     offset[0] += len(link_text)
             # Add newline and reset text color to black so link color doesn't bleed
             requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': '\n'}})
@@ -4091,8 +4093,13 @@ def export_to_docs():
                     if isinstance(tip, dict):
                         tip_title = tip.get('title', '')
                         tip_body = tip.get('tip', tip.get('content', ''))
+                        tip_url = tip.get('source_url') or tip.get('url') or ''
                         if tip_title:
-                            add_text(f"{i}. {tip_title}", bold=True)
+                            if tip_url:
+                                # Hyperlink the bold title to the source article
+                                add_rich_text(f'<a href="{tip_url}">{i}. {tip_title}</a>', bold=True)
+                            else:
+                                add_text(f"{i}. {tip_title}", bold=True)
                             if tip_body:
                                 add_rich_text(tip_body)
                         else:

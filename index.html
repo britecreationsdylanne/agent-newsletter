@@ -5573,6 +5573,11 @@
             const container = document.getElementById(prefix + sectionKey + '-bullets-container');
             if (!container) return;
             container.innerHTML = '';
+            // Roundup bullets use removeRoundupBullet so deletions also splice
+            // generatedRoundupContent and don't resurrect after re-render.
+            const removeHandler = sectionKey === 'roundup'
+                ? "removeRoundupBullet(this)"
+                : "this.closest('.dynamic-field-item').remove()";
             bullets.forEach((b, idx) => {
                 let text = b.summary || b.text || b.headline || (typeof b === 'string' ? b : '');
                 if (typeof text === 'string') {
@@ -5582,7 +5587,7 @@
                 const item = document.createElement('div');
                 item.className = 'dynamic-field-item';
                 item.dataset.bulletIndex = idx;
-                item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                item.innerHTML = '<button class="dynamic-remove-btn" onclick="' + removeHandler + '" title="Remove">&times;</button>' +
                     '<div class="field-group"><label class="field-label">Bullet ' + (idx + 1) + '</label>' +
                     '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + bulletId + '\')" type="button">🔗 Insert Link</button></div>' +
                     '<div class="link-popover" id="lp-' + bulletId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + bulletId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + bulletId + '\')">Insert</button></div></div>' +
@@ -5670,15 +5675,37 @@
             const item = document.createElement('div');
             item.className = 'dynamic-field-item';
             item.dataset.bulletIndex = idx;
-            item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+            // Remove handler also splices generatedRoundupContent so the source-of-truth
+            // array stays in sync with DOM — prevents the array from re-rendering a
+            // ghost bullet after a user deletes one.
+            item.innerHTML = '<button class="dynamic-remove-btn" onclick="removeRoundupBullet(this)" title="Remove">&times;</button>' +
                 '<div class="field-group"><label class="field-label">Bullet ' + (idx + 1) + '</label>' +
                 '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + bulletId + '\')" type="button">🔗 Insert Link</button></div>' +
                 '<div class="link-popover" id="lp-' + bulletId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + bulletId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + bulletId + '\')">Insert</button></div></div>' +
                 '<div class="editable" contenteditable="true" id="' + bulletId + '" data-placeholder="Enter news roundup bullet..." style="min-height: 60px;"></div></div>';
             container.appendChild(item);
+            // Persist to the source-of-truth array so later re-renders (navigation,
+            // auto-save refreshes) don't wipe the manually-added bullet.
+            if (typeof generatedRoundupContent !== 'undefined' && Array.isArray(generatedRoundupContent)) {
+                generatedRoundupContent.push({ summary: '', text: '' });
+            }
             console.log('[addRoundupBullet] Added bullet', idx, 'to', prefix);
             var el = document.getElementById(bulletId);
             if (el) el.focus();
+        }
+
+        // Removes a roundup bullet from both DOM and generatedRoundupContent so the
+        // array stays in sync and renderDynamicBullets won't resurrect the deleted bullet.
+        function removeRoundupBullet(btn) {
+            const item = btn.closest('.dynamic-field-item');
+            if (!item) return;
+            const container = item.parentElement;
+            const items = container ? Array.from(container.querySelectorAll('.dynamic-field-item')) : [];
+            const idx = items.indexOf(item);
+            item.remove();
+            if (idx !== -1 && typeof generatedRoundupContent !== 'undefined' && Array.isArray(generatedRoundupContent) && idx < generatedRoundupContent.length) {
+                generatedRoundupContent.splice(idx, 1);
+            }
         }
 
         function addSpotlightSection(prefix) {
@@ -5894,7 +5921,8 @@
                     if (tipsIntroEl) tipsIntroEl.innerHTML = sanitizeHTML(styleLinksBlue(generatedTipsContent.intro));
                     tips = (generatedTipsContent.tips || []).map(t => ({
                         title: t.title || '',
-                        tip: t.tip || t.content || ''
+                        tip: t.tip || t.content || '',
+                        source_url: t.source_url || t.url || ''
                     }));
                 } else if (Array.isArray(generatedTipsContent)) {
                     if (tipsIntroEl) tipsIntroEl.innerHTML = '';
@@ -9304,7 +9332,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     });
                 }
                 if (tipsItems.length === 0 && generatedTipsContent?.tips) {
-                    tipsItems = generatedTipsContent.tips.map(t => ({ title: t.title || '', tip: t.tip || t.description || '' }));
+                    tipsItems = generatedTipsContent.tips.map(t => ({ title: t.title || '', tip: t.tip || t.description || '', source_url: t.source_url || t.url || '' }));
                 }
             }
 
