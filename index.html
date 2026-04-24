@@ -12277,15 +12277,15 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
 
         // Load published newsletters
         async function loadArchive() {
+            const grid = document.getElementById('archiveGrid');
+            const empty = document.getElementById('archiveContent');
             try {
-                const response = await fetch(`${API_BASE}/api/list-published`);
+                const response = await fetch(`${API_BASE}/api/list-published`, { credentials: 'same-origin' });
                 const data = await response.json();
-                const grid = document.getElementById('archiveGrid');
-                const empty = document.getElementById('archiveContent');
+                console.log('[Archive] API response:', { status: response.status, success: data.success, count: Array.isArray(data.newsletters) ? data.newsletters.length : 'n/a' });
                 if (data.success && data.newsletters && data.newsletters.length > 0) {
                     if (empty) empty.style.display = 'none';
-                    grid.style.display = 'grid';
-                    grid.innerHTML = '';
+                    if (grid) { grid.style.display = 'grid'; grid.innerHTML = ''; }
                     data.newsletters.forEach(n => {
                         const monthCap = n.month ? n.month.charAt(0).toUpperCase() + n.month.slice(1) : '?';
                         const savedBy = n.lastSavedBy || 'unknown';
