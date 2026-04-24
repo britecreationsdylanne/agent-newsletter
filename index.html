@@ -11582,8 +11582,45 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                 skippedResearch = d.skippedResearch || { claims: false, roundup: false, tips: false };
                 // Populate review DOM fields so generateNewsletterHTML() can read them
                 displayGeneratedContent();
+                // generateNewsletterHTML() prefers fc-* (Final Copy) fields over
+                // review-* (Review) fields via `||`, which picks whichever element
+                // EXISTS first, not whichever has content. In viewNewsletter
+                // context the fc-* fields are empty because the user never walked
+                // through step 7b for the published draft, so Brite Spot / Claims
+                // copy would silently drop. Mirror the just-populated review-*
+                // content into fc-* so the existing preference still yields text.
+                const mirrorFields = [
+                    'britespot-title', 'britespot-paragraph',
+                    'claims-title', 'claims-copy',
+                    'spotlight-subheader', 'tips-intro', 'headerIntro'
+                ];
+                const mirroredOriginals = {};
+                mirrorFields.forEach(field => {
+                    const reviewEl = document.getElementById('review-' + field);
+                    const fcEl = document.getElementById('fc-' + field);
+                    if (fcEl) mirroredOriginals[field] = fcEl.innerHTML;
+                    if (reviewEl && fcEl) fcEl.innerHTML = reviewEl.innerHTML;
+                });
+                // Mirror dynamic bullet containers too (roundup, britespot, tips)
+                const mirrorContainers = ['roundup-bullets-container', 'britespot-bullets-container', 'tips-container'];
+                const mirroredContainers = {};
+                mirrorContainers.forEach(id => {
+                    const reviewEl = document.getElementById('review-' + id);
+                    const fcEl = document.getElementById('fc-' + id);
+                    if (fcEl) mirroredContainers[id] = fcEl.innerHTML;
+                    if (reviewEl && fcEl) fcEl.innerHTML = reviewEl.innerHTML;
+                });
                 // Generate preview
                 const html = generateNewsletterHTML();
+                // Restore fc-* fields to what they were before we mirrored
+                mirrorFields.forEach(field => {
+                    const fcEl = document.getElementById('fc-' + field);
+                    if (fcEl && field in mirroredOriginals) fcEl.innerHTML = mirroredOriginals[field];
+                });
+                mirrorContainers.forEach(id => {
+                    const fcEl = document.getElementById('fc-' + id);
+                    if (fcEl && id in mirroredContainers) fcEl.innerHTML = mirroredContainers[id];
+                });
                 document.getElementById('newsletterModalContent').innerHTML = html;
                 document.getElementById('newsletterModal').style.display = 'block';
                 // Restore original state
