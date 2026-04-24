@@ -11568,14 +11568,31 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                 // Set state from published draft
                 selectedMonth = d.month || '';
                 const gc = d.generatedContent || {};
+                // Pull any user-edited titles/subtitles from reviewHTML — they
+                // were saved there at push time but never copied into gc, so
+                // viewNewsletter was falling back to generic labels like
+                // "Curious Claims" and blank Brite Spot titles.
+                const rhStrip = (html) => {
+                    if (!html) return '';
+                    const tmp = document.createElement('div');
+                    tmp.innerHTML = html;
+                    return (tmp.textContent || '').trim();
+                };
+                const rh = d.reviewHTML || {};
                 headerIntroContent = gc.headerIntro || '';
                 briteSpotContent = gc.briteSpot || '';
-                generatedBriteSpotTitle = gc.briteSpotTitle || '';
+                generatedBriteSpotTitle = rhStrip(rh['britespot-title']) || gc.briteSpotTitle || '';
                 briteSpotBullets = gc.briteSpotBullets || [];
                 generatedClaimsContent = gc.claims || '';
+                // Seed selectedClaims so displayGeneratedContent can read the
+                // saved claims title instead of defaulting to "Curious Claims".
+                const claimsTitleFromRH = rhStrip(rh['claims-title']);
+                if (claimsTitleFromRH) {
+                    selectedClaims = Object.assign({}, selectedClaims || {}, { title: claimsTitleFromRH });
+                }
                 generatedRoundupContent = gc.roundup || '';
                 generatedSpotlightContent = gc.spotlight || '';
-                generatedSpotlightSubheader = gc.spotlightSubheader || '';
+                generatedSpotlightSubheader = rhStrip(rh['spotlight-subheader']) || gc.spotlightSubheader || '';
                 generatedTipsContent = gc.tips || '';
                 generatedIntroContent = gc.intro || '';
                 generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null };
