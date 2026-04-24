@@ -4599,13 +4599,17 @@ def list_published():
         newsletters = []
 
         def preview_text(val, fallback):
-            """Coerce a stored section value (string OR dict) to an 80-char preview."""
+            """Coerce a stored section value (string OR dict) to an 80-char preview.
+            Strips HTML tags so <p>...</p> wrappers don't eat into the preview length.
+            """
             if not val:
                 return fallback
             if isinstance(val, dict):
                 # Spotlight/BriteSpot are sometimes saved as {subheader, body, h3s}
                 val = val.get('subheader') or val.get('title') or val.get('body') or fallback
-            return str(val)[:80]
+            text = re.sub(r'<[^>]+>', '', str(val))  # strip HTML tags
+            text = re.sub(r'\s+', ' ', text).strip()  # collapse whitespace
+            return text[:80] if text else fallback
 
         for blob in blobs:
             if not blob.name.endswith('.json'):
@@ -4613,16 +4617,23 @@ def list_published():
             try:
                 data = json.loads(blob.download_as_text())
                 gc = data.get('generatedContent', {}) or {}
+                # Prefer explicit subheader, then spotlight dict's subheader, then spotlight string
+                spotlight_preview = gc.get('spotlightSubheader') or gc.get('spotlight')
                 newsletters.append({
                     'filename': blob.name,
                     'month': data.get('month'),
                     'year': data.get('year'),
                     'lastSavedBy': data.get('lastSavedBy'),
                     'lastSavedAt': data.get('lastSavedAt'),
+                    # Keys match the frontend archive card: briteSpot, claims, spotlight
                     'sections': {
+                        'briteSpot': {'title': preview_text(gc.get('briteSpot'), 'Brite Spot')},
+                        'claims': {'title': preview_text(gc.get('claims') or gc.get('curious_claims'), 'Curious Claims')},
+                        'spotlight': {'title': preview_text(spotlight_preview, 'Spotlight')},
+                        # Legacy keys kept for any cached UI that still reads these
                         'news': {'title': preview_text(gc.get('headerIntro'), 'Newsletter')},
                         'tip': {'title': preview_text(gc.get('briteSpot'), 'Brite Spot')},
-                        'trend': {'title': preview_text(gc.get('spotlight'), 'Spotlight')},
+                        'trend': {'title': preview_text(spotlight_preview, 'Spotlight')},
                     }
                 })
             except Exception as item_err:
