@@ -8577,9 +8577,9 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
 
             // Shared helper: restyle all <p>, <h3>, <h4> tags with full inline styles, stripping any existing style/class attrs
             const restyleParagraphs = (html) => {
-                html = html.replace(/<p[^>]*>/gi, '<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">');
-                html = html.replace(/<h3[^>]*>/gi, '<h3 style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">');
-                html = html.replace(/<h4[^>]*>/gi, '<h4 style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;font-weight:600;color:#272D3F;">');
+                html = html.replace(/<p[^>]*>/gi, '<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">');
+                html = html.replace(/<h3[^>]*>/gi, '<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">');
+                html = html.replace(/<h4[^>]*>/gi, '<h4 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;font-weight:600;color:#272D3F;">');
                 return html;
             };
 
@@ -8620,11 +8620,11 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
                 if (paragraphs.length > 1) {
                     return stripLastPMargin(paragraphs.map(p =>
-                        `<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
+                        `<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
                     ).join(''));
                 }
                 // Single paragraph
-                return `<p style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
+                return `<p class="dark-text-secondary" style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
             };
 
             // Helper to format brite spot text with proper paragraph styling
@@ -8647,10 +8647,10 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
                 if (paragraphs.length > 1) {
                     return stripLastPMargin(paragraphs.map(p =>
-                        `<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
+                        `<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
                     ).join(''));
                 }
-                return `<p style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
+                return `<p class="dark-text-secondary" style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
             };
 
             // Helper to generate bullet items with checkmark images
@@ -11434,7 +11434,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
 
         // Initialize
         initMonths();
-        loadNewsletterArchive();
+        loadArchive();
 
         // Newsletter Archive Functions
         async function loadNewsletterArchive() {
@@ -11522,7 +11522,6 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                     body: JSON.stringify({ file: filename })
                 });
                 console.log('[Published] Deleted:', filename);
-                loadNewsletterArchive();
                 loadArchive();
             } catch (e) {
                 console.error('[Published] Delete failed:', e);
@@ -12000,7 +11999,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                     console.error('[Draft] Publish API returned error:', result.error);
                 }
                 await loadDrafts();
-                await loadNewsletterArchive();
+                await loadArchive();
             } catch (e) {
                 console.error('[Draft] Publish failed:', e);
             }
