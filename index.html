@@ -2096,6 +2096,7 @@
                         <span class="research-card-badge">AI + Citations</span>
                     </div>
                     <p class="research-card-description">Searches the web via Perplexity AI, then GPT-5.2 transforms findings into newsletter-ready articles with agent-specific insights.</p>
+                    <p style="font-size:11px;color:#6b7280;margin:-6px 0 10px 0;font-style:italic;">Note: Perplexity does not return publish dates per article. Use the time window filter below to constrain recency.</p>
                     <div class="research-card-filters">
                         <input type="text" id="perplexityQuery" placeholder="e.g., insurance fraud, strange claim, lawsuit verdict..." value="unusual bizarre insurance claim lawsuit settlement story">
                         <select id="perplexityTimeWindow">
@@ -3547,6 +3548,7 @@
                     <span class="research-result-badge" style="background: #059669; color: white;">CUSTOM</span>
                     <div class="research-result-meta">
                         <span>${escapeHTML(article.publisher || '')}</span>
+                        ${article.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${escapeHTML(article.published_at)}</span>` : ''}
                         <a href="${escapeHTML(article.url || '')}" target="_blank" onclick="event.stopPropagation()">Source →</a>
                         <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                     </div>
@@ -3714,6 +3716,7 @@
                     <span class="research-result-badge saved">SAVED</span>
                     <div class="research-result-meta">
                         <span>${escapeHTML(article.publisher || '')}</span>
+                        ${article.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${escapeHTML(article.published_at)}</span>` : ''}
                         <a href="${escapeHTML(article.url || '')}" target="_blank" onclick="event.stopPropagation()">Source →</a>
                         <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                         <button class="dots-btn" style="color: #f59e0b;" onclick="event.stopPropagation(); toggleDotsMenu(this, ${savedArticleIdx})">⋮</button>
@@ -4751,6 +4754,7 @@
                         <span class="research-result-badge" style="background: ${colors.bg}; color: ${colors.text};">${impact}</span>
                         <div class="research-result-meta">
                             <span>${result.publisher || ''}</span>
+                            ${result.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${result.published_at}</span>` : ''}
                             ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
                             <input type="checkbox" class="research-result-checkbox" ${isSelected ? 'checked' : ''} onclick="handleCheckboxClick(this, event)">
                             <button class="dots-btn" ${isSaved ? 'style="color: #f59e0b;"' : ''} onclick="event.stopPropagation(); toggleDotsMenu(this, ${articleIdx})">⋮</button>
@@ -8551,6 +8555,27 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 return html;
             };
 
+            // Collapse the last paragraph's bottom margin so the section's 15px
+            // bottom spacer is the only thing creating the gap (avoids 16px margin
+            // + 15px spacer stacking into 31px of visible space at section bottom).
+            const stripLastPMargin = (html) => {
+                if (!html) return html;
+                const lastIdx = html.lastIndexOf('margin:0 0 16px 0');
+                if (lastIdx === -1) return html;
+                return html.substring(0, lastIdx) + 'margin:0' + html.substring(lastIdx + 'margin:0 0 16px 0'.length);
+            };
+
+            // Strip empty placeholder elements (e.g. <h3>&nbsp;</h3>, <p>&nbsp;</p>)
+            // that sometimes leak in from AI-generated content and create dead space.
+            const stripEmptyPlaceholders = (html) => {
+                if (!html) return html;
+                return html
+                    .replace(/<(h[1-6]|p)\b[^>]*>\s*(&nbsp;|&#160;|\u00a0|\s)*\s*<\/\1>/gi, '')
+                    .replace(/<br\s*\/?>\s*(<br\s*\/?>)+/gi, '<br>')
+                    .replace(/(<br\s*\/?>\s*)+$/i, '')
+                    .trim();
+            };
+
             // Helper to format claims text with proper paragraph spacing
             const formatClaimsText = (text) => {
                 if (!text) return '';
@@ -8558,16 +8583,17 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 if (claimsTitle) {
                     text = text.replace(new RegExp('^\\s*(<p[^>]*>)?\\s*(<strong>|<b>|<h[1-4][^>]*>)?' + claimsTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(<\\/strong>|<\\/b>|<\\/h[1-4]>)?\\s*(<\\/p>)?\\s*', 'i'), '');
                 }
+                text = stripEmptyPlaceholders(text);
                 // If text already has <p> tags, restyle them with full inline styles
                 if (text.includes('<p')) {
-                    return restyleParagraphs(text);
+                    return stripLastPMargin(restyleParagraphs(text));
                 }
                 // If plain text, split by double newlines and wrap in paragraphs
                 const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
                 if (paragraphs.length > 1) {
-                    return paragraphs.map(p =>
+                    return stripLastPMargin(paragraphs.map(p =>
                         `<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
-                    ).join('');
+                    ).join(''));
                 }
                 // Single paragraph
                 return `<p style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
@@ -8584,18 +8610,19 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 text = text.replace(/<font[^>]*>([\s\S]*?)<\/font>/gi, '$1');
                 text = text.replace(/<strong[^>]*>/gi, '<strong>').replace(/<em[^>]*>/gi, '<em>').replace(/<b[^>]*>/gi, '<strong>').replace(/<\/b>/gi, '</strong>').replace(/<i[^>]*>/gi, '<em>').replace(/<\/i>/gi, '</em>');
                 text = text.replace(/<div[^>]*>/gi, '<p>').replace(/<\/div>/gi, '</p>');
+                text = stripEmptyPlaceholders(text);
                 // If text has <p> tags, restyle them with full inline styles
                 if (text.includes('<p')) {
-                    return restyleParagraphs(text);
+                    return stripLastPMargin(restyleParagraphs(text));
                 }
                 // If plain text with double newlines, split into paragraphs
                 const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
                 if (paragraphs.length > 1) {
-                    return paragraphs.map(p =>
+                    return stripLastPMargin(paragraphs.map(p =>
                         `<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
-                    ).join('');
+                    ).join(''));
                 }
-                return `<p style="margin:0 0 6px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
+                return `<p style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
             };
 
             // Helper to generate bullet items with checkmark images
@@ -8618,8 +8645,8 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right:12px;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
-                        <td style="padding-bottom: ${index === items.length - 1 ? '0' : '16px'};" valign="top">
+                        <td style="padding-right:12px;vertical-align:top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
+                        <td style="padding-bottom:${index === items.length - 1 ? '0' : '16px'};padding-top:19px;vertical-align:top;" valign="top">
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.summary || item}</p>
                         </td>
                     </tr>
@@ -8799,23 +8826,23 @@ briteSpotLayout === 'portrait' ? `
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td>
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
 
-<!-- Copy -->
+${briteSpotText ? `<!-- Copy -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-${briteSpotText ? formatBriteSpotText(briteSpotText) : ''}
+${formatBriteSpotText(briteSpotText)}
 </td>
 </tr>
 </tbody>
-</table>
+</table>` : ''}
 
-<!-- Bullet points -->
+${(briteSpotBullets && briteSpotBullets.length) ? `<!-- Bullet points -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
@@ -8824,12 +8851,12 @@ ${generateBulletItems(briteSpotBullets)}
 </td>
 </tr>
 </tbody>
-</table>
+</table>` : ''}
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td>
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -8920,14 +8947,6 @@ ${ssPosition === 'after-claims' ? specialSectionHtml : ''}
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
-</tr>
-</tbody>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
 <td style="padding:0 15px;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tbody>
@@ -9002,13 +9021,13 @@ ${(() => {
     t = t.replace(/^\s*<h4[^>]*>[\s\S]*?<\/h4>\s*/i, '');
     // Strip markdown # headers from body text
     t = t.replace(/^#{1,6}\s+/gm, '');
-    // Strip empty/whitespace-only paragraphs
-    t = t.replace(/<p[^>]*>(\s|&nbsp;|\u00a0)*<\/p>/gi, '').trim();
+    // Strip empty placeholders (<h1-6>&nbsp;</>, <p>&nbsp;</p>, trailing <br>)
+    t = stripEmptyPlaceholders(t);
     if (!t) return '';
     let html = restyleParagraphs(t.includes('<p') ? t : '<p>' + t + '</p>');
-    // Remove bottom margin from last paragraph to avoid extra space at bottom of box
-    const lastMarginIdx = html.lastIndexOf('margin:0 0 16px 0');
-    if (lastMarginIdx !== -1) html = html.substring(0, lastMarginIdx) + 'margin:0 0 0 0' + html.substring(lastMarginIdx + 'margin:0 0 16px 0'.length);
+    // Remove bottom margin from last paragraph so the 15px bottom spacer is
+    // the only thing creating the gap at section bottom.
+    html = stripLastPMargin(html);
     return html;
 })()}
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
@@ -9020,15 +9039,23 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     return a !== b && !a.includes(b) && !b.includes(a);
 }).map((section, idx, arr) => {
     // Strip trailing <br> tags and markdown # headers from body text (both plain and inside <p>)
-    const body = (section.body || section.content || '')
+    const body = stripEmptyPlaceholders((section.body || section.content || '')
         .replace(/(<br\s*\/?>\s*)+$/, '')
         .replace(/^#{1,6}\s+/gm, '')
         .replace(/<p([^>]*)>\s*#{1,6}\s+/g, '<p$1>')
-        .trim();
+        .trim());
     return `<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
 <p class="dark-text-secondary" style="margin:0 0 ${idx === arr.length - 1 ? '0' : '16'}px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${body}</p>`;
 }).join('') : ''}
 </td>
+</tr>
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -9090,14 +9117,6 @@ ${tipsIntro ? `<p class="dark-text-secondary" style="margin:0;font-family:Montse
 <td style="padding:0 15px;font-size:0;line-height:0;">
 <img alt="The Agent Advantage" src="${tipsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
 </td>
-</tr>
-</tbody>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -10261,6 +10280,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                         ${signalTags}
                         <div class="research-result-meta">
                             <span>${escapeHTML(result.publisher || '')}</span>
+                            ${result.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${escapeHTML(result.published_at)}</span>` : ''}
                             ${result.url ? `<a href="${escapeHTML(result.url)}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
                             <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                             <button class="dots-btn" ${isSaved ? 'style="color: #f59e0b;"' : ''} onclick="event.stopPropagation(); toggleDotsMenu(this, ${articleIdx})">⋮</button>
@@ -11099,6 +11119,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                         <span class="research-result-badge" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text};">${contentType.replace('_', ' ').toUpperCase()}</span>
                         <div class="research-result-meta">
                             <span>${result.publisher || 'Unknown source'}</span>
+                            ${result.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${result.published_at}</span>` : ''}
                             ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
                             <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                             <button class="dots-btn" ${isSaved ? 'style="color: #f59e0b;"' : ''} onclick="event.stopPropagation(); toggleDotsMenu(this, ${articleIdx})">⋮</button>
