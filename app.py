@@ -4597,10 +4597,22 @@ def list_published():
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blobs = list(bucket.list_blobs(prefix='published/'))
         newsletters = []
+
+        def preview_text(val, fallback):
+            """Coerce a stored section value (string OR dict) to an 80-char preview."""
+            if not val:
+                return fallback
+            if isinstance(val, dict):
+                # Spotlight/BriteSpot are sometimes saved as {subheader, body, h3s}
+                val = val.get('subheader') or val.get('title') or val.get('body') or fallback
+            return str(val)[:80]
+
         for blob in blobs:
-            if blob.name.endswith('.json'):
+            if not blob.name.endswith('.json'):
+                continue
+            try:
                 data = json.loads(blob.download_as_text())
-                gc = data.get('generatedContent', {})
+                gc = data.get('generatedContent', {}) or {}
                 newsletters.append({
                     'filename': blob.name,
                     'month': data.get('month'),
@@ -4608,11 +4620,15 @@ def list_published():
                     'lastSavedBy': data.get('lastSavedBy'),
                     'lastSavedAt': data.get('lastSavedAt'),
                     'sections': {
-                        'news': {'title': gc.get('headerIntro', 'Newsletter')[:80] if gc.get('headerIntro') else 'Newsletter'},
-                        'tip': {'title': gc.get('briteSpot', 'Brite Spot')[:80] if gc.get('briteSpot') else 'Brite Spot'},
-                        'trend': {'title': gc.get('spotlight', 'Spotlight')[:80] if gc.get('spotlight') else 'Spotlight'},
+                        'news': {'title': preview_text(gc.get('headerIntro'), 'Newsletter')},
+                        'tip': {'title': preview_text(gc.get('briteSpot'), 'Brite Spot')},
+                        'trend': {'title': preview_text(gc.get('spotlight'), 'Spotlight')},
                     }
                 })
+            except Exception as item_err:
+                # One bad blob shouldn't take down the entire archive listing
+                safe_print(f"[PUBLISHED LIST WARN] skipping {blob.name}: {item_err}")
+                continue
         newsletters.sort(key=lambda d: d.get('lastSavedAt', ''), reverse=True)
         return jsonify({'success': True, 'newsletters': newsletters})
     except Exception as e:
