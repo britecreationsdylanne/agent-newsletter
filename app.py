@@ -3001,8 +3001,11 @@ PARAGRAPH STRUCTURE:
 - Paragraph 2: The twist/absurdity/resolution (what happened, why it's memorable)
 - Paragraph 3 (optional): Brief agent takeaway or amusing insight
 
+CRITICAL — PRESERVE THE SOURCE LINK:
+The research briefing above contains a hyperlink (in markdown format [text](url) or as an <a href> tag) pointing to the original source article. You MUST preserve this exact same URL in your condensed version. Pick a meaningful 2-5 word phrase from your story and turn it into a markdown link [phrase](url) using the exact URL from the research. Place it naturally inline (e.g., "as [WLOS reported](url)" or "the [bizarre incident](url)"). Do NOT add a separate "Read more" line or "Source:" footer — the link must be inline and feel organic to the prose. If the research has no link, skip this requirement.
+
 OUTPUT FORMAT:
-<p>First paragraph content here...</p>
+<p>First paragraph content here, with [embedded link](url) somewhere inline...</p>
 <p>Second paragraph content here...</p>
 <p>Optional third paragraph...</p>
 
@@ -3987,6 +3990,13 @@ def export_to_docs():
             offset = add_text.__defaults__[2]
             if not html_val:
                 return
+            # Safety net: convert markdown [text](url) → <a href="url">text</a>
+            # so links pasted/generated in markdown form survive export.
+            html_val = re.sub(
+                r'\[([^\]]+)\]\((https?://[^)\s]+)\)',
+                r'<a href="\2">\1</a>',
+                html_val
+            )
             # Strip to plain text but keep <a> tags
             text_val = html_to_plain_text_keep_links(html_val)
             # Parse segments: plain text and links

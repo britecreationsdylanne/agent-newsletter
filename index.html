@@ -6561,7 +6561,40 @@
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('paste', stripFormattingPaste);
             });
+            // Claims fields: preserve hyperlinks on paste (HTML <a> tags AND markdown [text](url))
+            ['review-claims-copy','fc-claims-copy'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('paste', preserveLinksPaste);
+            });
         });
+
+        // Paste handler for fields where hyperlinks must survive.
+        // Keeps <a href> tags from HTML clipboard; converts markdown [text](url) to <a> from plain text.
+        function preserveLinksPaste(e) {
+            e.preventDefault();
+            const html = e.clipboardData.getData('text/html');
+            const text = e.clipboardData.getData('text/plain');
+            if (html) {
+                let clean = html
+                    .replace(/<!--[\s\S]*?-->/g, '')
+                    .replace(/<style[\s\S]*?<\/style>/gi, '')
+                    .replace(/<meta[^>]*>/gi, '')
+                    .replace(/<span[^>]*>/gi, '').replace(/<\/span>/gi, '')
+                    .replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '')
+                    .replace(/<b\b[^>]*>/gi, '<strong>').replace(/<\/b>/gi, '</strong>')
+                    .replace(/<i\b[^>]*>/gi, '<em>').replace(/<\/i>/gi, '</em>')
+                    .replace(/<div[^>]*>/gi, '<p>').replace(/<\/div>/gi, '</p>')
+                    .replace(/<p[^>]*>/gi, '<p>');
+                document.execCommand('insertHTML', false, clean);
+            } else if (text) {
+                const linked = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
+                if (linked !== text) {
+                    document.execCommand('insertHTML', false, linked);
+                } else {
+                    document.execCommand('insertText', false, text);
+                }
+            }
+        }
 
         // Auto-save on page close/navigate away
         window.addEventListener('beforeunload', (e) => {
