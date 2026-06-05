@@ -38,6 +38,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 
 from integrations.openai_client import OpenAIClient
 from integrations.gemini_client import GeminiClient
+from integrations.openai_image_client import OpenAIImageClient
 from integrations.claude_client import ClaudeClient
 from integrations.perplexity_client import PerplexityClient
 from integrations.ontraport_client import OntraportClient
@@ -166,10 +167,9 @@ def html_to_plain_text(html_content):
 
 # Initialize AI clients
 openai_client = OpenAIClient()
-gemini_client = GeminiClient()
-if not gemini_client.is_available():
-    print("[WARNING] Gemini image generation not available - add GOOGLE_AI_API_KEY to .env")
-    print("         Get your API key at: https://aistudio.google.com/app/apikey")
+image_client = OpenAIImageClient()  # GPT Image 2 (primary image generation)
+if not image_client.is_available():
+    print("[WARNING] Image generation not available - add OPENAI_API_KEY to .env")
 
 # Try to initialize Claude (optional)
 try:
@@ -467,7 +467,7 @@ def analyze_industry_impact(results: list, theme_context: dict = None) -> list:
     try:
         # Get model config for research enrichment task
         model_config = get_model_for_task('research_enrichment')
-        model_id = model_config.get('id', 'gpt-5.2')
+        model_id = model_config.get('id', 'gpt-5.5')
         max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
 
         safe_print(f"[Insight Builder] Analyzing {len(results)} results with {model_id}...")
@@ -582,7 +582,7 @@ def analyze_story_angles(results: list, user_query: str, theme_context: dict = N
     try:
         # Get model config for research enrichment task
         model_config = get_model_for_task('research_enrichment')
-        model_id = model_config.get('id', 'gpt-5.2')
+        model_id = model_config.get('id', 'gpt-5.5')
         max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
 
         safe_print(f"[Source Explorer] Analyzing {len(results)} results with {model_id}...")
@@ -697,7 +697,7 @@ def enrich_results_with_llm(results: list, original_query: str, theme_context: d
     try:
         # Get model config for research enrichment task
         model_config = get_model_for_task('research_enrichment')
-        model_id = model_config.get('id', 'gpt-5.2')
+        model_id = model_config.get('id', 'gpt-5.5')
         max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
 
         safe_print(f"[Enrichment] Using model: {model_id}")
@@ -1083,7 +1083,7 @@ Output ONLY the rewritten content, no labels or explanations."""
         result = claude_client.generate_content(
             prompt=rewrite_bs_prompt,
             system_prompt=rewrite_bs_system,
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-8",
             temperature=0.6,
             max_tokens=200
         )
@@ -1216,7 +1216,7 @@ Output ONLY the content, no labels or explanations."""
         result = claude_client.generate_content(
             prompt=prompt,
             system_prompt=rewrite_system,
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-8",
             temperature=0.6,
             max_tokens=400
         )
@@ -1279,7 +1279,7 @@ def discover_spotlight_themes():
             results_text += f"\nArticle {i+1}:\n- Title: {r.get('title', '')}\n- URL: {r.get('url', '')}\n- Summary: {r.get('snippet', r.get('summary', ''))[:300]}\n"
 
         model_config = get_model_for_task('research_enrichment')
-        model_id = model_config.get('id', 'gpt-5.2')
+        model_id = model_config.get('id', 'gpt-5.5')
         max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
 
         cluster_prompt = f"""You are an editorial assistant for "The BriteCo Brief", a monthly P&C insurance newsletter for independent agents.
@@ -1377,7 +1377,7 @@ def refine_spotlight_themes():
             results_text += f"\nArticle {i+1}:\n- Title: {a.get('title', a.get('headline', ''))}\n- URL: {url}\n- Summary: {a.get('snippet', a.get('summary', a.get('so_what', '')))[:300]}\n"
 
         model_config = get_model_for_task('research_enrichment')
-        model_id = model_config.get('id', 'gpt-5.2')
+        model_id = model_config.get('id', 'gpt-5.5')
         max_tokens_param = model_config.get('max_tokens_param', 'max_tokens')
 
         refine_prompt = f"""You are an editorial assistant for "The BriteCo Brief", a P&C insurance newsletter for independent agents.
@@ -1645,7 +1645,7 @@ Output as plain text - headline on first line, then paragraphs separated by blan
         result = claude_client.generate_content(
             prompt=spotlight_prompt,
             system_prompt=spotlight_system,
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-8",
             temperature=0.5,
             max_tokens=2000
         )
@@ -2408,7 +2408,7 @@ Output the complete story as flowing prose, not as labeled sections."""
             claims_research = claude_client.generate_content(
                 prompt=claims_prompt,
                 system_prompt=claims_system,
-                model="claude-opus-4-5-20251101",
+                model="claude-opus-4-8",
                 temperature=0.7,
                 max_tokens=800
             )
@@ -2448,7 +2448,7 @@ Output ONLY the bullet text, nothing else."""
                 roundup_result = claude_client.generate_content(
                     prompt=roundup_prompt,
                     system_prompt=roundup_system,
-                    model="claude-opus-4-5-20251101",
+                    model="claude-opus-4-8",
                     temperature=0.5,
                     max_tokens=150
                 )
@@ -2539,7 +2539,7 @@ Output ONLY the intro and tips in this format, nothing else."""
                 tips_result = claude_client.generate_content(
                     prompt=tips_prompt,
                     system_prompt=tips_system,
-                    model="claude-opus-4-5-20251101",
+                    model="claude-opus-4-8",
                     temperature=0.6,
                     max_tokens=800
                 )
@@ -2670,7 +2670,7 @@ Output ONLY the introduction text, no labels or formatting."""
             intro_result = claude_client.generate_content(
                 prompt=intro_prompt,
                 system_prompt=intro_system,
-                model="claude-opus-4-5-20251101",
+                model="claude-opus-4-8",
                 temperature=0.7,
                 max_tokens=150
             )
@@ -2715,7 +2715,7 @@ Output ONLY the text, no title or labels."""
                 auto_bs_result = claude_client.generate_content(
                     prompt=auto_bs_prompt,
                     system_prompt=auto_bs_system,
-                    model="claude-opus-4-5-20251101",
+                    model="claude-opus-4-8",
                     temperature=0.6,
                     max_tokens=150
                 )
@@ -2770,7 +2770,7 @@ Output ONLY the Brite Spot text, no title or labels."""
             brite_spot_result = claude_client.generate_content(
                 prompt=brite_spot_prompt,
                 system_prompt=brite_spot_system,
-                model="claude-opus-4-5-20251101",
+                model="claude-opus-4-8",
                 temperature=0.6,
                 max_tokens=200
             )
@@ -2836,7 +2836,7 @@ Output ONLY the paragraphs in <p> tags, no title or labels."""
             claims_result = claude_client.generate_content(
                 prompt=claims_gen_prompt,
                 system_prompt=claims_gen_system,
-                model="claude-opus-4-5-20251101",
+                model="claude-opus-4-8",
                 temperature=0.65,
                 max_tokens=400
             )
@@ -2922,7 +2922,7 @@ Output ONLY the image generation prompt, nothing else."""
 
             prompt_result = claude_client.generate_content(
                 prompt=prompt_request,
-                model="claude-opus-4-5-20251101",
+                model="claude-opus-4-8",
                 temperature=0.5,
                 max_tokens=150
             )
@@ -2958,8 +2958,8 @@ def generate_image():
         print(f"\n[API] Generating image for {section}...")
         safe_print(f"  Prompt: {prompt[:100]}...")
 
-        # Generate image using Gemini
-        result = gemini_client.generate_image(
+        # Generate image using GPT Image 2
+        result = image_client.generate_image(
             prompt=prompt,
             aspect_ratio="16:9"
         )
@@ -3032,11 +3032,11 @@ def generate_images():
     try:
         data = request.json
 
-        # Check if Gemini is available
-        if not gemini_client or not gemini_client.is_available():
+        # Check if the image client is available
+        if not image_client or not image_client.is_available():
             return jsonify({
                 'success': False,
-                'error': 'Gemini API not configured. Please add GOOGLE_AI_API_KEY to your .env file. Get a key from https://aistudio.google.com/app/apikey'
+                'error': 'OpenAI API not configured. Please add OPENAI_API_KEY to your .env file. Get a key from https://platform.openai.com/api-keys'
             }), 503
 
         # Handle single-image request (from special section)
@@ -3045,7 +3045,7 @@ def generate_images():
         if single_prompt and single_section:
             print(f"\n[API] Single image request for {single_section}")
             try:
-                image_result = gemini_client.generate_image(
+                image_result = image_client.generate_image(
                     prompt=single_prompt,
                     aspect_ratio="16:9"
                 )
@@ -3069,7 +3069,7 @@ def generate_images():
         else:
             prompts = data.get('prompts', {})  # Pre-generated or user-edited prompts
 
-        print(f"\n[API] Generating images with Nano Banana (Gemini)...")
+        print(f"\n[API] Generating images with GPT Image 2...")
         print(f"[API] Received {len(prompts)} prompts")
 
         images = {}
@@ -3082,9 +3082,9 @@ def generate_images():
             # All section images are now full-width landscape (16:9)
             aspect_ratio = "16:9"
 
-            # Generate with Gemini (Nano Banana)
-            print(f"  [{section_name.upper()}] Calling Nano Banana...")
-            image_result = gemini_client.generate_image(
+            # Generate with GPT Image 2
+            print(f"  [{section_name.upper()}] Calling GPT Image 2...")
+            image_result = image_client.generate_image(
                 prompt=prompt,
                 aspect_ratio=aspect_ratio
             )
@@ -3203,7 +3203,7 @@ Output ONLY the subject line, nothing else."""
 
         subject_result = claude_client.generate_content(
             prompt=subject_prompt,
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-8",
             temperature=0.6,
             max_tokens=50
         )
@@ -3220,7 +3220,7 @@ Output ONLY the preview text, nothing else."""
 
         preview_result = claude_client.generate_content(
             prompt=preview_prompt,
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-8",
             temperature=0.5,
             max_tokens=60
         )
@@ -3285,7 +3285,7 @@ Output EXACTLY 4 subject lines, one per line, numbered 1-4. No other text."""
 
         subject_result = claude_client.generate_content(
             prompt=subject_prompt,
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-8",
             temperature=0.7,
             max_tokens=300
         )
@@ -3324,7 +3324,7 @@ Output EXACTLY 4 preheader options, one per line, numbered 1-4. No other text.""
 
         preheader_result = claude_client.generate_content(
             prompt=preheader_prompt,
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-8",
             temperature=0.7,
             max_tokens=400
         )
@@ -3464,7 +3464,7 @@ CONTENT TO REVIEW:
 
         check_result = claude_client.generate_content(
             prompt=check_prompt,
-            model="claude-opus-4-5-20251101",
+            model="claude-opus-4-8",
             temperature=0.2,
             max_tokens=1500
         )
