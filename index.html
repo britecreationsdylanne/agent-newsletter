@@ -2096,6 +2096,7 @@
                         <span class="research-card-badge">AI + Citations</span>
                     </div>
                     <p class="research-card-description">Searches the web via Perplexity AI, then GPT-5.5 transforms findings into newsletter-ready articles with agent-specific insights.</p>
+                    <p style="font-size:11px;color:#6b7280;margin:-6px 0 10px 0;font-style:italic;">Note: Perplexity does not return publish dates per article. Use the time window filter below to constrain recency.</p>
                     <div class="research-card-filters">
                         <input type="text" id="perplexityQuery" placeholder="e.g., insurance fraud, strange claim, lawsuit verdict..." value="unusual bizarre insurance claim lawsuit settlement story">
                         <select id="perplexityTimeWindow">
@@ -2251,6 +2252,10 @@
             <div class="content-section">
                 <h3>Brite Spot</h3>
                 <div class="field-group">
+                    <label class="field-label">Title <span style="font-weight:400;font-size:11px;color:#999;">(optional — clear to remove)</span></label>
+                    <div class="editable editable-sm" contenteditable="true" id="review-britespot-title"></div>
+                </div>
+                <div class="field-group">
                     <label class="field-label">Paragraph</label>
                     <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-britespot-paragraph')" type="button">🔗 Insert Link</button></div>
                     <div class="link-popover" id="lp-review-britespot-paragraph">
@@ -2265,6 +2270,36 @@
                 </div>
                 <div class="dynamic-fields-container" id="review-britespot-bullets-container"></div>
                 <button type="button" class="btn-secondary btn" onclick="addBriteSpotBullet('review-')" style="margin: 10px 0; font-size: 13px;">+ Add Bullet</button>
+
+                <!-- AI Rewrite Assist for Brite Spot -->
+                <div style="margin-top:16px;border:2px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                    <button type="button" onclick="toggleBriteSpotAIAssist()" style="width:100%;text-align:left;padding:10px 16px;background:#f9fafb;border:none;cursor:pointer;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;">
+                        <span id="britespot-assist-toggle-icon">▶</span> ✨ AI Rewrite Assist
+                    </button>
+                    <div id="britespot-assist-panel" style="display:none;padding:16px;">
+                        <p style="margin:0 0 12px 0;font-size:13px;color:#666;">Paste article URL(s) or notes for context — AI rewrites your paragraph using them as reference.</p>
+                        <label class="field-label">Reference Articles / Notes</label>
+                        <textarea id="britespot-review-reference" rows="4" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:6px;font-size:14px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;" placeholder="Paste article URL(s), key facts, or notes here..."></textarea>
+                        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+                            <label style="font-size:13px;font-weight:600;">Tone:</label>
+                            <select id="britespot-review-tone" style="padding:8px;border:2px solid #e5e7eb;border-radius:6px;font-size:13px;">
+                                <option value="friendly">Friendly</option>
+                                <option value="informative">Informative</option>
+                                <option value="witty">Witty</option>
+                                <option value="exciting">Exciting</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                            <button type="button" class="btn" style="padding:8px 16px;font-size:13px;" onclick="rewriteBriteSpotInReview()">✨ Rewrite</button>
+                        </div>
+                        <div id="britespot-review-result" style="display:none;background:#f0fdf4;border:2px solid #22c55e;border-radius:8px;padding:14px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span style="font-weight:600;color:#15803d;font-size:13px;">AI Rewritten Version</span>
+                                <button type="button" class="btn" style="padding:6px 12px;font-size:12px;" onclick="useBriteSpotReviewRewrite()">Use This Version</button>
+                            </div>
+                            <div id="britespot-review-result-text" style="color:#166534;line-height:1.6;font-size:14px;white-space:pre-wrap;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="content-section">
@@ -2460,12 +2495,8 @@
                                 <span>John Ortbal (john.ortbal@brite.co)</span>
                             </label>
                             <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="stef.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Stef Lynn (stef.lynn@brite.co)</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
-                                <input type="checkbox" class="docRecipientCheckbox" value="selena.fragassi@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
-                                <span>Selena Fragassi (selena.fragassi@brite.co)</span>
+                                <input type="checkbox" class="docRecipientCheckbox" value="stephanie.lynn@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
+                                <span>Stephanie Lynn (stephanie.lynn@brite.co)</span>
                             </label>
                             <label style="display: flex; align-items: center; cursor: pointer; font-size: 13px;">
                                 <input type="checkbox" class="docRecipientCheckbox" value="dylanne.crugnale@brite.co" checked style="margin-right: 8px; width: 16px; height: 16px;">
@@ -2489,6 +2520,25 @@
                         <div id="emailSendResult" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px;"></div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Attach to ClickUp Section -->
+            <div id="clickupSection" style="display: none; margin-top: 20px; padding: 20px; background: #f8f9fa; border: 2px solid #e5e7eb; border-radius: 8px;">
+                <h3 style="margin: 0 0 10px 0; color: #7b68ee;">Attach Draft to ClickUp</h3>
+                <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">Link your exported Google Doc to the ClickUp task.</p>
+
+                <button class="btn" onclick="searchClickUpTasks()" id="clickupSearchBtn" style="background: #7b68ee;">
+                    <span id="clickupSearchBtnText">Search ClickUp Tasks</span>
+                </button>
+
+                <div id="clickupResults" style="display: none; margin-top: 15px;">
+                    <div id="clickupTaskList" style="margin-bottom: 15px;"></div>
+                    <button class="btn" onclick="attachDraftToClickUp()" id="clickupAttachBtn" style="background: #22c55e; display: none;">
+                        Attach Draft Link
+                    </button>
+                </div>
+
+                <div id="clickupStatus" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px;"></div>
             </div>
 
             <div id="draftAutoSaveStatus" style="text-align: center; font-size: 13px; color: #999; margin-bottom: 10px;"></div>
@@ -2625,6 +2675,10 @@
 
             <div class="content-section">
                 <h3>Brite Spot</h3>
+                <div class="field-group">
+                    <label class="field-label">Title <span style="font-weight:400;font-size:11px;color:#999;">(optional — clear to remove)</span></label>
+                    <div class="editable editable-sm" contenteditable="true" id="fc-britespot-title"></div>
+                </div>
                 <div class="field-group">
                     <label class="field-label">Paragraph</label>
                     <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-britespot-paragraph')" type="button">🔗 Insert Link</button></div>
@@ -2852,22 +2906,59 @@
                 <h3 style="margin: 0 0 10px 0;">✨ Brite Spot Image</h3>
                 <p style="font-size: 14px; color: #666; margin-bottom: 15px;" id="briteSpotImageTitle">For your Brite Spot section</p>
 
-                <div id="briteSpotImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
-                    <div style="text-align: center; color: #999;">
-                        <div class="spinner" style="margin: 0 auto 10px;"></div>
-                        <div>Generating image...</div>
-                    </div>
+                <!-- Layout Selector -->
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Image Layout:</label>
+                    <select id="briteSpotLayoutSelect" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: white;" onchange="updateBriteSpotLayout(this.value)">
+                        <option value="wide">Wide (16:9) — Default / AI Generated</option>
+                        <option value="square">Square (1:1) — Upload</option>
+                        <option value="two-squares">Two Squares Side-by-Side — Upload</option>
+                        <option value="portrait">Portrait (9:16) — Upload</option>
+                    </select>
+                    <p id="briteSpotLayoutHint" style="margin: 6px 0 0; font-size: 12px; color: #888; display: none;">Upload an image to use this layout. AI generation uses the default wide format.</p>
                 </div>
 
-                <div style="margin-bottom: 10px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">Image Prompt:</label>
-                    <textarea id="briteSpotPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
+                <!-- Single image preview (wide / square / portrait) -->
+                <div id="briteSpotSingleImageContainer">
+                    <div id="briteSpotImagePreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 300px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                        <div style="text-align: center; color: #999;">
+                            <div class="spinner" style="margin: 0 auto 10px;"></div>
+                            <div>Generating image...</div>
+                        </div>
+                    </div>
+
+                    <div id="briteSpotPromptContainer" style="margin-bottom: 10px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px;">Image Prompt:</label>
+                        <textarea id="briteSpotPrompt" rows="2" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 14px;" placeholder="Describe the image you want..."></textarea>
+                    </div>
+                    <span id="briteSpotRegenBtn"><button class="btn-secondary btn" onclick="regenerateImage('briteSpot')" style="margin-right: 10px;">🔄 Regenerate</button></span>
+                    <button class="btn-secondary btn" onclick="exportImage('briteSpot')" style="margin-right: 10px;">📥 Export</button>
+                    <button class="btn-secondary btn" onclick="resizeImage('briteSpot')" style="margin-right: 10px;">🔍 Resize</button>
+                    <input type="file" id="briteSpotUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpot', this)">
+                    <button class="btn-secondary btn" onclick="document.getElementById('briteSpotUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
                 </div>
-                <button class="btn-secondary btn" onclick="regenerateImage('briteSpot')" style="margin-right: 10px;">🔄 Regenerate</button>
-                <button class="btn-secondary btn" onclick="exportImage('briteSpot')" style="margin-right: 10px;">📥 Export</button>
-                <button class="btn-secondary btn" onclick="resizeImage('briteSpot')" style="margin-right: 10px;">🔍 Resize</button>
-                <input type="file" id="briteSpotUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpot', this)">
-                <button class="btn-secondary btn" onclick="document.getElementById('briteSpotUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;">📤 Upload</button>
+
+                <!-- Two Squares container (hidden by default) -->
+                <div id="briteSpotTwoSquaresContainer" style="display: none;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px;">Left Image</label>
+                            <div id="briteSpotLeftPreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                                <div style="text-align: center; color: #999; font-size: 13px;">Click upload below</div>
+                            </div>
+                            <input type="file" id="briteSpotLeftUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpotLeft', this)">
+                            <button class="btn-secondary btn" onclick="document.getElementById('briteSpotLeftUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;margin-top:8px;font-size:12px;">📤 Upload Left</button>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px;">Right Image</label>
+                            <div id="briteSpotRightPreview" style="background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                                <div style="text-align: center; color: #999; font-size: 13px;">Click upload below</div>
+                            </div>
+                            <input type="file" id="briteSpotRightUpload" accept="image/*" style="display:none;" onchange="handleImageUpload('briteSpotRight', this)">
+                            <button class="btn-secondary btn" onclick="document.getElementById('briteSpotRightUpload').click()" style="background:#f59e0b;color:white;border-color:#f59e0b;margin-top:8px;font-size:12px;">📤 Upload Right</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Claims Image -->
@@ -3038,7 +3129,7 @@
             <!-- Footer CTA Options -->
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #FE8916;">
                 <h3 style="margin: 0 0 10px 0;">Footer CTA</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Customize the "Wait Before You Go..." section at the bottom of the newsletter</p>
+                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Customize the "Wait! Before You Go..." section at the bottom of the newsletter</p>
 
                 <!-- Body Text Dropdown -->
                 <div style="margin-bottom: 15px;">
@@ -3452,23 +3543,24 @@
             item.setAttribute('data-section', section);
             item.setAttribute('data-preserved', 'true');
             item.setAttribute('onclick', 'handleItemClick(this)');
-            item.innerHTML = sanitizeHTML(`
+            item.innerHTML = `
                 <div class="research-result-header">
                     <span class="research-result-badge" style="background: #059669; color: white;">CUSTOM</span>
                     <div class="research-result-meta">
-                        <span>${article.publisher}</span>
-                        <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>
+                        <span>${escapeHTML(article.publisher || '')}</span>
+                        ${article.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${escapeHTML(article.published_at)}</span>` : ''}
+                        <a href="${escapeHTML(article.url || '')}" target="_blank" onclick="event.stopPropagation()">Source →</a>
                         <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                     </div>
                 </div>
-                <div class="research-result-title">${article.headline}</div>
+                <div class="research-result-title">${escapeHTML(article.headline || '')}</div>
                 ${article.snippet ? `
                     <div class="research-result-keydata">
                         <div class="research-result-keydata-label">SUMMARY</div>
-                        <p>${article.snippet.substring(0, 250)}${article.snippet.length > 250 ? '...' : ''}</p>
+                        <p>${escapeHTML(article.snippet.substring(0, 250))}${article.snippet.length > 250 ? '...' : ''}</p>
                     </div>
                 ` : ''}
-            `);
+            `;
 
             if (resultsDiv.firstChild) {
                 resultsDiv.insertBefore(item, resultsDiv.firstChild);
@@ -3619,24 +3711,25 @@
             item.setAttribute('data-preserved', 'true');
             item.dataset.url = article.url || '';
             item.setAttribute('onclick', 'handleItemClick(this)');
-            item.innerHTML = sanitizeHTML(`
+            item.innerHTML = `
                 <div class="research-result-header">
                     <span class="research-result-badge saved">SAVED</span>
                     <div class="research-result-meta">
-                        <span>${article.publisher}</span>
-                        <a href="${article.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>
+                        <span>${escapeHTML(article.publisher || '')}</span>
+                        ${article.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${escapeHTML(article.published_at)}</span>` : ''}
+                        <a href="${escapeHTML(article.url || '')}" target="_blank" onclick="event.stopPropagation()">Source →</a>
                         <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                         <button class="dots-btn" style="color: #f59e0b;" onclick="event.stopPropagation(); toggleDotsMenu(this, ${savedArticleIdx})">⋮</button>
                     </div>
                 </div>
-                <div class="research-result-title">${article.headline}</div>
+                <div class="research-result-title">${escapeHTML(article.headline || '')}</div>
                 ${article.snippet ? `
                     <div class="research-result-keydata">
                         <div class="research-result-keydata-label">SUMMARY</div>
-                        <p>${article.snippet.substring(0, 250)}${article.snippet.length > 250 ? '...' : ''}</p>
+                        <p>${escapeHTML(article.snippet.substring(0, 250))}${article.snippet.length > 250 ? '...' : ''}</p>
                     </div>
                 ` : ''}
-            `);
+            `;
 
             if (resultsDiv.firstChild) {
                 resultsDiv.insertBefore(item, resultsDiv.firstChild);
@@ -4150,6 +4243,57 @@
             }
         }
 
+        // Brite Spot AI Rewrite Assist in Review Step
+        function toggleBriteSpotAIAssist() {
+            const panel = document.getElementById('britespot-assist-panel');
+            const icon = document.getElementById('britespot-assist-toggle-icon');
+            const isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+            icon.textContent = isOpen ? '▶' : '▼';
+        }
+
+        async function rewriteBriteSpotInReview() {
+            const paraEl = document.getElementById('review-britespot-paragraph');
+            const currentContent = paraEl ? paraEl.innerText.trim() : '';
+            const reference = document.getElementById('britespot-review-reference')?.value.trim() || '';
+            const tone = document.getElementById('britespot-review-tone')?.value || 'friendly';
+            const resultDiv = document.getElementById('britespot-review-result');
+            const resultText = document.getElementById('britespot-review-result-text');
+
+            if (!currentContent && !reference) {
+                alert('Enter content in the Brite Spot paragraph or paste reference notes first.');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultText.innerHTML = '<div class="spinner" style="margin:8px auto;"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/rewrite-britespot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: currentContent || reference, reference_text: reference, tone })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window._briteSpotReviewRewritten = data.rewritten;
+                    resultText.textContent = data.rewritten;
+                } else {
+                    resultText.innerHTML = `<span style="color:#dc2626;">Error: ${escapeHTML(data.error)}</span>`;
+                }
+            } catch (e) {
+                resultText.innerHTML = `<span style="color:#dc2626;">Error: ${escapeHTML(e.message)}</span>`;
+            }
+        }
+
+        function useBriteSpotReviewRewrite() {
+            if (window._briteSpotReviewRewritten) {
+                const el = document.getElementById('review-britespot-paragraph');
+                if (el) el.innerHTML = sanitizeHTML(window._briteSpotReviewRewritten);
+                document.getElementById('britespot-review-result').style.display = 'none';
+            }
+        }
+
         // Save Brite Spot page content before moving to next step
         function saveBriteSpotPage() {
             // Save header intro
@@ -4610,6 +4754,7 @@
                         <span class="research-result-badge" style="background: ${colors.bg}; color: ${colors.text};">${impact}</span>
                         <div class="research-result-meta">
                             <span>${result.publisher || ''}</span>
+                            ${result.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${result.published_at}</span>` : ''}
                             ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
                             <input type="checkbox" class="research-result-checkbox" ${isSelected ? 'checked' : ''} onclick="handleCheckboxClick(this, event)">
                             <button class="dots-btn" ${isSaved ? 'style="color: #f59e0b;"' : ''} onclick="event.stopPropagation(); toggleDotsMenu(this, ${articleIdx})">⋮</button>
@@ -4962,11 +5107,11 @@
                 text = text.replace(/^###\s*(.+)$/gm, '<strong style="display: block; font-size: 16px; color: #272D3F; margin: 16px 0 8px 0;">$1</strong>');
                 text = text.replace(/(?:>|\n)###\s*([^\n<]+)/g, '$&'.replace(/###\s*([^\n<]+)/, '<strong style="display: block; font-size: 16px; color: #272D3F; margin: 16px 0 8px 0;">$1</strong>'));
                 // Then handle ## headers - at line start
-                text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/^##\s*(.+)$/gm, '<strong style="display: block; font-size: 17px; color: #272D3F; margin: 0 0 10px 0;">$1</strong>');
                 // Handle ## after newlines
-                text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/\n##\s*([^\n]+)/g, '\n<strong style="display: block; font-size: 17px; color: #272D3F; margin: 0 0 10px 0;">$1</strong>');
                 // Handle ## after closing HTML tags like </p>## or ><p>##
-                text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="display: block; font-size: 17px; color: #272D3F; margin: 20px 0 10px 0;">$1</strong>');
+                text = text.replace(/>##\s*([^<\n]+)/g, '><strong style="display: block; font-size: 17px; color: #272D3F; margin: 0 0 10px 0;">$1</strong>');
                 // Convert markdown bold **text** to <strong> (must have content between)
                 text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
                 // Clean up any stray ** that weren't part of a proper pair
@@ -5251,6 +5396,7 @@
         let generatedSpotlightSubheader = null;  // Spotlight subheader from Step 2B
         let generatedTipsContent = null;  // Array of 5 tip items
         let generatedBriteSpotContent = null;
+        let generatedBriteSpotTitle = '';
 
         // Track what has been generated to avoid re-triggering on back navigation
         let promptsAlreadyGenerated = false;
@@ -5351,6 +5497,7 @@
                     generatedTipsContent = data.content.agent_tips;
                     // Use backend-generated brite_spot (auto-generated when no topic provided)
                     generatedBriteSpotContent = data.content.brite_spot || null;
+                    generatedBriteSpotTitle = data.content.brite_spot_title || '';
 
                     console.log('Generated content sections:', Object.keys(data.content));
 
@@ -5426,6 +5573,11 @@
             const container = document.getElementById(prefix + sectionKey + '-bullets-container');
             if (!container) return;
             container.innerHTML = '';
+            // Roundup bullets use removeRoundupBullet so deletions also splice
+            // generatedRoundupContent and don't resurrect after re-render.
+            const removeHandler = sectionKey === 'roundup'
+                ? "removeRoundupBullet(this)"
+                : "this.closest('.dynamic-field-item').remove()";
             bullets.forEach((b, idx) => {
                 let text = b.summary || b.text || b.headline || (typeof b === 'string' ? b : '');
                 if (typeof text === 'string') {
@@ -5435,7 +5587,7 @@
                 const item = document.createElement('div');
                 item.className = 'dynamic-field-item';
                 item.dataset.bulletIndex = idx;
-                item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+                item.innerHTML = '<button class="dynamic-remove-btn" onclick="' + removeHandler + '" title="Remove">&times;</button>' +
                     '<div class="field-group"><label class="field-label">Bullet ' + (idx + 1) + '</label>' +
                     '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + bulletId + '\')" type="button">🔗 Insert Link</button></div>' +
                     '<div class="link-popover" id="lp-' + bulletId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + bulletId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + bulletId + '\')">Insert</button></div></div>' +
@@ -5462,8 +5614,13 @@
                     '<div class="link-popover" id="lp-' + contentId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + contentId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + contentId + '\')">Insert</button></div></div>' +
                     '<div class="editable" contenteditable="true" id="' + contentId + '"></div></div>';
                 container.appendChild(item);
-                document.getElementById(titleId).textContent = s.title || s.h3 || '';
-                document.getElementById(contentId).innerHTML = sanitizeHTML(s.body || s.content || s.text || '');
+                // Strip markdown header prefixes (# ## ###) and bold markers from section titles
+                const rawTitle = s.title || s.h3 || '';
+                document.getElementById(titleId).textContent = rawTitle.replace(/^\s*\*{1,2}\s*#{1,6}\s*/, '').replace(/^\s*#{1,6}\s*/, '').replace(/\*{1,2}\s*$/, '').trim();
+                const rawBody = (s.body || s.content || s.text || '')
+                    .replace(/^#{1,6}\s+/gm, '')
+                    .replace(/<p([^>]*)>\s*#{1,6}\s+/g, '<p$1>');
+                document.getElementById(contentId).innerHTML = sanitizeHTML(rawBody);
             });
         }
 
@@ -5518,15 +5675,37 @@
             const item = document.createElement('div');
             item.className = 'dynamic-field-item';
             item.dataset.bulletIndex = idx;
-            item.innerHTML = '<button class="dynamic-remove-btn" onclick="this.closest(\'.dynamic-field-item\').remove()" title="Remove">&times;</button>' +
+            // Remove handler also splices generatedRoundupContent so the source-of-truth
+            // array stays in sync with DOM — prevents the array from re-rendering a
+            // ghost bullet after a user deletes one.
+            item.innerHTML = '<button class="dynamic-remove-btn" onclick="removeRoundupBullet(this)" title="Remove">&times;</button>' +
                 '<div class="field-group"><label class="field-label">Bullet ' + (idx + 1) + '</label>' +
                 '<div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover(\'' + bulletId + '\')" type="button">🔗 Insert Link</button></div>' +
                 '<div class="link-popover" id="lp-' + bulletId + '"><input type="text" placeholder="Display text" class="lp-text"><input type="text" placeholder="https://..." class="lp-url"><div class="link-popover-actions"><button type="button" onclick="hideLinkPopover(\'' + bulletId + '\')">Cancel</button><button type="button" class="link-insert-btn" onclick="insertLink(\'' + bulletId + '\')">Insert</button></div></div>' +
                 '<div class="editable" contenteditable="true" id="' + bulletId + '" data-placeholder="Enter news roundup bullet..." style="min-height: 60px;"></div></div>';
             container.appendChild(item);
+            // Persist to the source-of-truth array so later re-renders (navigation,
+            // auto-save refreshes) don't wipe the manually-added bullet.
+            if (typeof generatedRoundupContent !== 'undefined' && Array.isArray(generatedRoundupContent)) {
+                generatedRoundupContent.push({ summary: '', text: '' });
+            }
             console.log('[addRoundupBullet] Added bullet', idx, 'to', prefix);
             var el = document.getElementById(bulletId);
             if (el) el.focus();
+        }
+
+        // Removes a roundup bullet from both DOM and generatedRoundupContent so the
+        // array stays in sync and renderDynamicBullets won't resurrect the deleted bullet.
+        function removeRoundupBullet(btn) {
+            const item = btn.closest('.dynamic-field-item');
+            if (!item) return;
+            const container = item.parentElement;
+            const items = container ? Array.from(container.querySelectorAll('.dynamic-field-item')) : [];
+            const idx = items.indexOf(item);
+            item.remove();
+            if (idx !== -1 && typeof generatedRoundupContent !== 'undefined' && Array.isArray(generatedRoundupContent) && idx < generatedRoundupContent.length) {
+                generatedRoundupContent.splice(idx, 1);
+            }
         }
 
         function addSpotlightSection(prefix) {
@@ -5603,28 +5782,30 @@
         function displayGeneratedContent() {
             // Helper functions (keep existing cleanContentForDisplay, styleLinksBlue, etc.)
             function styleLinksBlue(text) {
-                if (!text) return '';
+                if (!text || typeof text !== 'string') return '';
                 text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
                 text = text.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
                 text = text.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
                 return text;
             }
 
-            // 1. BriteCo Brief Intro (use AI-generated intro as fallback)
+            // 1. BriteCo Brief Intro — AI brite spot content serves as newsletter intro
             const headerIntroEl = document.getElementById('review-headerIntro');
             if (headerIntroEl) {
-                const headerIntroDisplay = headerIntroContent || generatedIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
+                // Use saved manual intro first; otherwise use AI brite spot as intro text
+                const aiBriteSpotAsIntro = typeof generatedBriteSpotContent === 'string'
+                    ? generatedBriteSpotContent
+                    : (generatedBriteSpotContent?.paragraph || generatedBriteSpotContent?.body || generatedBriteSpotContent?.content || '');
+                const headerIntroDisplay = headerIntroContent || aiBriteSpotAsIntro || generatedIntroContent || document.getElementById('headerIntroInput')?.value?.trim() || '';
                 headerIntroEl.innerHTML = sanitizeHTML(styleLinksBlue(headerIntroDisplay) || '<p style="color:#999;">No intro content</p>');
             }
 
-            // 2. Brite Spot - paragraph + dynamic bullets (use AI-generated as fallback)
+            // 2. Brite Spot - manually populated; only restore saved content, no AI pre-fill
+            const bsTitleEl2 = document.getElementById('review-britespot-title');
+            if (bsTitleEl2) bsTitleEl2.textContent = generatedBriteSpotTitle || '';
             const bsParagraphEl = document.getElementById('review-britespot-paragraph');
             if (bsParagraphEl) {
-                let bsText = briteSpotContent || '';
-                if (!bsText && generatedBriteSpotContent) {
-                    bsText = typeof generatedBriteSpotContent === 'string' ? generatedBriteSpotContent : (generatedBriteSpotContent.paragraph || generatedBriteSpotContent.body || generatedBriteSpotContent.content || '');
-                }
-                bsParagraphEl.innerHTML = sanitizeHTML(styleLinksBlue(bsText));
+                bsParagraphEl.innerHTML = sanitizeHTML(styleLinksBlue(briteSpotContent || ''));
             }
             let bsBullets = briteSpotBullets || [];
             if (bsBullets.length === 0 && generatedBriteSpotContent) {
@@ -5740,7 +5921,8 @@
                     if (tipsIntroEl) tipsIntroEl.innerHTML = sanitizeHTML(styleLinksBlue(generatedTipsContent.intro));
                     tips = (generatedTipsContent.tips || []).map(t => ({
                         title: t.title || '',
-                        tip: t.tip || t.content || ''
+                        tip: t.tip || t.content || '',
+                        source_url: t.source_url || t.url || ''
                     }));
                 } else if (Array.isArray(generatedTipsContent)) {
                     if (tipsIntroEl) tipsIntroEl.innerHTML = '';
@@ -6300,11 +6482,14 @@
         let generatedImages = {
             meme: null,
             briteSpot: null,
+            briteSpotLeft: null,
+            briteSpotRight: null,
             claims: null,
             spotlight: null,
             tips: null,
             specialSection: null
         };
+        let briteSpotLayout = 'wide'; // 'wide' | 'square' | 'two-squares' | 'portrait'
 
         // ============================================================================
         // SPECIAL SECTION FUNCTIONS
@@ -6352,6 +6537,65 @@
         // Initialize auto-save listeners after DOM is ready
         document.addEventListener('DOMContentLoaded', setupDraftAutoSave);
 
+        // Strip formatting on paste for Brite Spot fields (prevent Google Doc style bleed)
+        function stripFormattingPaste(e) {
+            e.preventDefault();
+            const html = e.clipboardData.getData('text/html');
+            const text = e.clipboardData.getData('text/plain');
+            if (html) {
+                let clean = html
+                    .replace(/<span[^>]*>/gi, '').replace(/<\/span>/gi, '')
+                    .replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '')
+                    .replace(/<b\b[^>]*>/gi, '<strong>').replace(/<\/b>/gi, '</strong>')
+                    .replace(/<i\b[^>]*>/gi, '<em>').replace(/<\/i>/gi, '</em>')
+                    .replace(/<strong[^>]*>/gi, '<strong>').replace(/<em[^>]*>/gi, '<em>')
+                    .replace(/<div[^>]*>/gi, '<p>').replace(/<\/div>/gi, '</p>')
+                    .replace(/<p[^>]*>/gi, '<p>');
+                document.execCommand('insertHTML', false, clean);
+            } else {
+                document.execCommand('insertText', false, text);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            ['review-britespot-title','review-britespot-paragraph','fc-britespot-title','fc-britespot-paragraph'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('paste', stripFormattingPaste);
+            });
+            // Claims fields: preserve hyperlinks on paste (HTML <a> tags AND markdown [text](url))
+            ['review-claims-copy','fc-claims-copy'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('paste', preserveLinksPaste);
+            });
+        });
+
+        // Paste handler for fields where hyperlinks must survive.
+        // Keeps <a href> tags from HTML clipboard; converts markdown [text](url) to <a> from plain text.
+        function preserveLinksPaste(e) {
+            e.preventDefault();
+            const html = e.clipboardData.getData('text/html');
+            const text = e.clipboardData.getData('text/plain');
+            if (html) {
+                let clean = html
+                    .replace(/<!--[\s\S]*?-->/g, '')
+                    .replace(/<style[\s\S]*?<\/style>/gi, '')
+                    .replace(/<meta[^>]*>/gi, '')
+                    .replace(/<span[^>]*>/gi, '').replace(/<\/span>/gi, '')
+                    .replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '')
+                    .replace(/<b\b[^>]*>/gi, '<strong>').replace(/<\/b>/gi, '</strong>')
+                    .replace(/<i\b[^>]*>/gi, '<em>').replace(/<\/i>/gi, '</em>')
+                    .replace(/<div[^>]*>/gi, '<p>').replace(/<\/div>/gi, '</p>')
+                    .replace(/<p[^>]*>/gi, '<p>');
+                document.execCommand('insertHTML', false, clean);
+            } else if (text) {
+                const linked = text.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
+                if (linked !== text) {
+                    document.execCommand('insertHTML', false, linked);
+                } else {
+                    document.execCommand('insertText', false, text);
+                }
+            }
+        }
+
         // Auto-save on page close/navigate away
         window.addEventListener('beforeunload', (e) => {
             if (selectedMonth && !isLoadingDraft) {
@@ -6360,7 +6604,7 @@
                 syncContentFromDOM();
                 const reviewHTML = { _layout: 'labeled' };
                 const prefix = document.querySelector('.step.active')?.id === 'step7b' ? 'fc-' : 'review-';
-                ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
                     const el = document.getElementById(prefix + field);
                     if (el) reviewHTML[field] = el.innerHTML;
                 });
@@ -6368,7 +6612,7 @@
                     month: selectedMonth,
                     year: new Date().getFullYear(),
                     currentStep: document.querySelector('.step.active')?.id || '',
-                    generatedContent: { headerIntro: headerIntroContent, briteSpot: briteSpotContent, briteSpotBullets: briteSpotBullets, claims: generatedClaimsContent, roundup: generatedRoundupContent, spotlight: generatedSpotlightContent, spotlightSubheader: generatedSpotlightSubheader, tips: generatedTipsContent, intro: generatedIntroContent },
+                    generatedContent: { headerIntro: headerIntroContent, briteSpot: briteSpotContent, briteSpotTitle: generatedBriteSpotTitle, briteSpotBullets: briteSpotBullets, claims: generatedClaimsContent, roundup: generatedRoundupContent, spotlight: generatedSpotlightContent, spotlightSubheader: generatedSpotlightSubheader, tips: generatedTipsContent, intro: generatedIntroContent },
                     selectedArticles: { claims: selectedClaims, spotlight: selectedSpotlight, roundup: selectedRoundup, tips: selectedTips },
                     generatedImages: generatedImages,
                     imagePrompts: basePrompts,
@@ -6672,6 +6916,92 @@
         let lastExportedMonth = '';
         let lastExportedYear = '';
 
+        // ── ClickUp Integration ──────────────────────
+        let selectedClickUpTaskId = null;
+
+        async function searchClickUpTasks() {
+            const btn = document.getElementById('clickupSearchBtn');
+            const btnText = document.getElementById('clickupSearchBtnText');
+            const resultsDiv = document.getElementById('clickupResults');
+            const taskList = document.getElementById('clickupTaskList');
+            const statusDiv = document.getElementById('clickupStatus');
+
+            btn.disabled = true;
+            btnText.textContent = 'Searching...';
+            statusDiv.style.display = 'none';
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/clickup/search-tasks`);
+                const data = await resp.json();
+
+                btnText.textContent = 'Search ClickUp Tasks';
+                btn.disabled = false;
+
+                if (data.success && data.tasks.length > 0) {
+                    resultsDiv.style.display = 'block';
+                    selectedClickUpTaskId = null;
+                    document.getElementById('clickupAttachBtn').style.display = 'none';
+
+                    taskList.innerHTML = data.tasks.map(t => `
+                        <label style="display: block; padding: 10px; margin-bottom: 8px; background: white; border: 2px solid #e5e7eb; border-radius: 6px; cursor: pointer;">
+                            <input type="radio" name="clickupTask" value="${t.id}" onchange="selectedClickUpTaskId='${t.id}'; document.getElementById('clickupAttachBtn').style.display='inline-block';" style="margin-right: 10px;">
+                            ${t.name}
+                        </label>
+                    `).join('');
+                } else {
+                    resultsDiv.style.display = 'block';
+                    taskList.innerHTML = '<p style="color: #666;">No matching tasks found in ClickUp.</p>';
+                }
+            } catch (err) {
+                btnText.textContent = 'Search ClickUp Tasks';
+                btn.disabled = false;
+                resultsDiv.style.display = 'block';
+                taskList.innerHTML = `<p style="color: #dc2626;">Error searching ClickUp: ${err.message}</p>`;
+            }
+        }
+
+        async function attachDraftToClickUp() {
+            if (!selectedClickUpTaskId || !lastExportedDocUrl) {
+                alert('Please export to Google Docs first and select a task.');
+                return;
+            }
+
+            const btn = document.getElementById('clickupAttachBtn');
+            const statusDiv = document.getElementById('clickupStatus');
+            btn.disabled = true;
+            btn.textContent = 'Attaching...';
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/clickup/attach-draft`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ task_id: selectedClickUpTaskId, doc_url: lastExportedDocUrl })
+                });
+                const data = await resp.json();
+
+                btn.textContent = 'Attach Draft Link';
+                btn.disabled = false;
+                statusDiv.style.display = 'block';
+
+                if (data.success) {
+                    statusDiv.style.background = '#d1fae5';
+                    statusDiv.style.border = '2px solid #10b981';
+                    statusDiv.innerHTML = '<p style="margin:0; color:#065f46; font-weight:600;">Draft link attached to ClickUp task!</p>';
+                } else {
+                    statusDiv.style.background = '#fee2e2';
+                    statusDiv.style.border = '2px solid #ef4444';
+                    statusDiv.innerHTML = `<p style="margin:0; color:#dc2626;">Error: ${data.error}</p>`;
+                }
+            } catch (err) {
+                btn.textContent = 'Attach Draft Link';
+                btn.disabled = false;
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#fee2e2';
+                statusDiv.style.border = '2px solid #ef4444';
+                statusDiv.innerHTML = `<p style="margin:0; color:#dc2626;">Error: ${err.message}</p>`;
+            }
+        }
+
         async function exportToGoogleDocs() {
             // Sync any edits from active contenteditable divs before exporting
             syncContentFromDOM();
@@ -6773,6 +7103,7 @@
 
                     // Show the email section
                     emailSection.style.display = 'block';
+                    document.getElementById('clickupSection').style.display = 'block';
                 } else {
                     resultDiv.style.display = 'block';
                     resultDiv.style.background = '#fee2e2';
@@ -7583,7 +7914,9 @@
 
         // Cropper.js configuration - target dimensions per section
         const SECTION_CROP_CONFIG = {
-            briteSpot:  { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Brite Spot' },
+            briteSpot:  { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Brite Spot (16:9)' },
+            briteSpotLeft:  { width: 270, height: 270, aspectRatio: 1, label: 'Brite Spot Left (1:1)' },
+            briteSpotRight: { width: 270, height: 270, aspectRatio: 1, label: 'Brite Spot Right (1:1)' },
             claims:     { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Claims Corner' },
             spotlight:  { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Spotlight' },
             tips:       { width: 480, height: 175, aspectRatio: 480 / 175, label: 'Agent Advantage' },
@@ -7593,6 +7926,46 @@
 
         let activeCropper = null;
         let activeCropSection = null;
+
+        // Brite Spot layout switcher
+        function updateBriteSpotLayout(layout) {
+            briteSpotLayout = layout;
+            const singleContainer = document.getElementById('briteSpotSingleImageContainer');
+            const twoContainer = document.getElementById('briteSpotTwoSquaresContainer');
+            const promptContainer = document.getElementById('briteSpotPromptContainer');
+            const regenBtn = document.getElementById('briteSpotRegenBtn');
+            const hint = document.getElementById('briteSpotLayoutHint');
+
+            if (layout === 'two-squares') {
+                singleContainer.style.display = 'none';
+                twoContainer.style.display = 'block';
+                hint.style.display = 'block';
+            } else {
+                singleContainer.style.display = 'block';
+                twoContainer.style.display = 'none';
+                if (layout === 'wide') {
+                    promptContainer.style.display = 'block';
+                    regenBtn.style.display = '';
+                    hint.style.display = 'none';
+                } else {
+                    promptContainer.style.display = 'none';
+                    regenBtn.style.display = 'none';
+                    hint.style.display = 'block';
+                }
+            }
+
+            // Update crop config for briteSpot based on layout
+            if (layout === 'wide') {
+                SECTION_CROP_CONFIG.briteSpot = { width: 480, height: 270, aspectRatio: 480 / 270, label: 'Brite Spot (16:9)' };
+            } else if (layout === 'square') {
+                SECTION_CROP_CONFIG.briteSpot = { width: 400, height: 400, aspectRatio: 1, label: 'Brite Spot (1:1)' };
+            } else if (layout === 'portrait') {
+                SECTION_CROP_CONFIG.briteSpot = { width: 320, height: 570, aspectRatio: 9 / 16, label: 'Brite Spot (9:16)' };
+            }
+
+            const sel = document.getElementById('briteSpotLayoutSelect');
+            if (sel) sel.value = layout;
+        }
 
         // Upload custom image for a section — opens Cropper.js modal
         function handleImageUpload(section, input) {
@@ -7690,8 +8063,10 @@
             if (!generatedImages[section]) generatedImages[section] = {};
             generatedImages[section].url = croppedUrl;
 
-            // Update preview for article sections
-            const previewDiv = document.getElementById(section + 'ImagePreview');
+            // Update preview for article sections (handle briteSpotLeft/Right)
+            const previewIdMap = { 'briteSpotLeft': 'briteSpotLeftPreview', 'briteSpotRight': 'briteSpotRightPreview' };
+            const previewId = previewIdMap[section] || (section + 'ImagePreview');
+            const previewDiv = document.getElementById(previewId);
             if (previewDiv) {
                 previewDiv.innerHTML = '<img id="' + section + 'UploadedImg" src="' + croppedUrl + '" style="max-width:100%;border-radius:8px;" alt="' + section + ' image">';
             }
@@ -8156,10 +8531,14 @@
                 subjectLine = 'The BriteCo Brief',
                 introText = '',
                 introTextHero = '',
-                introCTAUrl = 'https://brite.co/agents',
+                introCTAUrl = 'https://brite.co/agent/',
                 introCTAText = 'Learn More',
+                briteSpotTitle = '',
                 briteSpotText = '',
                 briteSpotImage = '',
+                briteSpotLeftImage = '',
+                briteSpotRightImage = '',
+                briteSpotLayout = 'wide',
                 briteSpotBullets = [],
                 claimsTitle = '',
                 claimsText = '',
@@ -8172,7 +8551,7 @@
                 tipsImage = '',
                 tipsIntro = '',
                 tipsItems = [],
-                ctaUrl = 'https://brite.co/agents',
+                ctaUrl = 'https://brite.co/agent/',
                 ctaText = 'Partner With Us',
                 ctaBodyText = 'Earn 12% recurring commissions on every policy',
                 specialSection: ssData = null
@@ -8216,7 +8595,7 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
 
             // WordPress hosted assets - matching Ontraport template
             const assets = {
-                logo: 'https://storage.googleapis.com/stay-in-the-loupe-images/assets/briteco-logo-solid-color.png',
+                logo: 'https://storage.googleapis.com/stay-in-the-loupe-images/assets/briteco-logo-2026.png',
                 logoFooter: 'https://brite.co/wp-content/uploads/2025/09/footer-logo.png',
                 heroBg: 'https://brite.co/wp-content/uploads/2025/09/section-1-bg.png',
                 briteSpotBanner: 'https://brite.co/wp-content/uploads/2025/09/brite-spot-1.png',
@@ -8231,10 +8610,31 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
 
             // Shared helper: restyle all <p>, <h3>, <h4> tags with full inline styles, stripping any existing style/class attrs
             const restyleParagraphs = (html) => {
-                html = html.replace(/<p[^>]*>/gi, '<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">');
-                html = html.replace(/<h3[^>]*>/gi, '<h3 style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">');
-                html = html.replace(/<h4[^>]*>/gi, '<h4 style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;font-weight:600;color:#272D3F;">');
+                html = html.replace(/<p[^>]*>/gi, '<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">');
+                html = html.replace(/<h3[^>]*>/gi, '<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">');
+                html = html.replace(/<h4[^>]*>/gi, '<h4 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;font-weight:600;color:#272D3F;">');
                 return html;
+            };
+
+            // Collapse the last paragraph's bottom margin so the section's 15px
+            // bottom spacer is the only thing creating the gap (avoids 16px margin
+            // + 15px spacer stacking into 31px of visible space at section bottom).
+            const stripLastPMargin = (html) => {
+                if (!html) return html;
+                const lastIdx = html.lastIndexOf('margin:0 0 16px 0');
+                if (lastIdx === -1) return html;
+                return html.substring(0, lastIdx) + 'margin:0' + html.substring(lastIdx + 'margin:0 0 16px 0'.length);
+            };
+
+            // Strip empty placeholder elements (e.g. <h3>&nbsp;</h3>, <p>&nbsp;</p>)
+            // that sometimes leak in from AI-generated content and create dead space.
+            const stripEmptyPlaceholders = (html) => {
+                if (!html) return html;
+                return html
+                    .replace(/<(h[1-6]|p)\b[^>]*>\s*(&nbsp;|&#160;|\u00a0|\s)*\s*<\/\1>/gi, '')
+                    .replace(/<br\s*\/?>\s*(<br\s*\/?>)+/gi, '<br>')
+                    .replace(/(<br\s*\/?>\s*)+$/i, '')
+                    .trim();
             };
 
             // Helper to format claims text with proper paragraph spacing
@@ -8244,19 +8644,20 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 if (claimsTitle) {
                     text = text.replace(new RegExp('^\\s*(<p[^>]*>)?\\s*(<strong>|<b>|<h[1-4][^>]*>)?' + claimsTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(<\\/strong>|<\\/b>|<\\/h[1-4]>)?\\s*(<\\/p>)?\\s*', 'i'), '');
                 }
+                text = stripEmptyPlaceholders(text);
                 // If text already has <p> tags, restyle them with full inline styles
                 if (text.includes('<p')) {
-                    return restyleParagraphs(text);
+                    return stripLastPMargin(restyleParagraphs(text));
                 }
                 // If plain text, split by double newlines and wrap in paragraphs
                 const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
                 if (paragraphs.length > 1) {
-                    return paragraphs.map(p =>
-                        `<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
-                    ).join('');
+                    return stripLastPMargin(paragraphs.map(p =>
+                        `<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
+                    ).join(''));
                 }
                 // Single paragraph
-                return `<p style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
+                return `<p class="dark-text-secondary" style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
             };
 
             // Helper to format brite spot text with proper paragraph styling
@@ -8265,18 +8666,24 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 // Strip list elements (bullets handled separately)
                 text = text.replace(/<ul[^>]*>[\s\S]*?<\/ul>/gi, '').replace(/<ol[^>]*>[\s\S]*?<\/ol>/gi, '').replace(/<li[^>]*>[\s\S]*?<\/li>/gi, '').replace(/^\s+|\s+$/g, '');
                 if (!text.trim()) return '';
+                // Strip inline formatting that overrides our styles (Google Doc paste artifacts)
+                text = text.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+                text = text.replace(/<font[^>]*>([\s\S]*?)<\/font>/gi, '$1');
+                text = text.replace(/<strong[^>]*>/gi, '<strong>').replace(/<em[^>]*>/gi, '<em>').replace(/<b[^>]*>/gi, '<strong>').replace(/<\/b>/gi, '</strong>').replace(/<i[^>]*>/gi, '<em>').replace(/<\/i>/gi, '</em>');
+                text = text.replace(/<div[^>]*>/gi, '<p>').replace(/<\/div>/gi, '</p>');
+                text = stripEmptyPlaceholders(text);
                 // If text has <p> tags, restyle them with full inline styles
                 if (text.includes('<p')) {
-                    return restyleParagraphs(text);
+                    return stripLastPMargin(restyleParagraphs(text));
                 }
                 // If plain text with double newlines, split into paragraphs
                 const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
                 if (paragraphs.length > 1) {
-                    return paragraphs.map(p =>
-                        `<p style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
-                    ).join('');
+                    return stripLastPMargin(paragraphs.map(p =>
+                        `<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${p.trim()}</p>`
+                    ).join(''));
                 }
-                return `<p style="margin:0 0 6px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
+                return `<p class="dark-text-secondary" style="margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${text}</p>`;
             };
 
             // Helper to generate bullet items with checkmark images
@@ -8299,18 +8706,23 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right:12px;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
-                        <td style="padding-bottom: ${index === items.length - 1 ? '0' : '16px'};" valign="top">
+                        <td style="padding-right:12px;vertical-align:top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
+                        <td style="padding-bottom:${index === items.length - 1 ? '0' : '16px'};padding-top:19px;vertical-align:top;" valign="top">
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.summary || item}</p>
                         </td>
                     </tr>
                 `).join('');
             };
 
-            // Helper to strip markdown headers (## or ###) from text
+            // Helper to strip markdown headers (## or ###) and bold markers from text
             const stripMarkdownHeaders = (text) => {
                 if (!text) return '';
-                return text.replace(/^#{1,3}\s*/, '').trim();
+                // Strip markdown # headers: handle leading HTML tags, bold markers, whitespace
+                return text
+                    .replace(/^(\s*(<[^>]+>)?\s*)*\*{0,2}\s*#{1,6}\s+/i, '')  // leading # with optional tags/bold
+                    .replace(/\*{1,2}\s*$/, '')  // trailing bold markers
+                    .replace(/^#+ /, '')  // plain # at start (fallback)
+                    .trim();
             };
 
             // Helper to generate spotlight H2 sections (using H3 content from generated spotlight)
@@ -8331,8 +8743,8 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right:12px;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
-                        <td style="padding-bottom: ${index === items.length - 1 ? '0' : '18px'};" valign="top">
+                        <td style="padding-right:12px;vertical-align:top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
+                        <td style="padding-bottom:${index === items.length - 1 ? '0' : '18px'};padding-top:19px;vertical-align:top;" valign="top">
                             <p class="dark-text" style="margin: 0 0 4px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 22px; font-weight: 600; color: #008182;">${item.title || ''}</p>
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
                         </td>
@@ -8384,6 +8796,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
     .email-container { width: 100% !important; max-width: 100% !important; }
     .mobile-padding { padding-left: 16px !important; padding-right: 16px !important; }
     .mobile-full-width { width: 100% !important; max-width: 100% !important; }
+    .mobile-stack-block { display: block !important; width: 100% !important; padding: 0 15px 8px !important; }
     h1 { font-size: 28px !important; line-height: 34px !important; }
     h2 { font-size: 20px !important; line-height: 26px !important; }
     h3 { font-size: 18px !important; line-height: 26px !important; }
@@ -8397,12 +8810,12 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
 
 <table cellpadding="0" cellspacing="0" style="background-color:#DFE7F0;" width="100%">
 <tr><td align="center" style="padding:20px 10px;">
-<table cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;" width="600" class="email-container">
+<table align="center" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;margin:0 auto;" width="600" class="email-container">
 
 <!-- HEADER WITH LOGO -->
 <tr>
 <td align="center" class="header-bg" style="padding:35px 20px;background-color:#272D3F;">
-<img alt="BriteCo Logo" src="${assets.logo}" style="display:block;max-width:301px;width:100%;height:auto;" width="301" />
+<img alt="BriteCo Logo" src="${assets.logo}" style="display:block;max-width:301px;width:100%;height:auto;margin:0 auto;" width="301" />
 </td>
 </tr>
 
@@ -8436,37 +8849,61 @@ ${introTextHero ? `<p style="margin:0 0 30px 0;font-family:Montserrat,Helvetica,
 <td style="padding:0;border:1px solid #272D3F;background-color:#ffffff;" class="section-bg section-border">
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><th align="center" class="section-header" style="background:#008182 url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png') repeat center / 400px auto;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:#ffffff;-webkit-text-fill-color:#ffffff;letter-spacing:0.5px;"><font color="#ffffff" style="color:#ffffff;"><span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">The Brite Spot</span></font></th></tr></table>
 
-<!-- Image -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px;">
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Optional Title -->
+${briteSpotTitle ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody><tr><td style="padding:0 15px;">
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#272D3F;">${briteSpotTitle}</h2>
+</td></tr></tbody></table>` : ''}
+
+<!-- Image (layout-aware) -->
+${briteSpotLayout === 'two-squares' ? `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr>
+<td width="50%" align="center" style="padding:0 4px 0 15px;" class="mobile-stack-block"><img src="${briteSpotLeftImage || assets.blankImage}" alt="The Brite Spot" width="263" style="display:block;width:100%;max-width:263px;height:auto;border-radius:4px;"></td>
+<td width="50%" align="center" style="padding:0 15px 0 4px;" class="mobile-stack-block"><img src="${briteSpotRightImage || assets.blankImage}" alt="The Brite Spot" width="263" style="display:block;width:100%;max-width:263px;height:auto;border-radius:4px;"></td>
+</tr></table>` :
+briteSpotLayout === 'square' ? `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr>
+<td align="center" style="padding:0 15px;font-size:0;line-height:0;">
+<img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" width="400" style="display:block;width:400px;max-width:100%;height:auto;border-radius:4px;" />
+</td></tr></tbody></table>` :
+briteSpotLayout === 'portrait' ? `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr>
+<td align="center" style="padding:0 15px;font-size:0;line-height:0;">
+<img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" width="320" style="display:block;width:320px;max-width:100%;height:auto;border-radius:4px;" />
+</td></tr></tbody></table>` : `
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr>
+<td style="padding:0 15px;font-size:0;line-height:0;">
 <img alt="The Brite Spot" src="${briteSpotImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
-</td>
-</tr>
-</tbody>
-</table>
+</td></tr></tbody></table>`}
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td>
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
 
-<!-- Copy -->
+${briteSpotText ? `<!-- Copy -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-${briteSpotText ? formatBriteSpotText(briteSpotText) : ''}
+${formatBriteSpotText(briteSpotText)}
 </td>
 </tr>
 </tbody>
-</table>
+</table>` : ''}
 
-<!-- Bullet points -->
+${(briteSpotBullets && briteSpotBullets.length) ? `<!-- Bullet points -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
@@ -8475,12 +8912,12 @@ ${generateBulletItems(briteSpotBullets)}
 </td>
 </tr>
 </tbody>
-</table>
+</table>` : ''}
 
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td>
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -8571,14 +9008,6 @@ ${ssPosition === 'after-claims' ? specialSectionHtml : ''}
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
-</tr>
-</tbody>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
 <td style="padding:0 15px;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 <tbody>
@@ -8633,20 +9062,14 @@ ${spotlightSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px;">
+<td style="padding:0 15px;font-size:0;line-height:0;">
 <img alt="Feature Spotlight" src="${spotlightImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
 </td>
 </tr>
 </tbody>
 </table>
 
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
-<td height="8" style="font-size:1px;line-height:1px;">&nbsp;</td>
-</tr>
-</tbody>
-</table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>
 
 <!-- Copy -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
@@ -8657,8 +9080,16 @@ ${(() => {
     let t = spotlightText || '';
     // Always strip leading h4 from spotlight copy (headline already shown above image)
     t = t.replace(/^\s*<h4[^>]*>[\s\S]*?<\/h4>\s*/i, '');
-    if (!t.trim()) return '';
-    return restyleParagraphs(t.includes('<p') ? t : '<p>' + t.trim() + '</p>');
+    // Strip markdown # headers from body text
+    t = t.replace(/^#{1,6}\s+/gm, '');
+    // Strip empty placeholders (<h1-6>&nbsp;</>, <p>&nbsp;</p>, trailing <br>)
+    t = stripEmptyPlaceholders(t);
+    if (!t) return '';
+    let html = restyleParagraphs(t.includes('<p') ? t : '<p>' + t + '</p>');
+    // Remove bottom margin from last paragraph so the 15px bottom spacer is
+    // the only thing creating the gap at section bottom.
+    html = stripLastPMargin(html);
+    return html;
 })()}
 ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const title = stripMarkdownHeaders(section.h3 || section.title || '').trim();
@@ -8667,11 +9098,48 @@ ${spotlightH2s && spotlightH2s.length > 0 ? spotlightH2s.filter(section => {
     const a = strip(title);
     const b = strip(spotlightSubheader);
     return a !== b && !a.includes(b) && !b.includes(a);
-}).map((section, idx, arr) => `
-<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${stripMarkdownHeaders(section.h3 || section.title || '')}</h3>
-<p class="dark-text-secondary" style="margin:0 0 16px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${section.body || section.content || ''}</p>
-`).join('') : ''}
+}).map((section, idx, arr) => {
+    const isLast = idx === arr.length - 1;
+    const title = stripMarkdownHeaders(section.h3 || section.title || '').trim();
+    // Clean + unwrap: strip trailing <br>, markdown headers, and any <div>
+    // wrappers (pasted content often arrives wrapped in <div> which breaks
+    // when placed inside a <p>, causing browser auto-close + stray margins).
+    let body = (section.body || section.content || '')
+        .replace(/(<br\s*\/?>\s*)+$/, '')
+        .replace(/^#{1,6}\s+/gm, '')
+        .replace(/<p([^>]*)>\s*#{1,6}\s+/g, '<p$1>')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '')
+        .trim();
+    body = stripEmptyPlaceholders(body);
+    // If body contains <p> tags, use the same pipeline as other prose
+    // sections (restyleParagraphs + stripLastPMargin on the final section)
+    // so nested paragraphs get consistent styling and no dead 16px margin
+    // stacks on top of the section's 15px bottom spacer.
+    let bodyHtml;
+    if (/<p\b/i.test(body)) {
+        bodyHtml = restyleParagraphs(body);
+        if (isLast) bodyHtml = stripLastPMargin(bodyHtml);
+    } else {
+        bodyHtml = `<p class="dark-text-secondary" style="margin:0 0 ${isLast ? '0' : '16'}px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;font-weight:400;color:#3B3B3B;">${body}</p>`;
+    }
+    // Only render <h3> when the section actually has a title — an empty
+    // <h3> is NOT a no-op (it takes line-height + margin = ~34px of dead
+    // space), which was the real cause of "too much space under image".
+    const h3Html = title
+        ? `<h3 class="dark-text" style="margin:0 0 8px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:600;color:#272D3F;">${title}</h3>\n`
+        : '';
+    return h3Html + bodyHtml;
+}).join('') : ''}
 </td>
+</tr>
+</tbody>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+<tbody>
+<tr>
+<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -8730,17 +9198,9 @@ ${tipsIntro ? `<p class="dark-text-secondary" style="margin:0;font-family:Montse
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px;">
+<td style="padding:0 15px;font-size:0;line-height:0;">
 <img alt="The Agent Advantage" src="${tipsImage || assets.blankImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" />
 </td>
-</tr>
-</tbody>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
-<tbody>
-<tr>
-<td height="15" style="font-size:1px;line-height:1px;">&nbsp;</td>
 </tr>
 </tbody>
 </table>
@@ -8783,14 +9243,14 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 <v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
 <![endif]-->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><td align="center" class="cta-padding" style="padding:120px 20px;">
-<h2 style="color:#ffffff;font-size:32px;margin:0 0 15px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-weight:600;">Wait Before You Go...</h2>
-<p style="color:#ffffff;font-size:18px;margin:0 0 30px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;">${ctaBodyText}</p>
+<h2 style="color:#ffffff;font-size:32px;margin:0 0 15px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-weight:600;text-align:center;">Wait! Before You Go...</h2>
+<p style="color:#ffffff;font-size:18px;margin:0 0 30px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;text-align:center;">${ctaBodyText}</p>
 <!--[if mso]>
 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:48px;v-text-anchor:middle;width:250px;" arcsize="20%" strokecolor="#FE8916" fillcolor="#FE8916">
 <w:anchorlock/><center style="color:#ffffff;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;">${ctaText.toUpperCase()}</center>
 </v:roundrect><![endif]-->
 <!--[if !mso]><!-->
-<a href="${ctaUrl}" style="display:inline-block;padding:11px 29px;background-color:#FE8916;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;text-transform:uppercase;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;">${ctaText.toUpperCase()}</a>
+<div style="text-align:center;"><a href="${ctaUrl}" style="display:inline-block;padding:11px 29px;background-color:#FE8916;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;text-transform:uppercase;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;">${ctaText.toUpperCase()}</a></div>
 <!--<![endif]-->
 </td></tr></table>
 <!--[if mso]>
@@ -8841,6 +9301,10 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 || '';
 
             // --- Read from labeled sub-fields (FC preferred, then Review) ---
+
+            // Brite Spot title (optional)
+            const bsTitleReadEl = document.getElementById('fc-britespot-title') || document.getElementById('review-britespot-title');
+            const briteSpotTitleForTemplate = bsTitleReadEl ? bsTitleReadEl.textContent.trim() : (generatedBriteSpotTitle || '');
 
             // Brite Spot paragraph
             const bsParagraphEl = document.getElementById('fc-britespot-paragraph') || document.getElementById('review-britespot-paragraph');
@@ -8924,7 +9388,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     });
                 }
                 if (tipsItems.length === 0 && generatedTipsContent?.tips) {
-                    tipsItems = generatedTipsContent.tips.map(t => ({ title: t.title || '', tip: t.tip || t.description || '' }));
+                    tipsItems = generatedTipsContent.tips.map(t => ({ title: t.title || '', tip: t.tip || t.description || '', source_url: t.source_url || t.url || '' }));
                 }
             }
 
@@ -8934,10 +9398,14 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 subjectLine,
                 introText: convertMarkdownLinksToHTML(introText),
                 introTextHero: convertMarkdownLinksToHTML(introText).replace(/color:\s*#[0-9a-fA-F]{6}/g, 'color: #ffffff'),
-                introCTAUrl: 'https://brite.co/agents',
+                introCTAUrl: 'https://brite.co/agent/',
                 introCTAText: 'Learn More',
+                briteSpotTitle: briteSpotTitleForTemplate,
                 briteSpotText: convertMarkdownLinksToHTML(briteSpotTextForTemplate),
                 briteSpotImage: generatedImages.briteSpot?.url || '',
+                briteSpotLeftImage: generatedImages.briteSpotLeft?.url || '',
+                briteSpotRightImage: generatedImages.briteSpotRight?.url || '',
+                briteSpotLayout: briteSpotLayout || 'wide',
                 briteSpotBullets: briteSpotBulletsForTemplate.map(b => convertMarkdownLinksToHTML(b)),
                 claimsTitle: claimsTitle,
                 claimsText: convertMarkdownLinksToHTML(claimsText),
@@ -8958,7 +9426,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     title: tip.title,
                     tip: convertMarkdownLinksToHTML(tip.tip)
                 })),
-                ctaUrl: 'https://brite.co/agents',
+                ctaUrl: 'https://brite.co/agent/',
                 ctaText: getCtaButtonText(),
                 ctaBodyText: getCtaBodyText(),
                 specialSection: specialSection.enabled ? {
@@ -9060,6 +9528,69 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
                 console.log('[ONTRAPORT] Getting final newsletter HTML...');
                 let html = getFinalNewsletterHTML();
+
+                // ── Re-wrap document structure if lost from preview editing ──
+                if (!html.includes('<!DOCTYPE') && !html.includes('<html')) {
+                    console.log('[ONTRAPORT] Re-wrapping with document structure (lost from preview innerHTML)');
+                    const preheaderText = document.getElementById('finalPreheader')?.value || '';
+                    html = `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>The BriteCo Brief</title>
+<!--[if mso]>
+<noscript>
+<xml>
+<o:OfficeDocumentSettings>
+<o:AllowPNG/>
+<o:PixelsPerInch>96</o:PixelsPerInch>
+</o:OfficeDocumentSettings>
+</xml>
+</noscript>
+<![endif]-->
+<!--[if !mso]><!-->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<!--<![endif]-->
+<style>
+body { margin: 0; padding: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; background-color: #DFE7F0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+table { border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+.ExternalClass { width: 100%; }
+.ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+.ReadMsgBody { width: 100%; }
+a { color: #008182; }
+a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+.section-header, .section-header font, .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+@media (prefers-color-scheme: dark) {
+    .section-header, .section-header font, .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+}
+[data-ogsc] .section-header, [data-ogsc] .section-header font, [data-ogsc] .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+u + .body .section-header, u + .body .section-header font, u + .body .section-header span { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+@media only screen and (max-width: 600px) {
+    .email-container { width: 100% !important; max-width: 100% !important; }
+    .mobile-padding { padding-left: 16px !important; padding-right: 16px !important; }
+    .mobile-full-width { width: 100% !important; max-width: 100% !important; }
+    .mobile-stack-block { display: block !important; width: 100% !important; padding: 0 15px 8px !important; }
+    h1 { font-size: 28px !important; line-height: 34px !important; }
+    h2 { font-size: 20px !important; line-height: 26px !important; }
+    h3 { font-size: 18px !important; line-height: 26px !important; }
+    .cta-padding { padding-top: 60px !important; padding-bottom: 60px !important; }
+}
+</style>
+</head>
+<body>
+<div style="display:none;max-height:0;overflow:hidden;">${preheaderText}</div>
+<div style="display:none;max-height:0;overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+` + html + `
+</body>
+</html>`;
+                }
 
                 // ── Editing artifact cleanup ──
                 html = html.replace(/\s*contenteditable="[^"]*"/gi, '');
@@ -9616,22 +10147,30 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 const data = await response.json();
 
                 if (data.success && data.results.length > 0) {
-                    researchResults.perplexity = data.results;
+                    // Merge with custom links for this tab (custom links come first, like spotlight does)
+                    const customLinksForTab = researchCustomLinks[currentTab] || [];
+                    const mergedResults = [...customLinksForTab, ...data.results];
+
+                    researchResults.perplexity = mergedResults;
                     // Store results for this specific tab
-                    tabSearchState[currentTab].results.perplexity = data.results;
+                    tabSearchState[currentTab].results.perplexity = mergedResults;
 
                     // Show queries header then three-section results
-                    // Preserve saved/custom article cards before clearing
-                    const preservedCards = Array.from(resultsDiv.querySelectorAll('.research-result-item[data-preserved="true"]'));
                     resultsDiv.innerHTML = '';
-                    preservedCards.forEach(card => resultsDiv.appendChild(card));
                     if (data.queries_used && data.queries_used.length > 0) {
                         const headerDiv = document.createElement('div');
                         headerDiv.style.cssText = 'font-size: 11px; color: #666; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-radius: 4px;';
                         headerDiv.innerHTML = `<strong>Queries:</strong> ${escapeHTML(data.queries_used.join(' | '))}`;
                         resultsDiv.appendChild(headerDiv);
                     }
-                    displayThreeSectionResults(data.results, resultsDiv, 'perplexity');
+                    // Show custom links indicator if any
+                    if (customLinksForTab.length > 0) {
+                        const customLinksDiv = document.createElement('div');
+                        customLinksDiv.style.cssText = 'font-size: 12px; color: #059669; background: #d1fae5; padding: 8px 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #10b981;';
+                        customLinksDiv.innerHTML = `<strong>📎 ${customLinksForTab.length} custom link${customLinksForTab.length > 1 ? 's' : ''} added</strong> (shown first)`;
+                        resultsDiv.appendChild(customLinksDiv);
+                    }
+                    displayThreeSectionResults(mergedResults, resultsDiv, 'perplexity');
                     updateAllResults();
 
                     // Cache the HTML for this tab
@@ -9817,34 +10356,37 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 item.setAttribute('data-article-idx', articleIdx);
                 item.setAttribute('data-section', currentResearchSection || 'claims');
                 item.setAttribute('onclick', 'handleItemClick(this)');
-                item.innerHTML = sanitizeHTML(`
+                // Note: Do NOT wrap in sanitizeHTML() — DOMPurify 3.x strips input tags and onclick handlers,
+                // which breaks checkboxes and selection. Use escapeHTML() on data values instead.
+                item.innerHTML = `
                     <div class="research-result-header">
-                        <span class="research-result-badge" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text};">${impact}</span>
+                        <span class="research-result-badge" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text};">${escapeHTML(impact)}</span>
                         ${signalTags}
                         <div class="research-result-meta">
-                            <span>${result.publisher || ''}</span>
-                            ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
+                            <span>${escapeHTML(result.publisher || '')}</span>
+                            ${result.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${escapeHTML(result.published_at)}</span>` : ''}
+                            ${result.url ? `<a href="${escapeHTML(result.url)}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
                             <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                             <button class="dots-btn" ${isSaved ? 'style="color: #f59e0b;"' : ''} onclick="event.stopPropagation(); toggleDotsMenu(this, ${articleIdx})">⋮</button>
                         </div>
                     </div>
 
-                    <div class="research-result-title">${headline}</div>
+                    <div class="research-result-title">${escapeHTML(headline)}</div>
 
                     ${industryData ? `
                     <div class="research-result-keydata">
                         <div class="research-result-keydata-label">KEY DATA</div>
-                        <p>${industryData.substring(0, 250)}${industryData.length > 250 ? '...' : ''}</p>
+                        <p>${escapeHTML(industryData.substring(0, 250))}${industryData.length > 250 ? '...' : ''}</p>
                     </div>
                     ` : ''}
 
                     ${soWhat ? `
                     <div class="research-result-action">
                         <div class="research-result-action-label">ACTION</div>
-                        <p>${soWhat}</p>
+                        <p>${escapeHTML(soWhat)}</p>
                     </div>
                     ` : ''}
-                `);
+                `;
                 if (isSaved) {
                     item.style.borderLeft = '4px solid #f59e0b';
                 }
@@ -10661,6 +11203,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         <span class="research-result-badge" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text};">${contentType.replace('_', ' ').toUpperCase()}</span>
                         <div class="research-result-meta">
                             <span>${result.publisher || 'Unknown source'}</span>
+                            ${result.published_at ? `<span style="color:#059669;font-weight:600;">· Published ${result.published_at}</span>` : ''}
                             ${result.url ? `<a href="${result.url}" target="_blank" onclick="event.stopPropagation()">Source →</a>` : ''}
                             <input type="checkbox" class="research-result-checkbox" onclick="handleCheckboxClick(this, event)">
                             <button class="dots-btn" ${isSaved ? 'style="color: #f59e0b;"' : ''} onclick="event.stopPropagation(); toggleDotsMenu(this, ${articleIdx})">⋮</button>
@@ -10947,7 +11490,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         // Initialize
         initMonths();
-        loadNewsletterArchive();
+        loadArchive();
 
         // Newsletter Archive Functions
         async function loadNewsletterArchive() {
@@ -11035,7 +11578,6 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     body: JSON.stringify({ file: filename })
                 });
                 console.log('[Published] Deleted:', filename);
-                loadNewsletterArchive();
                 loadArchive();
             } catch (e) {
                 console.error('[Published] Delete failed:', e);
@@ -11059,21 +11601,76 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 // Set state from published draft
                 selectedMonth = d.month || '';
                 const gc = d.generatedContent || {};
+                // Pull any user-edited titles/subtitles from reviewHTML — they
+                // were saved there at push time but never copied into gc, so
+                // viewNewsletter was falling back to generic labels like
+                // "Curious Claims" and blank Brite Spot titles.
+                const rhStrip = (html) => {
+                    if (!html) return '';
+                    const tmp = document.createElement('div');
+                    tmp.innerHTML = html;
+                    return (tmp.textContent || '').trim();
+                };
+                const rh = d.reviewHTML || {};
                 headerIntroContent = gc.headerIntro || '';
                 briteSpotContent = gc.briteSpot || '';
+                generatedBriteSpotTitle = rhStrip(rh['britespot-title']) || gc.briteSpotTitle || '';
                 briteSpotBullets = gc.briteSpotBullets || [];
                 generatedClaimsContent = gc.claims || '';
+                // Seed selectedClaims so displayGeneratedContent can read the
+                // saved claims title instead of defaulting to "Curious Claims".
+                const claimsTitleFromRH = rhStrip(rh['claims-title']);
+                if (claimsTitleFromRH) {
+                    selectedClaims = Object.assign({}, selectedClaims || {}, { title: claimsTitleFromRH });
+                }
                 generatedRoundupContent = gc.roundup || '';
                 generatedSpotlightContent = gc.spotlight || '';
-                generatedSpotlightSubheader = gc.spotlightSubheader || '';
+                generatedSpotlightSubheader = rhStrip(rh['spotlight-subheader']) || gc.spotlightSubheader || '';
                 generatedTipsContent = gc.tips || '';
                 generatedIntroContent = gc.intro || '';
                 generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null };
                 skippedResearch = d.skippedResearch || { claims: false, roundup: false, tips: false };
                 // Populate review DOM fields so generateNewsletterHTML() can read them
                 displayGeneratedContent();
+                // generateNewsletterHTML() prefers fc-* (Final Copy) fields over
+                // review-* (Review) fields via `||`, which picks whichever element
+                // EXISTS first, not whichever has content. In viewNewsletter
+                // context the fc-* fields are empty because the user never walked
+                // through step 7b for the published draft, so Brite Spot / Claims
+                // copy would silently drop. Mirror the just-populated review-*
+                // content into fc-* so the existing preference still yields text.
+                const mirrorFields = [
+                    'britespot-title', 'britespot-paragraph',
+                    'claims-title', 'claims-copy',
+                    'spotlight-subheader', 'tips-intro', 'headerIntro'
+                ];
+                const mirroredOriginals = {};
+                mirrorFields.forEach(field => {
+                    const reviewEl = document.getElementById('review-' + field);
+                    const fcEl = document.getElementById('fc-' + field);
+                    if (fcEl) mirroredOriginals[field] = fcEl.innerHTML;
+                    if (reviewEl && fcEl) fcEl.innerHTML = reviewEl.innerHTML;
+                });
+                // Mirror dynamic bullet containers too (roundup, britespot, tips)
+                const mirrorContainers = ['roundup-bullets-container', 'britespot-bullets-container', 'tips-container'];
+                const mirroredContainers = {};
+                mirrorContainers.forEach(id => {
+                    const reviewEl = document.getElementById('review-' + id);
+                    const fcEl = document.getElementById('fc-' + id);
+                    if (fcEl) mirroredContainers[id] = fcEl.innerHTML;
+                    if (reviewEl && fcEl) fcEl.innerHTML = reviewEl.innerHTML;
+                });
                 // Generate preview
                 const html = generateNewsletterHTML();
+                // Restore fc-* fields to what they were before we mirrored
+                mirrorFields.forEach(field => {
+                    const fcEl = document.getElementById('fc-' + field);
+                    if (fcEl && field in mirroredOriginals) fcEl.innerHTML = mirroredOriginals[field];
+                });
+                mirrorContainers.forEach(id => {
+                    const fcEl = document.getElementById('fc-' + id);
+                    if (fcEl && id in mirroredContainers) fcEl.innerHTML = mirroredContainers[id];
+                });
                 document.getElementById('newsletterModalContent').innerHTML = html;
                 document.getElementById('newsletterModal').style.display = 'block';
                 // Restore original state
@@ -11123,7 +11720,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             const prefix = onFinalCopy ? 'fc-' : 'review-';
 
             // Simple fields
-            ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+            ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
                 const el = document.getElementById(prefix + field);
                 if (el) reviewHTML[field] = el.innerHTML;
             });
@@ -11212,6 +11809,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                         },
                         generatedImages: generatedImages,
                         imagePrompts: basePrompts,  // Save image prompts
+                        briteSpotLayout: briteSpotLayout,
                         specialSection: specialSection,
                         skippedResearch: skippedResearch,
                         isManualBuild: isManualBuild,
@@ -11286,6 +11884,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 const gc = d.generatedContent || {};
                 headerIntroContent = gc.headerIntro || '';
                 briteSpotContent = gc.briteSpot || '';
+                generatedBriteSpotTitle = gc.briteSpotTitle || '';
                 briteSpotBullets = gc.briteSpotBullets || [];
                 generatedClaimsContent = gc.claims || '';
                 generatedRoundupContent = gc.roundup || '';
@@ -11293,7 +11892,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 generatedSpotlightSubheader = gc.spotlightSubheader || '';
                 generatedTipsContent = gc.tips || '';
                 generatedIntroContent = gc.intro || '';
-                generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null, specialSection: null };
+                generatedImages = d.generatedImages || { meme: null, briteSpot: null, briteSpotLeft: null, briteSpotRight: null, claims: null, spotlight: null, tips: null, specialSection: null };
+                briteSpotLayout = d.briteSpotLayout || 'wide';
 
                 // Restore selected articles
                 const sa = d.selectedArticles || {};
@@ -11315,6 +11915,9 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     if (basePrompts.claims) document.getElementById('claimsImagePromptText').value = basePrompts.claims;
                     if (basePrompts.spotlight) document.getElementById('spotlightImagePromptText').value = basePrompts.spotlight;
                     if (basePrompts.tips) document.getElementById('tipsImagePromptText').value = basePrompts.tips;
+                    // Show prompt editing UI (not the "Generating..." spinner)
+                    document.getElementById('promptGenerationLoading').style.display = 'none';
+                    document.getElementById('promptEditing').style.display = 'block';
                 }
 
                 // Restore image flags to prevent regeneration
@@ -11322,7 +11925,18 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     imagesAlreadyGenerated = true;
                     // Display saved images so they show on step 10
                     displayImages();
+                    // Restore two-squares previews if present
+                    if (generatedImages.briteSpotLeft?.url) {
+                        const lp = document.getElementById('briteSpotLeftPreview');
+                        if (lp) lp.innerHTML = `<img src="${generatedImages.briteSpotLeft.url}" style="max-width:100%;border-radius:8px;">`;
+                    }
+                    if (generatedImages.briteSpotRight?.url) {
+                        const rp = document.getElementById('briteSpotRightPreview');
+                        if (rp) rp.innerHTML = `<img src="${generatedImages.briteSpotRight.url}" style="max-width:100%;border-radius:8px;">`;
+                    }
                 }
+                // Restore Brite Spot layout selector
+                updateBriteSpotLayout(briteSpotLayout);
                 if (generatedImages && generatedImages.meme) {
                     memeConceptGenerated = true;
                     memeImageGenerated = true;
@@ -11350,7 +11964,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 if (savedHTML._layout === 'labeled') {
                     console.log('[Draft] Restoring from labeled reviewHTML');
                     // Simple fields
-                    ['headerIntro', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                    ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
                         const el = document.getElementById('review-' + field);
                         if (el && savedHTML[field] !== undefined) el.innerHTML = savedHTML[field];
                     });
@@ -11495,7 +12109,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     console.error('[Draft] Publish API returned error:', result.error);
                 }
                 await loadDrafts();
-                await loadNewsletterArchive();
+                await loadArchive();
             } catch (e) {
                 console.error('[Draft] Publish failed:', e);
             }
@@ -11520,6 +12134,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             if (introHtml) headerIntroContent = introHtml;
 
             // Brite Spot
+            const bsTitle = getText(prefix + 'britespot-title');
+            if (bsTitle !== undefined) generatedBriteSpotTitle = bsTitle;
             const bsPara = getHTML(prefix + 'britespot-paragraph');
             if (bsPara) { briteSpotContent = bsPara; briteSpotRewritten = bsPara; generatedBriteSpotContent = bsPara; }
             // Read bullets from container
@@ -11633,6 +12249,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
             // Simple fields
             copyField('review-headerIntro', 'fc-headerIntro');
+            copyField('review-britespot-title', 'fc-britespot-title');
             copyField('review-britespot-paragraph', 'fc-britespot-paragraph');
             copyField('review-claims-title', 'fc-claims-title');
             copyField('review-claims-copy', 'fc-claims-copy');
@@ -11747,15 +12364,15 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
 
         // Load published newsletters
         async function loadArchive() {
+            const grid = document.getElementById('archiveGrid');
+            const empty = document.getElementById('archiveContent');
             try {
-                const response = await fetch(`${API_BASE}/api/list-published`);
+                const response = await fetch(`${API_BASE}/api/list-published`, { credentials: 'same-origin' });
                 const data = await response.json();
-                const grid = document.getElementById('archiveGrid');
-                const empty = document.getElementById('archiveContent');
+                console.log('[Archive] API response:', { status: response.status, success: data.success, count: Array.isArray(data.newsletters) ? data.newsletters.length : 'n/a' });
                 if (data.success && data.newsletters && data.newsletters.length > 0) {
                     if (empty) empty.style.display = 'none';
-                    grid.style.display = 'grid';
-                    grid.innerHTML = '';
+                    if (grid) { grid.style.display = 'grid'; grid.innerHTML = ''; }
                     data.newsletters.forEach(n => {
                         const monthCap = n.month ? n.month.charAt(0).toUpperCase() + n.month.slice(1) : '?';
                         const savedBy = n.lastSavedBy || 'unknown';

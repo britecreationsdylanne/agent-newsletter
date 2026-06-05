@@ -67,6 +67,12 @@ class PerplexityClient:
 
             geo_context = f" Focus on {geography}." if geography else ""
 
+            # Add date cutoff to query for more precise recency filtering
+            from datetime import datetime, timedelta
+            days_map = {'7d': 7, '30d': 30}
+            max_days = days_map.get(time_window, 30)
+            cutoff_date = (datetime.now() - timedelta(days=max_days)).strftime('%Y-%m-%d')
+
             system_prompt = f"""You are a research assistant helping independent P&C insurance agents find relevant industry news and insights.
 
 Search for {time_context} articles and news.{geo_context}
@@ -97,6 +103,8 @@ Important:
 - Focus on actionable insights for P&C insurance agents
 - Include specific data points, statistics, and rate changes when available
 - Do NOT include articles older than the specified time window
+- Prefer open-access trade publications and press releases over paywalled mainstream media
+- AVOID these paywalled sources: wsj.com, bloomberg.com, nytimes.com, ft.com, businessinsider.com, washingtonpost.com, economist.com, barrons.com, thetimes.co.uk, telegraph.co.uk
 - Return exactly {max_results} results"""
 
             # Make API request
@@ -109,7 +117,7 @@ Important:
                 "model": "sonar-pro",  # deeper search, better recency and citation quality
                 "messages": [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": query}
+                    {"role": "user", "content": f"after:{cutoff_date} {query}"}
                 ],
                 "temperature": 0.2,
                 "max_tokens": 2000,

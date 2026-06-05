@@ -11,7 +11,7 @@ import requests
 import base64
 import secrets
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, Response, redirect, session, url_for
 from flask_cors import CORS
@@ -53,6 +53,60 @@ from config.model_config import get_model_for_task
 # Chicago timezone for timestamps
 CHICAGO_TZ = pytz.timezone('America/Chicago')
 
+
+PAYWALL_DOMAINS = [
+    'wsj.com', 'bloomberg.com', 'nytimes.com', 'ft.com', 'businessinsider.com',
+    'washingtonpost.com', 'economist.com', 'barrons.com', 'thetimes.co.uk',
+    'telegraph.co.uk', 'latimes.com', 'bostonglobe.com'
+]
+
+
+def filter_paywalled(results):
+    """Remove results from known paywalled domains."""
+    from urllib.parse import urlparse
+    filtered = []
+    for r in results:
+        url = r.get('url', '')
+        try:
+            domain = urlparse(url).netloc.lower().replace('www.', '')
+            if not any(domain == pw or domain.endswith('.' + pw) for pw in PAYWALL_DOMAINS):
+                filtered.append(r)
+        except Exception:
+            filtered.append(r)
+    return filtered
+
+
+def filter_by_recency(results, time_window='30d'):
+    """Filter out articles older than the requested time window."""
+    days_map = {'7d': 7, '30d': 30}
+    max_days = days_map.get(time_window, 30)
+    cutoff = datetime.now() - timedelta(days=max_days)
+    filtered = []
+    for r in results:
+        date_str = r.get('published_date') or r.get('published_at') or ''
+        if not date_str:
+            filtered.append(r)
+            continue
+        try:
+            pub_date = datetime.strptime(date_str[:10], '%Y-%m-%d')
+            if pub_date >= cutoff:
+                filtered.append(r)
+        except (ValueError, TypeError):
+            filtered.append(r)
+    return filtered
+
+
+def fix_em_dashes(text):
+    """Ensure spaces around em dashes per style guide."""
+    import re
+    if not text or not isinstance(text, str):
+        return text
+    # Add space before/after em dashes that are missing them
+    text = re.sub(r'(\S)—(\S)', r'\1 — \2', text)
+    text = re.sub(r'(\S)—', r'\1 —', text)
+    text = re.sub(r'—(\S)', r'— \1', text)
+    return text
+
 app = Flask(__name__, static_folder='.')
 CORS(app)
 
@@ -71,6 +125,11 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
+
+# ClickUp configuration
+CLICKUP_API_TOKEN = os.environ.get('CLICKUP_API_TOKEN') or os.environ.get('_CLICKUP_API_TOKEN')
+CLICKUP_LIST_ID = os.environ.get('CLICKUP_LIST_ID') or os.environ.get('_CLICKUP_LIST_ID')
+CLICKUP_LINK_FIELD_ID = 'e4129c72-f566-490d-a939-9aff1726fabc'
 
 # Allowed email domain
 ALLOWED_DOMAIN = 'brite.co'
@@ -833,9 +892,11 @@ def v2_search_perplexity():
             max_results=8
         )
 
-        # Filter out excluded URLs
+        # Filter out excluded URLs, paywalled sources, and stale articles
         if exclude_urls:
             search_results = [r for r in search_results if r.get('url') not in exclude_urls]
+        search_results = filter_paywalled(search_results)
+        search_results = filter_by_recency(search_results, time_window)
 
         # Take top 8 results for more options
         results = search_results[:8]
@@ -1036,9 +1097,10 @@ def rewrite_britespot():
         data = request.json
         content = data.get('content', '')
         tone = data.get('tone', 'informative')
+        reference_text = data.get('reference_text', '')
 
-        if not content:
-            return jsonify({'success': False, 'error': 'Content required'}), 400
+        if not content and not reference_text:
+            return jsonify({'success': False, 'error': 'Content or reference required'}), 400
 
         print(f"\n[API] Rewriting Brite Spot content ({tone} tone)...")
 
@@ -1070,8 +1132,11 @@ VOICE:
         rewrite_bs_prompt = f"""Rewrite this content for "The Brite Spot" section.
 
 ORIGINAL CONTENT:
-{content}
-
+{content or '(none — write from the reference material below)'}
+{f'''
+REFERENCE ARTICLES / NOTES (use for context, facts, and story angle):
+{reference_text}
+''' if reference_text else ''}
 REQUIREMENTS:
 - Maximum 100 words
 - {tone_instructions.get(tone, 'Professional but approachable')}
@@ -1090,7 +1155,7 @@ Output ONLY the rewritten content, no labels or explanations."""
 
         return jsonify({
             'success': True,
-            'rewritten': result['content'].strip(),
+            'rewritten': fix_em_dashes(result['content'].strip()),
             'original': content,
             'tone': tone
         })
@@ -1223,7 +1288,7 @@ Output ONLY the content, no labels or explanations."""
 
         return jsonify({
             'success': True,
-            'rewritten': result['content'].strip(),
+            'rewritten': fix_em_dashes(result['content'].strip()),
             'original': content,
             'section': section
         })
@@ -1650,7 +1715,7 @@ Output as plain text - headline on first line, then paragraphs separated by blan
             max_tokens=2000
         )
 
-        content_text = result['content'].strip()
+        content_text = fix_em_dashes(result['content'].strip())
         print(f"[API] Spotlight response length: {len(content_text)}")
 
         # Parse plain text response: first line is subheader, rest is body
@@ -1681,16 +1746,44 @@ Output as plain text - headline on first line, then paragraphs separated by blan
                 text
             )
 
-        # Build HTML body with proper paragraph tags and spacing
+        # Build structured h3 sections from markdown headers
+        h3s = []
+        current_title = ''
+        current_body_parts = []
+
+        for p in paragraphs:
+            header_match = re.match(r'^#{1,3}\s+(.+)', p.strip())
+            if header_match:
+                # Save previous section
+                if current_title or current_body_parts:
+                    h3s.append({
+                        'title': current_title,
+                        'body': ''.join(f'<p style="margin: 0 0 16px 0; line-height: 1.7;">{convert_links(bp)}</p>' for bp in current_body_parts)
+                    })
+                current_title = header_match.group(1).strip()
+                current_body_parts = []
+            else:
+                current_body_parts.append(p)
+
+        # Save last section
+        if current_title or current_body_parts:
+            h3s.append({
+                'title': current_title,
+                'body': ''.join(f'<p style="margin: 0 0 16px 0; line-height: 1.7;">{convert_links(bp)}</p>' for bp in current_body_parts)
+            })
+
+        # Build HTML body (fallback for non-structured rendering)
         html_body = ''
         for p in paragraphs:
-            p_with_links = convert_links(p)
+            p_clean = re.sub(r'^#{1,3}\s+', '', p.strip())
+            p_with_links = convert_links(p_clean)
             html_body += f'<p style="margin: 0 0 16px 0; line-height: 1.7;">{p_with_links}</p>'
 
-        # Build simple structure - body as HTML
+        # Build structure with both body and h3s
         spotlight_content = {
             'subheader': subheader,
             'body': html_body,
+            'h3s': h3s if h3s else [],
             'agent_takeaway': agent_takeaway or 'Review these developments and consider their impact on your clients.'
         }
 
@@ -2088,24 +2181,31 @@ def search_claims():
 
         print(f"\n[API] Searching for curious claims stories (month: {month})...")
 
-        # Multiple search queries to find interesting claims stories
-        # Focus on specific types of stories that make good "Curious Claims" content
+        # Multiple search queries to find interesting, specific claims stories
+        # Based on real past Curious Claims: bizarre incidents (bald eagle drops cat on car),
+        # coverage questions (contaminated gas — is it covered?), fraud arrests (170 felony charges),
+        # court rulings (grandson not covered under grandma's policy), major litigation (Meta loses coverage)
         CLAIMS_SEARCH_QUERIES = [
-            # Unusual/strange claims
-            '"unusual claim" OR "strange claim" OR "bizarre claim" insurance',
-            '"insurance claim" lawsuit settlement verdict',
-            'insurance fraud case caught convicted',
-            '"filed a claim" "insurance company" story',
-            # Specific incident types that make good stories
-            'homeowner insurance claim damage unusual',
-            'auto insurance claim accident story',
-            'liability insurance claim lawsuit ruling',
-            # Claims Journal specific searches (great source for claims stories)
-            'site:claimsjournal.com claim story',
-            'site:claimsjournal.com insurance lawsuit verdict',
-            # Court cases and settlements
-            '"insurance dispute" "court ruled" OR settlement',
-            'property damage claim "insurance paid" OR denied'
+            # Coverage disputes and "is it covered?" stories
+            'insurance coverage dispute denied "is it covered" unusual damage 2025 2026',
+            'homeowners insurance claim denied court ruled coverage dispute',
+            'auto insurance claim unusual damage covered policy question',
+            # Fraud and criminal cases with specifics
+            'insurance fraud arrested charged felony convicted 2025 2026',
+            'insurance scam scheme caught sentenced prison',
+            # Bizarre real incidents
+            'bizarre insurance claim animal wildlife freak accident 2025 2026',
+            'unusual insurance claim viral story weird incident',
+            'strange property damage insurance claim storm weather',
+            # Court rulings and coverage decisions
+            'insurer "duty to defend" ruling court decision 2026',
+            'insurance policy exclusion court ruled coverage denied upheld',
+            # Best sources for claims stories
+            'site:claimsjournal.com coverage dispute ruling 2025 2026',
+            'site:insurancejournal.com claim fraud bizarre unusual 2025 2026',
+            'site:propertycasualty360.com "is it covered" insurance claim',
+            # Big litigation / notable cases
+            'major insurance litigation ruling million billion coverage dispute'
         ]
 
         all_results = []
@@ -2392,7 +2492,7 @@ A federal appeals court affirmed that just because one insured party commits fra
             claims_prompt = f"""Write an engaging STORY about this claims case. Target: 350-400 words.
 
 Article: {curious_claims_topic.get('title', 'Unknown')}
-Source: {curious_claims_topic.get('url', 'N/A')}
+Source URL: {curious_claims_topic.get('url', 'N/A')}
 Initial Summary: {curious_claims_topic.get('description', '')}
 
 Structure your story as:
@@ -2402,6 +2502,9 @@ Structure your story as:
 4. THE TWIST (2-3 sentences) - what made it interesting
 5. THE RESOLUTION (2-3 sentences) - insurance outcome
 6. AGENT TAKEAWAY (2-3 sentences) - lesson for agents
+
+CRITICAL — SOURCE LINK REQUIREMENT:
+You MUST embed the Source URL as a markdown link [link text](url) naturally within the story. Pick a meaningful 2-5 word phrase from your story and turn it into the link. Good options: a key detail, a person's name, the publication name (e.g., "as reported by [WLOS](url)"), or a descriptive phrase like "the [bizarre incident](url)". Place it where it reads naturally — usually in THE SETUP, THE INCIDENT, or THE RESOLUTION section. Do NOT add a separate "Read more" line or "Source:" footer — the link must be inline and feel organic to the prose. Use this exact source URL: {curious_claims_topic.get('url', 'N/A')}
 
 Output the complete story as flowing prose, not as labeled sections."""
 
@@ -2428,15 +2531,14 @@ Output the complete story as flowing prose, not as labeled sections."""
 
 STYLE: Title Case throughout, one punchy sentence, with specific stats/numbers. Naturally embed a hyperlink.
 
-REAL EXAMPLES (match this exact style):
-"According to a New Survey, 83% of Americans Say They Would Drop Their Insurance Company After One Bad Claims Experience"
-"Auto Insurance Rates Are Falling Due to Fewer Claims, with the National Average Down By 2% and Even Up to 6.6% in Some Markets"
-"Insured Losses for Natural Disasters Hit $108 Billion Globally in 2025, Down from $147 Billion in 2024 Due to Less US Hurricane Landfalls"
-"Most Property Owners Are Now Paying 7% of Their Total Monthly Costs Towards Home Insurance, While Some Areas Like Miami Are Paying 13.1%"
-"As Driverless Cars Become More Common & Human Error Decreases, Expect Fewer Auto Claims -- About 30-40% Less"
-"Small Hail Stones Are Leading to More Home Insurance Claims; Stones Measuring Even 1 Inch Can Cause Damage and Premature Aging of Roofs"
+REAL EXAMPLES (match this exact style, all are 20 words or fewer):
+"83% of Americans Would Drop Their Insurer After One Bad Claims Experience, New Survey Finds"
+"Auto Insurance Rates Down 2% Nationally, Up to 6.6% in Some Markets Due to Fewer Claims"
+"Insured Losses for Natural Disasters Hit $108 Billion Globally in 2025, Down from $147 Billion in 2024"
+"Small Hail Stones as Small as 1 Inch Are Causing More Home Insurance Claims and Roof Damage"
+"Driverless Cars Could Reduce Auto Claims by 30-40% as Human Error Declines"
 
-RULES: Title Case. ONE sentence. Include specific numbers/percentages/dollar amounts. Never generic. Embed hyperlink as [Source Name](URL)."""
+RULES: Title Case. ONE sentence. Include specific numbers/percentages/dollar amounts. Never generic. Embed hyperlink as [Source Name](URL). HARD MAXIMUM: 20 words — count before responding."""
 
                 roundup_prompt = f"""Write a headline-style news bullet for this article. Embed a hyperlink to [{source_name}]({url}).
 
@@ -2452,8 +2554,29 @@ Output ONLY the bullet text, nothing else."""
                     temperature=0.5,
                     max_tokens=150
                 )
+                raw_summary = fix_em_dashes(roundup_result['content'].strip())
+                # Enforce 20-word display maximum
+                def truncate_headline(text, max_words=20):
+                    import re
+                    result, display_count, i = [], 0, 0
+                    while i < len(text) and display_count < max_words:
+                        lm = re.match(r'\[([^\]]+)\]\([^)]+\)', text[i:])
+                        if lm:
+                            wc = len(lm.group(1).split())
+                            if display_count + wc <= max_words:
+                                result.append(lm.group(0)); display_count += wc; i += lm.end()
+                            else:
+                                break
+                        elif text[i] == ' ':
+                            result.append(' '); i += 1
+                        else:
+                            end = i
+                            while end < len(text) and text[end] not in (' ', '['):
+                                end += 1
+                            result.append(text[i:end]); display_count += 1; i = end
+                    return ''.join(result).rstrip(',.;:- ')
                 roundup_items.append({
-                    'summary': roundup_result['content'].strip(),
+                    'summary': truncate_headline(raw_summary),
                     'url': url,
                     'source': source_name
                 })
@@ -2638,32 +2761,65 @@ def generate_content():
             print("  - Generating Introduction...")
             intro_system = f"""You are the copywriter for BriteCo Brief, a newsletter for independent insurance agents.
 
-=== REAL EXAMPLES FROM PAST ISSUES (match this conversational voice) ===
+=== REAL EXAMPLES FROM PAST ISSUES (match this structure and voice exactly) ===
 
-"Thank you to everyone who completed our annual independent agent survey and vied for the chance to win a $200 gift card. We have now picked our winners. Keep reading to find out if you are a recipient and get the latest on the homeowners insurance crisis that's still wreaking havoc on the industry."
+BEST EXAMPLE (use as default model):
+"AI continues to be the hot topic in the insurance industry. This month, we take a look at the latest developments impacting both large insurers and independent agencies. Plus, we offer five tips for discussing higher deductibles with clients without losing business."
 
-"It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history and had an astronomical impact on insurance. We look at how the industry is better prepared today, provide tips on retaining small business customers, and examine the curious world of alien abduction insurance."
+"The survey results are in! We've published the findings from our 2025 independent agent survey where homeowners takes the focus for the year ahead. Get your copy of the report here. Plus, keep reading for the latest developments in the auto insurance sector and get five tips for wading through underwriting changes."
 
-"From all of us at BriteCo, we are wishing you a very happy holiday season! As you make your list and check it twice, we wanted to remind you of one important item to not forget: filling out our brief Independent Agent Survey."
-
-"We want to hear from you about how the homeowners insurance crisis is impacting your business. Fill out our brief Independent Agent Survey and you could be one of three winners to get a $200 gift card. Keep reading for the latest industry developments and learn how agents have an advantage."
+"It's hard to believe it's been 20 years since Hurricane Katrina caused one of the biggest catastrophes in US history. We look at how the industry is better prepared today, provide tips on retaining small business customers, and examine the curious world of alien abduction insurance."
 
 === END EXAMPLES ===
 
+STRUCTURE TO FOLLOW:
+1. Open with a timely hook (a trend, stat, or specific topic — NOT "Welcome to" or "In this month's edition")
+2. Tease 2-3 SPECIFIC topics from the newsletter content provided below ("we take a look at...", "Plus, we offer tips on...", "and examine...")
+3. Keep it 2-4 sentences, max 75 words
+
 VOICE:
-- Conversational and warm -- like writing to a colleague
-- Use contractions naturally (it's, we're, you'll)
-- AVOID generic openings like "Welcome to another edition" or "In this month's newsletter"
-- Start with something SPECIFIC -- a stat, a question, a timely reference, or a direct address
-- AVOID: "landscape", "navigate", "leverage", "robust", "comprehensive", "in today's ever-evolving"
+- Conversational and warm — like writing to a colleague
+- Use contractions naturally (it's, we're, you'll, we've)
+- AVOID: "landscape", "navigate", "leverage", "robust", "comprehensive", "in today's ever-evolving", "Welcome to another edition"
+- LIMIT em dashes to at most 1. Prefer commas.
 
 {style_guide}"""
 
+            # Build content summary so intro can reference actual newsletter topics
+            content_teasers = []
+            if research.get('curious_claims'):
+                claims_data = research['curious_claims']
+                claims_title = claims_data.get('title', claims_data.get('headline', '')) if isinstance(claims_data, dict) else str(claims_data)[:80]
+                if claims_title:
+                    content_teasers.append(f"Curious Claims: {claims_title}")
+            if research.get('spotlight'):
+                spot = research['spotlight']
+                spot_title = spot.get('subheader', '') if isinstance(spot, dict) else ''
+                if spot_title:
+                    content_teasers.append(f"Feature Spotlight: {spot_title}")
+            if research.get('roundup') and isinstance(research['roundup'], list):
+                topics = [item.get('headline', item.get('summary', ''))[:60] for item in research['roundup'][:3] if isinstance(item, dict)]
+                if topics:
+                    content_teasers.append(f"News Roundup topics: {'; '.join(topics)}")
+            if research.get('tips'):
+                tips_data = research['tips']
+                if isinstance(tips_data, dict) and tips_data.get('tips'):
+                    tip_titles = [t.get('title', '')[:40] for t in tips_data['tips'][:2] if isinstance(t, dict)]
+                    if tip_titles:
+                        content_teasers.append(f"Agent tips: {', '.join(tip_titles)}")
+
+            content_summary = "\n".join(f"- {t}" for t in content_teasers) if content_teasers else "General P&C insurance industry topics"
+
             intro_prompt = f"""Write a brief, welcoming introduction for the {month.capitalize()} edition.
+
+THIS MONTH'S NEWSLETTER CONTAINS:
+{content_summary}
 
 Requirements:
 - 2-4 sentences, maximum 75 words
-- Reference something specific happening this month or tease specific content inside
+- MUST reference or tease 2-3 specific topics from the content list above
+- Match the examples: "We look at [topic], provide tips on [topic], and examine [topic]"
+- Do NOT be generic — name the actual stories
 
 Output ONLY the introduction text, no labels or formatting."""
 
@@ -2674,7 +2830,7 @@ Output ONLY the introduction text, no labels or formatting."""
                 temperature=0.7,
                 max_tokens=150
             )
-            sections['introduction'] = intro_result['content'].strip()
+            sections['introduction'] = fix_em_dashes(intro_result['content'].strip())
 
         # Generate Brite Spot (max 100 words) - auto-generate if no topic provided
         if not brite_spot_topic:
@@ -2704,12 +2860,14 @@ VOICE:
             auto_bs_prompt = f"""Write a brief "Brite Spot" section for the {month.capitalize()} edition thanking agents for their partnership and highlighting BriteCo's value.
 
 Requirements:
-- Maximum 75 words
+- Maximum 75 words for the body
 - Warm, genuine tone
 - Mention partnership and supporting clients
 - Include a subtle call to action
 
-Output ONLY the text, no title or labels."""
+Output in this exact format:
+TITLE: [Short descriptive title, 4-8 words, no punctuation at end]
+BODY: [The paragraph text]"""
 
             try:
                 auto_bs_result = claude_client.generate_content(
@@ -2717,13 +2875,21 @@ Output ONLY the text, no title or labels."""
                     system_prompt=auto_bs_system,
                     model="claude-opus-4-8",
                     temperature=0.6,
-                    max_tokens=150
+                    max_tokens=200
                 )
-                sections['brite_spot'] = auto_bs_result['content'].strip()
+                raw = auto_bs_result['content'].strip()
+                bs_title, bs_body = '', raw
+                if 'TITLE:' in raw:
+                    parts = raw.split('BODY:', 1)
+                    bs_title = parts[0].replace('TITLE:', '').strip()
+                    bs_body = parts[1].strip() if len(parts) > 1 else raw
+                sections['brite_spot'] = bs_body
+                sections['brite_spot_title'] = bs_title
                 print(f"    Auto-generated Brite Spot: {len(sections['brite_spot'].split())} words")
             except Exception as e:
                 print(f"    Error auto-generating Brite Spot: {e}")
                 sections['brite_spot'] = f"Thank you for your continued partnership with BriteCo. We're committed to helping you and your clients protect what matters most. Reach out to your BriteCo rep anytime — we're here to help."
+                sections['brite_spot_title'] = 'A Note From BriteCo'
 
         if brite_spot_topic:
             print("  - Generating Brite Spot...")
@@ -2760,21 +2926,30 @@ VOICE:
             brite_spot_prompt = f"""Write the "Brite Spot" section about: {brite_spot_topic}
 
 Requirements:
-- Maximum 100 words
+- Maximum 100 words for the body
 - Lead with the benefit to agents or a specific fact/stat
 - Include a clear call to action
 - Be SPECIFIC about benefits (exact percentages, features, names)
 
-Output ONLY the Brite Spot text, no title or labels."""
+Output in this exact format:
+TITLE: [Short descriptive title, 4-8 words, no punctuation at end]
+BODY: [The paragraph text]"""
 
             brite_spot_result = claude_client.generate_content(
                 prompt=brite_spot_prompt,
                 system_prompt=brite_spot_system,
                 model="claude-opus-4-8",
                 temperature=0.6,
-                max_tokens=200
+                max_tokens=250
             )
-            sections['brite_spot'] = brite_spot_result['content'].strip()
+            raw_bs = brite_spot_result['content'].strip()
+            bs_title_t, bs_body_t = '', raw_bs
+            if 'TITLE:' in raw_bs:
+                parts_bs = raw_bs.split('BODY:', 1)
+                bs_title_t = parts_bs[0].replace('TITLE:', '').strip()
+                bs_body_t = parts_bs[1].strip() if len(parts_bs) > 1 else raw_bs
+            sections['brite_spot'] = bs_body_t
+            sections['brite_spot_title'] = bs_title_t
 
         # Generate Curious Claims from research
         if research.get('curious_claims'):
@@ -2826,8 +3001,11 @@ PARAGRAPH STRUCTURE:
 - Paragraph 2: The twist/absurdity/resolution (what happened, why it's memorable)
 - Paragraph 3 (optional): Brief agent takeaway or amusing insight
 
+CRITICAL — PRESERVE THE SOURCE LINK:
+The research briefing above contains a hyperlink (in markdown format [text](url) or as an <a href> tag) pointing to the original source article. You MUST preserve this exact same URL in your condensed version. Pick a meaningful 2-5 word phrase from your story and turn it into a markdown link [phrase](url) using the exact URL from the research. Place it naturally inline (e.g., "as [WLOS reported](url)" or "the [bizarre incident](url)"). Do NOT add a separate "Read more" line or "Source:" footer — the link must be inline and feel organic to the prose. If the research has no link, skip this requirement.
+
 OUTPUT FORMAT:
-<p>First paragraph content here...</p>
+<p>First paragraph content here, with [embedded link](url) somewhere inline...</p>
 <p>Second paragraph content here...</p>
 <p>Optional third paragraph...</p>
 
@@ -2840,7 +3018,7 @@ Output ONLY the paragraphs in <p> tags, no title or labels."""
                 temperature=0.65,
                 max_tokens=400
             )
-            sections['curious_claims'] = claims_result['content'].strip()
+            sections['curious_claims'] = fix_em_dashes(claims_result['content'].strip())
 
         # News Roundup is already formatted as bullet points from research
         if research.get('roundup'):
@@ -3264,21 +3442,41 @@ def generate_subject_options():
 
         tone_desc = tone_guidelines.get(tone, tone_guidelines['professional'])
 
+        # Build content summary for subject lines — read nested structure from frontend
+        content_topics = []
+        spotlight = content.get('spotlight', {})
+        if isinstance(spotlight, dict) and spotlight.get('title'):
+            content_topics.append(f"Feature Spotlight: {spotlight['title']}")
+        claims = content.get('claims', {})
+        if isinstance(claims, dict) and claims.get('title'):
+            content_topics.append(f"Curious Claims: {claims['title']}")
+        roundup = content.get('roundup', {})
+        if isinstance(roundup, dict) and roundup.get('content'):
+            content_topics.append(f"News Roundup: {str(roundup['content'])[:120]}")
+        tips = content.get('tips', {})
+        if isinstance(tips, dict) and tips.get('content'):
+            tip_str = str(tips['content'])[:120] if tips['content'] else ''
+            if tip_str:
+                content_topics.append(f"Agent tips: {tip_str}")
+        content_summary = "\n".join(f"- {t}" for t in content_topics) if content_topics else "- P&C insurance industry news and insights for independent agents"
+
         # Generate subject lines
-        subject_prompt = f"""Create 4 email subject line options for the BriteCo Brief newsletter ({month.capitalize()} edition).
+        subject_prompt = f"""Create 4 VERY DIFFERENT email subject line options for the BriteCo Brief newsletter ({month.capitalize()} edition).
 
 Tone: {tone_desc}
 
-Newsletter sections include:
-- Curious Claims (unusual insurance claims stories)
-- Insurance News Roundup (P&C industry news)
-- Feature Spotlight (deep dive on trending topic)
-- Agent Advantage Tips (actionable advice for agents)
+THIS MONTH'S ACTUAL CONTENT:
+{content_summary}
 
 Requirements:
 - Each subject line should be 40-60 characters
-- Make them engaging but not clickbait
-- Reference the month or a key topic when appropriate
+- Each option must use a DIFFERENT approach:
+  1. Lead with the most compelling specific topic or statistic
+  2. Ask a provocative question related to the content
+  3. Use a bold statement or surprising fact from the newsletter
+  4. Reference the month with a specific content tease
+- Do NOT use generic phrases like "Your Monthly Update" or "What You Need to Know"
+- Each line should feel distinctly different from the others — vary structure, word choice, and hook type
 - Match the {tone} tone throughout
 
 Output EXACTLY 4 subject lines, one per line, numbered 1-4. No other text."""
@@ -3310,14 +3508,18 @@ Output EXACTLY 4 subject lines, one per line, numbered 1-4. No other text."""
             ]
 
         # Generate preheaders
-        preheader_prompt = f"""Create 4 email preheader (preview text) options to complement subject lines for the BriteCo Brief newsletter.
+        preheader_prompt = f"""Create 4 VERY DIFFERENT email preheader (preview text) options for BriteCo Brief.
 
 Tone: {tone_desc}
 
+THIS MONTH'S CONTENT:
+{content_summary}
+
 Requirements:
 - Each preheader should be 60-90 characters
-- Tease content to encourage opening
-- Complement subject lines without repeating them
+- Reference SPECIFIC topics from the content above — not generic newsletter language
+- Each must use a different approach: tease a stat, pose a question, highlight a story, create curiosity
+- Do NOT use: "industry insights", "what you need to know", "this month's highlights"
 - Match the {tone} tone
 
 Output EXACTLY 4 preheader options, one per line, numbered 1-4. No other text."""
@@ -3725,6 +3927,8 @@ def export_to_docs():
             text = text.replace('&nbsp;', ' ')
             # Remove ** markdown bold markers
             text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+            # Remove markdown # headers (keep the text after #)
+            text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
             # Clean up whitespace
             text = re.sub(r'\n{3,}', '\n\n', text)
             return text.strip()
@@ -3786,6 +3990,13 @@ def export_to_docs():
             offset = add_text.__defaults__[2]
             if not html_val:
                 return
+            # Safety net: convert markdown [text](url) → <a href="url">text</a>
+            # so links pasted/generated in markdown form survive export.
+            html_val = re.sub(
+                r'\[([^\]]+)\]\((https?://[^)\s]+)\)',
+                r'<a href="\2">\1</a>',
+                html_val
+            )
             # Strip to plain text but keep <a> tags
             text_val = html_to_plain_text_keep_links(html_val)
             # Parse segments: plain text and links
@@ -3817,9 +4028,12 @@ def export_to_docs():
                         link_text = link_url
                     requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': link_text}})
                     requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + len(link_text)}, 'textStyle': {'link': {'url': link_url}, 'foregroundColor': {'color': {'rgbColor': {'red': 0.0, 'green': 0.506, 'blue': 0.506}}}}, 'fields': 'link,foregroundColor'}})
+                    if bold:
+                        requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + len(link_text)}, 'textStyle': {'bold': True}, 'fields': 'bold'}})
                     offset[0] += len(link_text)
-            # Add newline
+            # Add newline and reset text color to black so link color doesn't bleed
             requests_list.append({'insertText': {'location': {'index': offset[0]}, 'text': '\n'}})
+            requests_list.append({'updateTextStyle': {'range': {'startIndex': offset[0], 'endIndex': offset[0] + 1}, 'textStyle': {'foregroundColor': {'color': {'rgbColor': {'red': 0.0, 'green': 0.0, 'blue': 0.0}}}, 'link': None}, 'fields': 'foregroundColor,link'}})
             offset[0] += 1
 
         # Add newsletter sections
@@ -3889,8 +4103,13 @@ def export_to_docs():
                     if isinstance(tip, dict):
                         tip_title = tip.get('title', '')
                         tip_body = tip.get('tip', tip.get('content', ''))
+                        tip_url = tip.get('source_url') or tip.get('url') or ''
                         if tip_title:
-                            add_text(f"{i}. {tip_title}", bold=True)
+                            if tip_url:
+                                # Hyperlink the bold title to the source article
+                                add_rich_text(f'<a href="{tip_url}">{i}. {tip_title}</a>', bold=True)
+                            else:
+                                add_text(f"{i}. {tip_title}", bold=True)
                             if tip_body:
                                 add_rich_text(tip_body)
                         else:
@@ -4278,6 +4497,7 @@ def save_draft():
             'generatedContent': data.get('generatedContent'),
             'generatedImages': data.get('generatedImages'),
             'imagePrompts': data.get('imagePrompts'),
+            'briteSpotLayout': data.get('briteSpotLayout', 'wide'),
             'selectedArticles': data.get('selectedArticles'),
             'specialSection': data.get('specialSection'),
             'subjectLine': data.get('subjectLine'),
@@ -4349,7 +4569,7 @@ def load_draft():
 
 @app.route('/api/publish-draft', methods=['POST'])
 def publish_draft():
-    """Move a draft from drafts/ to published/ in GCS"""
+    """Copy a draft from drafts/ to published/ in GCS with a versioned timestamp name"""
     user = get_current_user()
     if not user:
         return jsonify({'success': False, 'error': 'Not authenticated'}), 401
@@ -4365,9 +4585,12 @@ def publish_draft():
         source_blob = bucket.blob(filename)
         if not source_blob.exists():
             return jsonify({'success': False, 'error': 'Draft not found'}), 404
-        published_name = filename.replace('drafts/', 'published/', 1)
+        # Use timestamped filename so each Ontraport push saves a new version
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        base_name = filename.replace('drafts/', '', 1).replace('.json', '')
+        published_name = f'published/{base_name}-{timestamp}.json'
         bucket.copy_blob(source_blob, bucket, published_name)
-        source_blob.delete()
+        # Keep the draft file intact so it can be reloaded/edited
         safe_print(f"[DRAFT] Published {filename} -> {published_name}")
         return jsonify({'success': True, 'file': published_name})
     except Exception as e:
@@ -4384,22 +4607,49 @@ def list_published():
         bucket = gcs_client.bucket(GCS_BUCKET_NAME)
         blobs = list(bucket.list_blobs(prefix='published/'))
         newsletters = []
+
+        def preview_text(val, fallback):
+            """Coerce a stored section value (string OR dict) to an 80-char preview.
+            Strips HTML tags so <p>...</p> wrappers don't eat into the preview length.
+            """
+            if not val:
+                return fallback
+            if isinstance(val, dict):
+                # Spotlight/BriteSpot are sometimes saved as {subheader, body, h3s}
+                val = val.get('subheader') or val.get('title') or val.get('body') or fallback
+            text = re.sub(r'<[^>]+>', '', str(val))  # strip HTML tags
+            text = re.sub(r'\s+', ' ', text).strip()  # collapse whitespace
+            return text[:80] if text else fallback
+
         for blob in blobs:
-            if blob.name.endswith('.json'):
+            if not blob.name.endswith('.json'):
+                continue
+            try:
                 data = json.loads(blob.download_as_text())
-                gc = data.get('generatedContent', {})
+                gc = data.get('generatedContent', {}) or {}
+                # Prefer explicit subheader, then spotlight dict's subheader, then spotlight string
+                spotlight_preview = gc.get('spotlightSubheader') or gc.get('spotlight')
                 newsletters.append({
                     'filename': blob.name,
                     'month': data.get('month'),
                     'year': data.get('year'),
                     'lastSavedBy': data.get('lastSavedBy'),
                     'lastSavedAt': data.get('lastSavedAt'),
+                    # Keys match the frontend archive card: briteSpot, claims, spotlight
                     'sections': {
-                        'news': {'title': gc.get('headerIntro', 'Newsletter')[:80] if gc.get('headerIntro') else 'Newsletter'},
-                        'tip': {'title': gc.get('briteSpot', 'Brite Spot')[:80] if gc.get('briteSpot') else 'Brite Spot'},
-                        'trend': {'title': gc.get('spotlight', 'Spotlight')[:80] if gc.get('spotlight') else 'Spotlight'},
+                        'briteSpot': {'title': preview_text(gc.get('briteSpot'), 'Brite Spot')},
+                        'claims': {'title': preview_text(gc.get('claims') or gc.get('curious_claims'), 'Curious Claims')},
+                        'spotlight': {'title': preview_text(spotlight_preview, 'Spotlight')},
+                        # Legacy keys kept for any cached UI that still reads these
+                        'news': {'title': preview_text(gc.get('headerIntro'), 'Newsletter')},
+                        'tip': {'title': preview_text(gc.get('briteSpot'), 'Brite Spot')},
+                        'trend': {'title': preview_text(spotlight_preview, 'Spotlight')},
                     }
                 })
+            except Exception as item_err:
+                # One bad blob shouldn't take down the entire archive listing
+                safe_print(f"[PUBLISHED LIST WARN] skipping {blob.name}: {item_err}")
+                continue
         newsletters.sort(key=lambda d: d.get('lastSavedAt', ''), reverse=True)
         return jsonify({'success': True, 'newsletters': newsletters})
     except Exception as e:
@@ -4579,6 +4829,70 @@ def delete_saved_article():
 
     except Exception as e:
         safe_print(f"[SAVED ARTICLES] Error deleting: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/clickup/search-tasks', methods=['GET'])
+@login_required
+def clickup_search_tasks():
+    """Search ClickUp for Agent Newsletter tasks with status 'to do'"""
+    if not CLICKUP_API_TOKEN or not CLICKUP_LIST_ID:
+        return jsonify({'success': False, 'error': 'ClickUp not configured'}), 500
+
+    try:
+        headers = {'Authorization': CLICKUP_API_TOKEN}
+        resp = requests.get(
+            f'https://api.clickup.com/api/v2/list/{CLICKUP_LIST_ID}/task',
+            headers=headers,
+            params={'subtasks': 'false', 'statuses[]': 'to do'}
+        )
+        resp.raise_for_status()
+        tasks = resp.json().get('tasks', [])
+
+        # Filter to tasks whose name starts with "Agent Newsletter"
+        filtered = [
+            {'id': t['id'], 'name': t['name']}
+            for t in tasks
+            if t.get('name', '').lower().startswith('agent newsletter')
+        ]
+
+        return jsonify({'success': True, 'tasks': filtered})
+
+    except Exception as e:
+        safe_print(f"[CLICKUP] Error searching tasks: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/clickup/attach-draft', methods=['POST'])
+@login_required
+def clickup_attach_draft():
+    """Attach a Google Doc URL to a ClickUp task's Link custom field"""
+    if not CLICKUP_API_TOKEN:
+        return jsonify({'success': False, 'error': 'ClickUp not configured'}), 500
+
+    try:
+        data = request.json
+        task_id = data.get('task_id')
+        doc_url = data.get('doc_url')
+
+        if not task_id or not doc_url:
+            return jsonify({'success': False, 'error': 'task_id and doc_url are required'}), 400
+
+        headers = {
+            'Authorization': CLICKUP_API_TOKEN,
+            'Content-Type': 'application/json'
+        }
+        resp = requests.post(
+            f'https://api.clickup.com/api/v2/task/{task_id}/field/{CLICKUP_LINK_FIELD_ID}',
+            headers=headers,
+            json={'value': doc_url}
+        )
+        resp.raise_for_status()
+
+        return jsonify({'success': True, 'message': 'Draft link attached to ClickUp task'})
+
+    except Exception as e:
+        safe_print(f"[CLICKUP] Error attaching draft: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
