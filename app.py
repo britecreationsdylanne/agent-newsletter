@@ -48,7 +48,7 @@ from config.brand_guidelines import (
     get_style_guide_for_prompt, get_search_sources_prompt,
     get_humanization_guidelines, get_full_style_guide_for_section
 )
-from config.model_config import get_model_for_task
+from config.model_config import get_model_for_task, get_model_id_for_task
 
 # Chicago timezone for timestamps
 CHICAGO_TZ = pytz.timezone('America/Chicago')
@@ -237,6 +237,11 @@ try:
 except Exception as e:
     claude_client = None
     print(f"[WARNING] Claude not available: {e}")
+
+# Claude model for editorial/writing tasks.
+# Single source of truth: config/vision_models.yaml -> task_assignments.claude_writing
+CLAUDE_WRITING_MODEL = get_model_id_for_task('claude_writing')
+print(f"[ModelConfig] Claude writing model: {CLAUDE_WRITING_MODEL}")
 
 # Initialize Perplexity client
 try:
@@ -1148,7 +1153,7 @@ Output ONLY the rewritten content, no labels or explanations."""
         result = claude_client.generate_content(
             prompt=rewrite_bs_prompt,
             system_prompt=rewrite_bs_system,
-            model="claude-opus-4-8",
+            model=CLAUDE_WRITING_MODEL,
             temperature=0.6,
             max_tokens=200
         )
@@ -1281,7 +1286,7 @@ Output ONLY the content, no labels or explanations."""
         result = claude_client.generate_content(
             prompt=prompt,
             system_prompt=rewrite_system,
-            model="claude-opus-4-8",
+            model=CLAUDE_WRITING_MODEL,
             temperature=0.6,
             max_tokens=400
         )
@@ -1710,7 +1715,7 @@ Output as plain text - headline on first line, then paragraphs separated by blan
         result = claude_client.generate_content(
             prompt=spotlight_prompt,
             system_prompt=spotlight_system,
-            model="claude-opus-4-8",
+            model=CLAUDE_WRITING_MODEL,
             temperature=0.5,
             max_tokens=2000
         )
@@ -2511,7 +2516,7 @@ Output the complete story as flowing prose, not as labeled sections."""
             claims_research = claude_client.generate_content(
                 prompt=claims_prompt,
                 system_prompt=claims_system,
-                model="claude-opus-4-8",
+                model=CLAUDE_WRITING_MODEL,
                 temperature=0.7,
                 max_tokens=800
             )
@@ -2550,7 +2555,7 @@ Output ONLY the bullet text, nothing else."""
                 roundup_result = claude_client.generate_content(
                     prompt=roundup_prompt,
                     system_prompt=roundup_system,
-                    model="claude-opus-4-8",
+                    model=CLAUDE_WRITING_MODEL,
                     temperature=0.5,
                     max_tokens=150
                 )
@@ -2662,7 +2667,7 @@ Output ONLY the intro and tips in this format, nothing else."""
                 tips_result = claude_client.generate_content(
                     prompt=tips_prompt,
                     system_prompt=tips_system,
-                    model="claude-opus-4-8",
+                    model=CLAUDE_WRITING_MODEL,
                     temperature=0.6,
                     max_tokens=800
                 )
@@ -2826,7 +2831,7 @@ Output ONLY the introduction text, no labels or formatting."""
             intro_result = claude_client.generate_content(
                 prompt=intro_prompt,
                 system_prompt=intro_system,
-                model="claude-opus-4-8",
+                model=CLAUDE_WRITING_MODEL,
                 temperature=0.7,
                 max_tokens=150
             )
@@ -2873,7 +2878,7 @@ BODY: [The paragraph text]"""
                 auto_bs_result = claude_client.generate_content(
                     prompt=auto_bs_prompt,
                     system_prompt=auto_bs_system,
-                    model="claude-opus-4-8",
+                    model=CLAUDE_WRITING_MODEL,
                     temperature=0.6,
                     max_tokens=200
                 )
@@ -2938,7 +2943,7 @@ BODY: [The paragraph text]"""
             brite_spot_result = claude_client.generate_content(
                 prompt=brite_spot_prompt,
                 system_prompt=brite_spot_system,
-                model="claude-opus-4-8",
+                model=CLAUDE_WRITING_MODEL,
                 temperature=0.6,
                 max_tokens=250
             )
@@ -3014,7 +3019,7 @@ Output ONLY the paragraphs in <p> tags, no title or labels."""
             claims_result = claude_client.generate_content(
                 prompt=claims_gen_prompt,
                 system_prompt=claims_gen_system,
-                model="claude-opus-4-8",
+                model=CLAUDE_WRITING_MODEL,
                 temperature=0.65,
                 max_tokens=400
             )
@@ -3100,7 +3105,7 @@ Output ONLY the image generation prompt, nothing else."""
 
             prompt_result = claude_client.generate_content(
                 prompt=prompt_request,
-                model="claude-opus-4-8",
+                model=CLAUDE_WRITING_MODEL,
                 temperature=0.5,
                 max_tokens=150
             )
@@ -3381,7 +3386,7 @@ Output ONLY the subject line, nothing else."""
 
         subject_result = claude_client.generate_content(
             prompt=subject_prompt,
-            model="claude-opus-4-8",
+            model=CLAUDE_WRITING_MODEL,
             temperature=0.6,
             max_tokens=50
         )
@@ -3398,7 +3403,7 @@ Output ONLY the preview text, nothing else."""
 
         preview_result = claude_client.generate_content(
             prompt=preview_prompt,
-            model="claude-opus-4-8",
+            model=CLAUDE_WRITING_MODEL,
             temperature=0.5,
             max_tokens=60
         )
@@ -3483,7 +3488,7 @@ Output EXACTLY 4 subject lines, one per line, numbered 1-4. No other text."""
 
         subject_result = claude_client.generate_content(
             prompt=subject_prompt,
-            model="claude-opus-4-8",
+            model=CLAUDE_WRITING_MODEL,
             temperature=0.7,
             max_tokens=300
         )
@@ -3526,7 +3531,7 @@ Output EXACTLY 4 preheader options, one per line, numbered 1-4. No other text.""
 
         preheader_result = claude_client.generate_content(
             prompt=preheader_prompt,
-            model="claude-opus-4-8",
+            model=CLAUDE_WRITING_MODEL,
             temperature=0.7,
             max_tokens=400
         )
@@ -3666,7 +3671,7 @@ CONTENT TO REVIEW:
 
         check_result = claude_client.generate_content(
             prompt=check_prompt,
-            model="claude-opus-4-8",
+            model=CLAUDE_WRITING_MODEL,
             temperature=0.2,
             max_tokens=1500
         )

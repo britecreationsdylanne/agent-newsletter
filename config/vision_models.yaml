@@ -312,6 +312,15 @@ task_assignments:
     tier: "economy"
     notes: "Short outputs, economy tier sufficient"
 
+  # Editorial Writing (Claude-authored newsletter copy: intro, Brite Spot,
+  # Curious Claims, roundups, subject lines, brand checks)
+  claude_writing:
+    description: "Claude frontier model for editorial newsletter writing"
+    model: "claude-opus-4-8"
+    fallback: "claude-sonnet-4-6"
+    tier: "frontier"
+    notes: "Single source of truth for the Claude writing model used across app.py"
+
   # Image Generation (newsletter section images, memes)
   meme_generation:
     description: "Generate newsletter/meme images with text overlays"
