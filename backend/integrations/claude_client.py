@@ -18,7 +18,7 @@ class ClaudeClient:
             raise ValueError("ANTHROPIC_API_KEY not found in environment")
 
         self.client = Anthropic(api_key=self.api_key)
-        self.default_model = "claude-opus-4-5-20251101"  # Claude Opus 4.5 (frontier model for writing)
+        self.default_model = "claude-opus-4-8"  # Claude Opus 4.8 (frontier model for writing)
 
     def generate_content(
         self,
@@ -36,7 +36,7 @@ class ClaudeClient:
             system_prompt: System instructions
             temperature: Creativity (0-1)
             max_tokens: Max response length
-            model: Model to use (defaults to claude-3-5-sonnet)
+            model: Model to use (defaults to claude-opus-4-8)
 
         Returns:
             dict with content, model, tokens, cost_estimate, latency_ms
@@ -84,18 +84,18 @@ class ClaudeClient:
     def _estimate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
         """Estimate cost based on model pricing"""
 
-        # Claude 3.5 Sonnet pricing (as of 2025)
+        # Claude Sonnet 4.6 pricing
         if "sonnet" in model.lower():
             input_cost = (input_tokens / 1_000_000) * 3.00  # $3 per 1M input tokens
             output_cost = (output_tokens / 1_000_000) * 15.00  # $15 per 1M output tokens
-        # Claude 3 Haiku (cheaper option)
+        # Claude Haiku 4.5 (cheaper option)
         elif "haiku" in model.lower():
-            input_cost = (input_tokens / 1_000_000) * 0.25
-            output_cost = (output_tokens / 1_000_000) * 1.25
-        # Claude 3 Opus (premium)
+            input_cost = (input_tokens / 1_000_000) * 1.00
+            output_cost = (output_tokens / 1_000_000) * 5.00
+        # Claude Opus 4.8 (premium)
         elif "opus" in model.lower():
-            input_cost = (input_tokens / 1_000_000) * 15.00
-            output_cost = (output_tokens / 1_000_000) * 75.00
+            input_cost = (input_tokens / 1_000_000) * 5.00
+            output_cost = (output_tokens / 1_000_000) * 25.00
         else:
             input_cost = (input_tokens / 1_000_000) * 3.00
             output_cost = (output_tokens / 1_000_000) * 15.00

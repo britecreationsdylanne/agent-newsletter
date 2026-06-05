@@ -1,51 +1,16 @@
 # Vision Models Reference
 # ======================
-# Catalog of vision-capable models across providers for benchmarking
-# The 'id' field is the exact string to send to the API
-# VALIDATED: 2026-01-09 - Only models with status "active" have been tested and work
-# Last Updated: 2026-01-09
+# Catalog of models used by the Agent Newsletter app.
+# The 'id' field is the exact string sent to the API.
+# Source of truth: brite-skills/vision_models.yaml
+# Last Updated: 2026-06-05 (migrated deprecated models to active replacements)
 
 providers:
   google:
     name: "Google (Gemini)"
     env_key: "GOOGLE_API_KEY"
     models:
-      # Gemini 3 Series (Preview) - VALIDATED WORKING
-      - id: "gemini-3-pro-preview"
-        name: "Gemini 3 Pro Preview"
-        tier: "frontier"
-        speed: "medium"
-        context_window: 1000000
-        vision: true
-        status: "active"
-        notes: "VALIDATED - Cutting-edge multimodal understanding"
-        cost_per_1m_input: 1.25
-        cost_per_1m_output: 5.00
-
-      - id: "gemini-3-flash-preview"
-        name: "Gemini 3 Flash Preview"
-        tier: "standard"
-        speed: "fast"
-        context_window: 1000000
-        vision: true
-        status: "active"
-        notes: "VALIDATED - Fast/cheap - good for OCR tasks"
-        cost_per_1m_input: 0.10
-        cost_per_1m_output: 0.40
-
-      - id: "gemini-3-pro-image-preview"
-        name: "Gemini 3 Pro Image Preview"
-        tier: "frontier"
-        speed: "medium"
-        context_window: 1000000
-        vision: true
-        image_generation: true
-        status: "active"
-        notes: "Image generation model - for memes, illustrations"
-        cost_per_1m_input: 1.25
-        cost_per_1m_output: 5.00
-
-      # Gemini 2.5 Series - VALIDATED WORKING
+      # Gemini 2.5 Series - active
       - id: "gemini-2.5-pro"
         name: "Gemini 2.5 Pro"
         tier: "frontier"
@@ -53,8 +18,8 @@ providers:
         context_window: 1000000
         vision: true
         status: "active"
-        notes: "VALIDATED - Deep reasoning capabilities"
-        cost_per_1m_input: 1.25
+        notes: "Deep reasoning capabilities"
+        cost_per_1m_input: 0.625
         cost_per_1m_output: 5.00
 
       - id: "gemini-2.5-flash"
@@ -64,106 +29,60 @@ providers:
         context_window: 1000000
         vision: true
         status: "active"
-        notes: "VALIDATED - Balanced performance"
-        cost_per_1m_input: 0.15
-        cost_per_1m_output: 0.60
+        notes: "Balanced performance; replacement for Gemini 2.0 Flash / Flash-Lite"
+        cost_per_1m_input: 0.30
+        cost_per_1m_output: 2.50
 
-      # Gemini 2.0 Series - WORKING
-      - id: "gemini-2.0-flash"
-        name: "Gemini 2.0 Flash"
+      # Image generation (Google) - kept as fallback for image tasks
+      - id: "gemini-2.5-flash-image"
+        name: "Gemini 2.5 Flash Image"
         tier: "standard"
         speed: "fast"
-        context_window: 1000000
         vision: true
+        image_generation: true
         status: "active"
-        notes: "VALIDATED - GA model, native tool use, multimodal"
-        cost_per_1m_input: 0.10
-        cost_per_1m_output: 0.40
-
-      - id: "gemini-2.0-flash-lite"
-        name: "Gemini 2.0 Flash Lite"
-        tier: "economy"
-        speed: "fastest"
-        context_window: 1000000
-        vision: true
-        status: "active"
-        notes: "VALIDATED - Most cost-efficient model"
-        cost_per_1m_input: 0.02
-        cost_per_1m_output: 0.10
-
-      # Legacy
-      - id: "gemini-1.5-flash"
-        name: "Gemini 1.5 Flash"
-        tier: "legacy"
-        speed: "fast"
-        context_window: 1000000
-        vision: true
-        status: "deprecated"
-        notes: "Retired April 2025 - use 2.0+ instead"
-        cost_per_1m_input: 0.075
-        cost_per_1m_output: 0.30
-
-      - id: "gemini-1.5-pro"
-        name: "Gemini 1.5 Pro"
-        tier: "legacy"
-        speed: "medium"
-        context_window: 2000000
-        vision: true
-        status: "deprecated"
-        notes: "Retired April 2025 - use 2.0+ instead"
-        cost_per_1m_input: 1.25
-        cost_per_1m_output: 5.00
+        notes: "Google image generation (a.k.a. Nano Banana). Fallback for image tasks."
 
   openai:
     name: "OpenAI"
     env_key: "OPENAI_API_KEY"
     models:
-      # GPT-5.2 Series - WORKING
-      - id: "gpt-5.2"
-        name: "GPT-5.2"
+      # GPT-5.5 Series - active frontier (replaces gpt-5.2)
+      - id: "gpt-5.5"
+        name: "GPT-5.5"
         tier: "frontier"
         speed: "medium"
+        context_window: 1050000
+        max_output: 128000
+        vision: true
+        status: "active"
+        notes: "Latest frontier model. Uses max_completion_tokens. Replaces GPT-5.2."
+        cost_per_1m_input: 5.00
+        cost_per_1m_output: 30.00
+
+      # GPT-5 Mini - economy reasoning variant
+      - id: "gpt-5-mini"
+        name: "GPT-5 Mini"
+        tier: "economy"
+        speed: "fast"
         context_window: 400000
         max_output: 128000
         vision: true
         status: "active"
-        notes: "VALIDATED - Most advanced frontier model. Uses max_completion_tokens"
-        cost_per_1m_input: 1.75
-        cost_per_1m_output: 14.00
+        notes: "Smaller, faster, cheaper GPT-5. Uses max_completion_tokens."
+        cost_per_1m_input: 0.25
+        cost_per_1m_output: 2.00
 
-      # GPT-5.2 Turbo - Not found (404), may not exist
-      - id: "gpt-5.2-turbo"
-        name: "GPT-5.2 Turbo"
-        tier: "frontier"
-        speed: "fast"
-        context_window: 400000
-        vision: true
-        status: "unavailable"
-        notes: "404 - Model not found. May not exist or different name."
-        cost_per_1m_input: 1.25
-        cost_per_1m_output: 10.00
-
-      # GPT-5 Mini - Economy variant
-      - id: "gpt-5-mini"
-        name: "GPT-5 Mini"
-        tier: "economy"
-        speed: "fastest"
-        context_window: 400000
-        vision: true
-        status: "active"
-        notes: "Cost-efficient GPT-5. Uses max_completion_tokens"
-        cost_per_1m_input: 0.10
-        cost_per_1m_output: 0.40
-
-      # GPT-4.1 Series - WORKING
+      # GPT-4.1 Series - active
       - id: "gpt-4.1"
         name: "GPT-4.1"
         tier: "standard"
         speed: "medium"
-        context_window: 128000
+        context_window: 1047576
+        max_output: 32768
         vision: true
         status: "active"
-        notes: "VALIDATED - Frontier model with vision, fine-tunable"
+        notes: "1M context vision model"
         cost_per_1m_input: 2.00
         cost_per_1m_output: 8.00
 
@@ -171,10 +90,11 @@ providers:
         name: "GPT-4.1 Mini"
         tier: "standard"
         speed: "fast"
-        context_window: 128000
+        context_window: 1047576
+        max_output: 32768
         vision: true
         status: "active"
-        notes: "VALIDATED - Efficient mid-tier model"
+        notes: "1M context efficient mid-tier model"
         cost_per_1m_input: 0.40
         cost_per_1m_output: 1.60
 
@@ -182,14 +102,15 @@ providers:
         name: "GPT-4.1 Nano"
         tier: "economy"
         speed: "fastest"
-        context_window: 128000
+        context_window: 1047576
+        max_output: 32768
         vision: true
         status: "active"
-        notes: "VALIDATED - Ultra-fast, cost-efficient"
+        notes: "1M context ultra-fast, cost-efficient"
         cost_per_1m_input: 0.10
         cost_per_1m_output: 0.40
 
-      # GPT-4o Series - WORKING
+      # GPT-4o Series - active
       - id: "gpt-4o"
         name: "GPT-4o"
         tier: "standard"
@@ -197,7 +118,7 @@ providers:
         context_window: 128000
         vision: true
         status: "active"
-        notes: "VALIDATED - Omni model - text, audio, image, video"
+        notes: "Omni model - text, audio, image, video"
         cost_per_1m_input: 2.50
         cost_per_1m_output: 10.00
 
@@ -208,190 +129,126 @@ providers:
         context_window: 128000
         vision: true
         status: "active"
-        notes: "VALIDATED - 60% cheaper than GPT-3.5 Turbo, great for focused tasks"
+        notes: "Cheap, great for focused tasks"
         cost_per_1m_input: 0.15
         cost_per_1m_output: 0.60
 
-      # Legacy
-      - id: "gpt-4-turbo"
-        name: "GPT-4 Turbo"
-        tier: "legacy"
-        speed: "medium"
-        context_window: 128000
-        vision: true
+      # Image generation (OpenAI) - primary image model
+      - id: "gpt-image-2"
+        name: "GPT Image 2"
+        tier: "frontier"
+        image_generation: true
         status: "active"
-        notes: "VALIDATED - Previous generation, still supported"
-        cost_per_1m_input: 10.00
+        notes: ">95% in-image text accuracy, native transparent PNG, up to 4K. Per-image ~$0.01 (low) / ~$0.06 (medium) / ~$0.22 (high) at 1024x1024."
+        cost_per_1m_input: 8.00
         cost_per_1m_output: 30.00
 
   anthropic:
     name: "Anthropic (Claude)"
     env_key: "ANTHROPIC_API_KEY"
     models:
-      # Claude 4.5 Series - WORKING
-      - id: "claude-opus-4-5-20251101"
-        name: "Claude Opus 4.5"
+      # Claude Opus 4.8 - active frontier (replaces Opus 4.5)
+      - id: "claude-opus-4-8"
+        name: "Claude Opus 4.8"
         tier: "frontier"
         speed: "slow"
-        context_window: 200000
+        context_window: 1000000
+        max_output: 128000
         vision: true
         status: "active"
-        notes: "VALIDATED - Most capable, best vision/reasoning/math"
-        cost_per_1m_input: 15.00
-        cost_per_1m_output: 75.00
+        notes: "Most capable Claude. Replaces Opus 4.5. Cheaper than 4.5 ($5/$25 per 1M)."
+        cost_per_1m_input: 5.00
+        cost_per_1m_output: 25.00
 
-      # Claude Sonnet 4 - WORKING
-      - id: "claude-sonnet-4-20250514"
-        name: "Claude Sonnet 4"
+      # Claude Sonnet 4.6 - active standard (replaces Sonnet 4)
+      - id: "claude-sonnet-4-6"
+        name: "Claude Sonnet 4.6"
         tier: "standard"
         speed: "medium"
         context_window: 200000
+        max_output: 64000
         vision: true
         status: "active"
-        notes: "VALIDATED - Balanced capability and speed"
+        notes: "Balanced capability and speed. Replaces Sonnet 4."
         cost_per_1m_input: 3.00
         cost_per_1m_output: 15.00
 
-      # Claude 3.5 Series
-      - id: "claude-3-5-haiku-20241022"
-        name: "Claude 3.5 Haiku"
+      # Claude Haiku 4.5 - active economy (replaces 3.5 Haiku)
+      - id: "claude-haiku-4-5-20251001"
+        name: "Claude Haiku 4.5"
         tier: "economy"
         speed: "fastest"
         context_window: 200000
         vision: true
         status: "active"
-        notes: "VALIDATED - Fast and affordable"
-        cost_per_1m_input: 0.80
-        cost_per_1m_output: 4.00
-
-      # Legacy/Unavailable
-      - id: "claude-3-opus-20240229"
-        name: "Claude 3 Opus"
-        tier: "legacy"
-        speed: "slow"
-        context_window: 200000
-        vision: true
-        status: "deprecated"
-        notes: "Deprecated June 2025, retiring Jan 2026"
-        cost_per_1m_input: 15.00
-        cost_per_1m_output: 75.00
+        notes: "Fast and affordable. Replaces Claude 3.5 Haiku."
+        cost_per_1m_input: 1.00
+        cost_per_1m_output: 5.00
 
 # Benchmark Test Groups
-# Define model groups for A/B testing
-# ONLY INCLUDES VALIDATED WORKING MODELS
+# Define model groups for A/B testing (active models only)
 benchmark_groups:
-  # Economy tier - cheapest models for high-volume tasks
   economy_tier:
-    description: "Cheapest validated models for high-volume tasks"
+    description: "Cheapest active models for high-volume tasks"
     models:
-      - "gemini-2.0-flash-lite"
       - "gpt-4o-mini"
-      - "claude-3-5-haiku-20241022"
+      - "gpt-4.1-nano"
+      - "claude-haiku-4-5-20251001"
 
-  # Standard tier - balanced cost/performance
   standard_tier:
-    description: "Balanced cost/performance validated models"
+    description: "Balanced cost/performance active models"
     models:
-      - "gemini-2.0-flash"
+      - "gemini-2.5-flash"
       - "gpt-4o"
-      - "claude-sonnet-4-20250514"
+      - "claude-sonnet-4-6"
 
-  # Frontier tier - highest capability
   frontier_tier:
-    description: "Highest capability validated models"
+    description: "Highest capability active models"
     models:
-      - "gpt-5.2"
-      - "claude-opus-4-5-20251101"
-      # Note: gemini-3-pro not yet available
+      - "gpt-5.5"
+      - "claude-opus-4-8"
+      - "gemini-2.5-pro"
 
-  # OpenAI comparison - all tiers
   openai_versions:
     description: "Compare OpenAI model generations"
     models:
-      - "gpt-5.2"
+      - "gpt-5.5"
       - "gpt-5-mini"
       - "gpt-4.1"
       - "gpt-4o"
       - "gpt-4o-mini"
 
-  # OpenAI economy options
-  openai_economy:
-    description: "Compare OpenAI economy models"
-    models:
-      - "gpt-5-mini"
-      - "gpt-4.1-nano"
-      - "gpt-4o-mini"
-
-  # Claude comparison
   claude_versions:
     description: "Compare Claude model tiers"
     models:
-      - "claude-opus-4-5-20251101"
-      - "claude-sonnet-4-20250514"
-      - "claude-3-5-haiku-20241022"
+      - "claude-opus-4-8"
+      - "claude-sonnet-4-6"
+      - "claude-haiku-4-5-20251001"
 
-  # Gemini comparison - all versions
-  gemini_versions:
-    description: "Compare Gemini model generations"
-    models:
-      - "gemini-3-pro-preview"
-      - "gemini-3-flash-preview"
-      - "gemini-2.5-pro"
-      - "gemini-2.5-flash"
-      - "gemini-2.0-flash"
-      - "gemini-2.0-flash-lite"
-
-  # Gemini Flash comparison
-  gemini_flash_versions:
-    description: "Compare Gemini Flash models (3 vs 2.5 vs 2.0)"
-    models:
-      - "gemini-3-flash-preview"
-      - "gemini-2.5-flash"
-      - "gemini-2.0-flash"
-
-  # Gemini Pro comparison
-  gemini_pro_versions:
-    description: "Compare Gemini Pro models"
-    models:
-      - "gemini-3-pro-preview"
-      - "gemini-2.5-pro"
-
-  # Default for classification benchmarks
   classification_default:
-    description: "Recommended validated models for document classification"
+    description: "Recommended active models for document classification"
     models:
-      - "gemini-2.0-flash"        # Fast, cheap, good vision
-      - "claude-sonnet-4-20250514"  # Strong reasoning
-      - "gpt-4o-mini"             # Cost-effective
+      - "gemini-2.5-flash"
+      - "claude-sonnet-4-6"
+      - "gpt-4o-mini"
 
-  # Full cross-provider comparison (validated only)
   full_comparison:
-    description: "All validated models across providers"
+    description: "All active models across providers"
     models:
       # Frontier
-      - "gpt-5.2"
-      - "claude-opus-4-5-20251101"
+      - "gpt-5.5"
+      - "claude-opus-4-8"
+      - "gemini-2.5-pro"
       # Standard
-      - "gemini-2.0-flash"
       - "gpt-4o"
-      - "claude-sonnet-4-20250514"
+      - "claude-sonnet-4-6"
+      - "gemini-2.5-flash"
       # Economy
-      - "gemini-2.0-flash-lite"
       - "gpt-4o-mini"
-      - "claude-3-5-haiku-20241022"
-
-# Validation Results (2026-01-09):
-# WORKING:
-#   Google:    gemini-2.0-flash, gemini-2.0-flash-lite
-#   OpenAI:    gpt-5.2, gpt-5-2025-08-07, gpt-5-nano-2025-08-07, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano, gpt-4o, gpt-4o-mini, gpt-4-turbo
-#   Anthropic: claude-opus-4-5-20251101, claude-sonnet-4-20250514, claude-3-5-haiku-20241022
-#
-# NOT AVAILABLE (404 errors):
-#   Google:    gemini-3-pro-latest, gemini-3-flash, gemini-2.5-flash-preview-05-20
-#   OpenAI:    gpt-5.2-mini (may not exist)
-#   Anthropic: claude-4-1-opus-20250805, claude-4-1-sonnet-20250625, claude-3-5-sonnet-20241022
+      - "claude-haiku-4-5-20251001"
 
 # Sources:
+# - brite-skills/vision_models.yaml (source of truth)
 # - Google Gemini: https://ai.google.dev/gemini-api/docs/models
 # - OpenAI: https://platform.openai.com/docs/models
 # - Anthropic: https://platform.claude.com/docs/en/about-claude/models/overview
@@ -405,8 +262,8 @@ benchmark_groups:
 task_assignments:
   # Research & Analysis Tasks
   research_enrichment:
-    description: "GPT-5.2 analysis layer for Perplexity/Insight Builder/Source Explorer"
-    model: "gpt-5.2"
+    description: "GPT-5.5 analysis layer for Perplexity/Insight Builder/Source Explorer"
+    model: "gpt-5.5"
     fallback: "gpt-4.1"
     tier: "frontier"
     economy_alternative: "gpt-4o-mini"
@@ -416,17 +273,17 @@ task_assignments:
   content_generation:
     description: "Newsletter article writing (News, Tip, Trend sections)"
     model: "gpt-4o-mini"
-    fallback: "claude-3-5-haiku-20241022"
+    fallback: "claude-haiku-4-5-20251001"
     tier: "economy"
     standard_alternative: "gpt-4o"
-    frontier_alternative: "gpt-5.2"
+    frontier_alternative: "gpt-5.5"
     notes: "Cost-effective for high-volume content generation"
 
   # Brand & Quality Checks
   brand_guidelines_check:
     description: "Check content against brand voice guidelines"
     model: "gpt-4o-mini"
-    fallback: "claude-3-5-haiku-20241022"
+    fallback: "claude-haiku-4-5-20251001"
     tier: "economy"
     notes: "Fast validation, doesn't need frontier capabilities"
 
@@ -434,7 +291,7 @@ task_assignments:
   image_analysis:
     description: "Analyze images for content appropriateness"
     model: "gpt-4o"
-    fallback: "gemini-2.0-flash"
+    fallback: "gemini-2.5-flash"
     tier: "standard"
     economy_alternative: "gpt-4o-mini"
     notes: "Needs vision capabilities"
@@ -443,7 +300,7 @@ task_assignments:
   image_prompt_generation:
     description: "Generate prompts for image creation"
     model: "gpt-4o-mini"
-    fallback: "claude-3-5-haiku-20241022"
+    fallback: "claude-haiku-4-5-20251001"
     tier: "economy"
     notes: "Creative but cost-efficient"
 
@@ -451,14 +308,14 @@ task_assignments:
   subject_line_generation:
     description: "Generate email subject lines and preheaders"
     model: "gpt-4o-mini"
-    fallback: "claude-3-5-haiku-20241022"
+    fallback: "claude-haiku-4-5-20251001"
     tier: "economy"
     notes: "Short outputs, economy tier sufficient"
 
-  # Meme Image Generation
+  # Image Generation (newsletter section images, memes)
   meme_generation:
-    description: "Generate meme images with text overlays"
-    model: "gemini-3-pro-image-preview"
-    fallback: "gemini-2.0-flash"
+    description: "Generate newsletter/meme images with text overlays"
+    model: "gpt-image-2"
+    fallback: "gemini-2.5-flash-image"
     tier: "frontier"
-    notes: "Uses Gemini 3 Pro for image generation with humor"
+    notes: "GPT Image 2 primary (strong in-image text); Gemini image as fallback."

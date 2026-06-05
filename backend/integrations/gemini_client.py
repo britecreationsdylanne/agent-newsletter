@@ -170,9 +170,9 @@ class GeminiClient:
             List of search results with title, description, url
         """
         try:
-            # Use Gemini 2.0 Flash with Google Search grounding
+            # Use Gemini 2.5 Flash with Google Search grounding
             response = self.client.models.generate_content(
-                model="gemini-2.0-flash-exp",
+                model="gemini-2.5-flash",
                 contents=[f"""Search Google for {max_results} recent, real articles about: {query}
 
 For each article found, provide:
