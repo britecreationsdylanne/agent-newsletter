@@ -34,7 +34,10 @@ class ClaudeClient:
         Args:
             prompt: User prompt
             system_prompt: System instructions
-            temperature: Creativity (0-1)
+            temperature: Accepted for backward compatibility but NOT sent to the
+                API. Claude Opus 4.7/4.8 removed temperature/top_p/top_k —
+                sending them returns a 400. Kept in the signature so existing
+                callers don't break.
             max_tokens: Max response length
             model: Model to use (defaults to claude-opus-4-8)
 
@@ -49,10 +52,11 @@ class ClaudeClient:
         messages = [{"role": "user", "content": prompt}]
 
         # Call Claude API
+        # NOTE: temperature is intentionally NOT passed — Opus 4.7/4.8 removed it
+        # (and top_p/top_k); sending any of them returns a 400 error.
         response = self.client.messages.create(
             model=model_name,
             max_tokens=max_tokens,
-            temperature=temperature,
             system=system_prompt if system_prompt else "",
             messages=messages
         )
@@ -129,10 +133,10 @@ Return as JSON array with this structure:
   ...
 ]"""
 
+            # NOTE: temperature removed — Opus 4.7/4.8 reject temperature/top_p/top_k (400).
             response = self.client.messages.create(
                 model=self.default_model,
                 max_tokens=2000,
-                temperature=0.3,
                 messages=[{"role": "user", "content": search_prompt}],
                 tools=[{
                     "type": "web_search_20250305",
