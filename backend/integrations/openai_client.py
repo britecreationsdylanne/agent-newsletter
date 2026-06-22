@@ -204,14 +204,54 @@ No extra keys. No commentary outside JSON."""
 Return at least 25 candidate results if possible (we will dedupe/trim to {max_results} in code).
 No extra keys. No commentary outside JSON."""
 
-            # Use Responses API with web_search tool
-            response = self.client.responses.create(
-                model="gpt-4o",
-                tools=[{"type": "web_search"}],
-                max_tool_calls=1,
-                include=["web_search_call.action.sources"],  # Expose sources
-                input=full_prompt,
-            )
+            # Use Responses API with web_search tool.
+            # Force a JSON object response so the model can't return markdown prose
+            # (e.g. "Here are 28 articles: ...") which is unparseable. The schema
+            # requires a top-level {"results": [...]} object.
+            base_params = {
+                "model": "gpt-4o",
+                "tools": [{"type": "web_search"}],
+                "max_tool_calls": 1,
+                "include": ["web_search_call.action.sources"],  # Expose sources
+                "input": full_prompt,
+            }
+            json_format = {
+                "format": {
+                    "type": "json_schema",
+                    "name": "web_search_results",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["results"],
+                        "properties": {
+                            "results": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "required": ["title", "url", "publisher", "published_date", "summary"],
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "url": {"type": "string"},
+                                        "publisher": {"type": "string"},
+                                        "published_date": {"type": ["string", "null"]},
+                                        "summary": {"type": "string"},
+                                    },
+                                },
+                            }
+                        },
+                    },
+                }
+            }
+            try:
+                response = self.client.responses.create(text=json_format, **base_params)
+            except Exception as fmt_err:
+                # If this SDK/model rejects structured output alongside the
+                # web_search tool, fall back to a plain call. The downstream
+                # parser salvages JSON embedded in any prose the model returns.
+                print(f"[OpenAI Responses API] Structured output unavailable ({fmt_err}); retrying without it")
+                response = self.client.responses.create(**base_params)
 
             # Diagnostics: Check if web_search actually happened
             print(f"[OpenAI Responses API] Response received from API")
@@ -264,19 +304,34 @@ No extra keys. No commentary outside JSON."""
                 print("[OpenAI Responses API] No output_text in response")
                 return []
 
-            # Parse JSON, handling markdown fences if present
+            # Parse JSON, handling markdown fences / prose preamble if present
             import re
             text = output_text.strip()
-            if text.startswith("```"):
+            if "```json" in text:
+                text = text.split("```json", 1)[1].split("```", 1)[0].strip()
+            elif text.startswith("```"):
                 text = re.sub(r"^```[a-zA-Z]*\n", "", text)
                 text = re.sub(r"\n```$", "", text).strip()
 
             try:
                 data = json.loads(text)
-            except json.JSONDecodeError as e:
-                print(f"[OpenAI Responses API ERROR] JSON parsing failed: {e}")
-                print(f"[OpenAI Responses API ERROR] Text preview: {text[:200]}...")
-                return []
+            except json.JSONDecodeError:
+                # Salvage: the model preambled with prose (e.g. "Here are 28 articles: ...")
+                # Pull out the first balanced JSON object/array embedded in the text.
+                data = None
+                for open_ch, close_ch in (("{", "}"), ("[", "]")):
+                    start = text.find(open_ch)
+                    end = text.rfind(close_ch)
+                    if start != -1 and end > start:
+                        try:
+                            data = json.loads(text[start:end + 1])
+                            break
+                        except json.JSONDecodeError:
+                            continue
+                if data is None:
+                    print(f"[OpenAI Responses API ERROR] JSON parsing failed (no JSON found)")
+                    print(f"[OpenAI Responses API ERROR] Text preview: {text[:200]}...")
+                    return []
 
             # Handle both formats: {"results": [...]} or just [...]
             if isinstance(data, list):

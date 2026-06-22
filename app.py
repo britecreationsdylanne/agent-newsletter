@@ -210,6 +210,44 @@ def safe_print(text):
         safe_text = text.encode('ascii', errors='replace').decode('ascii')
         print(safe_text)
 
+
+def extract_json(content):
+    """Robustly parse a JSON object/array from an LLM response.
+
+    Handles markdown code fences, prose preamble/trailing text, and embedded
+    control characters (strict=False). Raises json.JSONDecodeError if nothing
+    parseable is found. Cannot recover output truncated by max_tokens.
+    """
+    if not content:
+        raise json.JSONDecodeError("empty content", "", 0)
+
+    text = content.strip()
+
+    # Strip markdown fences if present
+    if '```json' in text:
+        text = text.split('```json', 1)[1].split('```', 1)[0].strip()
+    elif text.startswith('```'):
+        text = re.sub(r'^```[a-zA-Z]*\n', '', text)
+        text = re.sub(r'\n```$', '', text).strip()
+
+    # Direct parse first (lenient about control chars inside strings)
+    try:
+        return json.loads(text, strict=False)
+    except json.JSONDecodeError:
+        pass
+
+    # Salvage: find the outermost JSON object or array and parse that
+    for open_ch, close_ch in (('{', '}'), ('[', ']')):
+        start = text.find(open_ch)
+        end = text.rfind(close_ch)
+        if start != -1 and end > start:
+            try:
+                return json.loads(text[start:end + 1], strict=False)
+            except json.JSONDecodeError:
+                continue
+
+    raise json.JSONDecodeError("no parseable JSON found", text[:200], 0)
+
 # Helper function to convert HTML to plain text
 def html_to_plain_text(html_content):
     """Convert HTML newsletter content to plain text for Ontraport"""
@@ -598,7 +636,7 @@ Return ONLY the JSON array, no other text."""
             content = re.sub(r"^```[a-zA-Z]*\n", "", content)
             content = re.sub(r"\n```$", "", content).strip()
 
-        enriched = json.loads(content)
+        enriched = extract_json(content)
 
         # Merge enriched data back into results
         for i, r in enumerate(results):
@@ -713,7 +751,7 @@ Return ONLY the JSON array, no other text."""
             content = re.sub(r"^```[a-zA-Z]*\n", "", content)
             content = re.sub(r"\n```$", "", content).strip()
 
-        enriched = json.loads(content)
+        enriched = extract_json(content)
 
         # Merge enriched data back into results
         for i, r in enumerate(results):
@@ -832,7 +870,7 @@ Return ONLY the JSON array, no other text."""
             content = re.sub(r"^```[a-zA-Z]*\n", "", content)
             content = re.sub(r"\n```$", "", content).strip()
 
-        enriched = json.loads(content)
+        enriched = extract_json(content)
 
         # Merge enriched data back into results
         for i, r in enumerate(results):
@@ -1395,7 +1433,7 @@ Guidelines:
             content = re.sub(r"^```[a-zA-Z]*\n", "", content)
             content = re.sub(r"\n```$", "", content).strip()
 
-        themes = json.loads(content)
+        themes = extract_json(content)
         safe_print(f"[API] Discovered {len(themes)} spotlight themes")
 
         return jsonify({
@@ -1481,7 +1519,7 @@ Guidelines:
             content = re.sub(r"^```[a-zA-Z]*\n", "", content)
             content = re.sub(r"\n```$", "", content).strip()
 
-        themes = json.loads(content)
+        themes = extract_json(content)
         safe_print(f"[API] Refined into {len(themes)} spotlight themes")
 
         return jsonify({
@@ -1945,7 +1983,7 @@ Return ONLY the JSON object, no other text."""
                         result_text = result_text[4:]
                     result_text = result_text.strip()
 
-                article_data = json.loads(result_text)
+                article_data = extract_json(result_text)
                 article_data['url'] = url
                 article_data['source_url'] = url
                 article_data['headline'] = article_data.get('title', '')
@@ -2072,7 +2110,7 @@ Focus on P&C insurance relevance. If the article is not insurance-related, still
             content_text = content_text.strip()
 
         try:
-            article_data = json.loads(content_text)
+            article_data = extract_json(content_text)
         except json.JSONDecodeError:
             # Fallback if parsing fails
             article_data = {
@@ -3240,8 +3278,10 @@ def generate_images():
 
         images = {}
 
-        # Generate image for each prompt
-        for section_name, prompt in prompts.items():
+        # Generate one section's image. Run concurrently below so 4+ images
+        # don't generate sequentially (~4-5 min) and blow past the request
+        # timeout / OOM the worker.
+        def _generate_one(section_name, prompt):
             safe_print(f"  [{section_name.upper()}] Prompt: {prompt[:80]}...")
 
             # Determine aspect ratio based on section
@@ -3317,9 +3357,26 @@ def generate_images():
 
             # Convert to data URL for frontend display
             image_url = f"data:image/png;base64,{image_data}" if image_data else ''
-
-            images[section_name] = image_url
             print(f"  [{section_name.upper()}] SUCCESS - Image generated ({len(image_data) if image_data else 0} bytes)")
+            return section_name, image_url
+
+        # Run image generation concurrently. Cap at 3 to keep wall-clock under the
+        # request timeout without hammering gpt-image's rate limit or spiking
+        # memory with every PNG in flight at once. One failure can't abort the batch.
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        jobs = [(s, p) for s, p in prompts.items()]
+        if jobs:
+            with ThreadPoolExecutor(max_workers=min(3, len(jobs))) as executor:
+                futures = {executor.submit(_generate_one, s, p): s for s, p in jobs}
+                for fut in as_completed(futures):
+                    s = futures[fut]
+                    try:
+                        section_name, image_url = fut.result()
+                        images[section_name] = image_url
+                    except Exception as img_err:
+                        safe_print(f"  [{s.upper()}] FAILED: {img_err}")
+                        images[s] = ''
 
         print(f"[API] Generated {len(images)} images")
 
@@ -3665,7 +3722,7 @@ CONTENT TO REVIEW:
             check_text = check_text.strip()
 
         try:
-            check_results = json.loads(check_text)
+            check_results = extract_json(check_text)
         except json.JSONDecodeError as e:
             print(f"[API WARNING] Failed to parse brand check JSON: {e}")
             print(f"[API WARNING] Raw response: {check_text[:200]}")
