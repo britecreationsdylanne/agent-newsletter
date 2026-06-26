@@ -8570,7 +8570,7 @@
 <!-- SPECIAL SECTION: ${ssTitle} -->
 <tr>
 <td style="padding:0;${colors.border !== 'none' ? 'border:1px solid ' + colors.border + ';' : ''}background-color:${colors.bg};">
-<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><th align="center" class="section-header" style="background:${colors.headerBg};padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:${colors.headerText};-webkit-text-fill-color:${colors.headerText};letter-spacing:0.5px;"><font color="${colors.headerText}" style="color:${colors.headerText};"><span style="color:${colors.headerText} !important;-webkit-text-fill-color:${colors.headerText} !important;">${ssTitle}</span></font></th></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tr><th align="center" class="section-header" style="background:${colors.headerBg} url('https://storage.googleapis.com/stay-in-the-loupe-images/assets/diamond-pattern-teal.png') repeat center / 400px auto;padding:18px 20px;font-family:Montserrat,Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;color:${colors.headerText};-webkit-text-fill-color:${colors.headerText};letter-spacing:0.5px;"><font color="${colors.headerText}" style="color:${colors.headerText};"><span style="color:${colors.headerText} !important;-webkit-text-fill-color:${colors.headerText} !important;">${ssTitle}</span></font></th></tr></table>
 
 ${ssImage ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td style="padding:0 15px;"><img alt="${ssTitle}" src="${ssImage}" style="display:block;width:100%;max-width:570px;height:auto;border-radius:4px;" /></td></tr></tbody></table>
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"><tbody><tr><td height="10" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></tbody></table>` : ''}
@@ -8671,6 +8671,9 @@ ${ssData.ctaUrl ? `<table border="0" cellpadding="0" cellspacing="0" role="prese
                 text = text.replace(/<font[^>]*>([\s\S]*?)<\/font>/gi, '$1');
                 text = text.replace(/<strong[^>]*>/gi, '<strong>').replace(/<em[^>]*>/gi, '<em>').replace(/<b[^>]*>/gi, '<strong>').replace(/<\/b>/gi, '</strong>').replace(/<i[^>]*>/gi, '<em>').replace(/<\/i>/gi, '</em>');
                 text = text.replace(/<div[^>]*>/gi, '<p>').replace(/<\/div>/gi, '</p>');
+                // Normalize stray heading tags to paragraphs so a heading-shaped line
+                // can't keep an oversized serif default font (the "side quest").
+                text = text.replace(/<h[1-6][^>]*>/gi, '<p>').replace(/<\/h[1-6]>/gi, '</p>');
                 text = stripEmptyPlaceholders(text);
                 // If text has <p> tags, restyle them with full inline styles
                 if (text.includes('<p')) {
@@ -8896,7 +8899,7 @@ ${briteSpotText ? `<!-- Copy -->
 <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
-<td style="padding:0 15px;">
+<td style="padding:0 15px;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;line-height:28px;color:#3B3B3B;">
 ${formatBriteSpotText(briteSpotText)}
 </td>
 </tr>
