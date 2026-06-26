@@ -1772,12 +1772,12 @@ Output as plain text - headline on first line, then paragraphs separated by blan
         # Split by double newlines (paragraph breaks)
         paragraphs = [p.strip() for p in body_text.split('\n\n') if p.strip()]
 
-        # Convert markdown links [text](url) to HTML links with blue styling
+        # Convert markdown links [text](url) to HTML links with teal styling
         import re
         def convert_links(text):
             return re.sub(
                 r'\[([^\]]+)\]\(([^)]+)\)',
-                r'<a href="\2" target="_blank" style="color: #0066cc; text-decoration: underline;">\1</a>',
+                r'<a href="\2" target="_blank" style="color: #008181; text-decoration: underline;">\1</a>',
                 text
             )
 
