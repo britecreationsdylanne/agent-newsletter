@@ -2192,7 +2192,7 @@
                 </div>
                 <div class="selection-progress-actions">
                     <button class="btn-secondary btn" onclick="showStep('2-spotlight')">← Back</button>
-                    <button class="btn-secondary btn" onclick="saveDraft(); alert('Progress saved!');" style="margin-left: auto; margin-right: 8px;">Save Progress</button>
+                    <button class="btn-secondary btn" onclick="saveDraft();" style="margin-left: auto; margin-right: 8px;">Save Progress</button>
                     <button class="btn" id="researchNextBtn" disabled onclick="generateContent()">Generate Newsletter →</button>
                 </div>
             </div>
@@ -11733,6 +11733,51 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
         // DRAFTS - Auto-save & Load
         // ============================================================
 
+        // Save-confirmation toast (bottom-right). Success toasts auto-fade; error
+        // toasts stay until dismissed and tell the user exactly what to do next.
+        let _toastFadeTimer = null;
+        function _getToastEl() {
+            let t = document.getElementById('appToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'appToast';
+                t.style.cssText = 'position:fixed;bottom:24px;right:24px;max-width:340px;padding:12px 30px 12px 16px;border-radius:8px;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45;font-weight:600;color:#ffffff;box-shadow:0 4px 16px rgba(0,0,0,0.25);z-index:99999;opacity:0;transition:opacity 0.25s ease;';
+                document.body.appendChild(t);
+            }
+            return t;
+        }
+        function showToast(message) {
+            const t = _getToastEl();
+            t.style.pointerEvents = 'none';
+            t.style.background = '#272d3f';
+            t.textContent = message;
+            t.style.opacity = '1';
+            if (_toastFadeTimer) clearTimeout(_toastFadeTimer);
+            _toastFadeTimer = setTimeout(() => { t.style.opacity = '0'; }, 1800);
+        }
+        function showSaveError(kind) {
+            const t = _getToastEl();
+            if (_toastFadeTimer) clearTimeout(_toastFadeTimer); // errors stay until dismissed
+            t.style.pointerEvents = 'auto';
+            t.style.background = '#dc3545';
+            t.innerHTML = '';
+            const msg = document.createElement('div');
+            if (kind === 'session') {
+                // Static, trusted markup (no user data) — safe to assign as innerHTML.
+                msg.innerHTML = 'Session expired — your work is still here. <a href="/auth/login" target="_blank" style="color:#fff;text-decoration:underline;">Sign in ↗</a> in a new tab, then click <b>Save Draft</b> again.';
+            } else {
+                msg.textContent = 'Couldn’t save — your work is safe. Check your connection, then click Save Draft to try again.';
+            }
+            t.appendChild(msg);
+            const close = document.createElement('button');
+            close.textContent = '×';
+            close.setAttribute('aria-label', 'Dismiss');
+            close.style.cssText = 'position:absolute;top:5px;right:9px;background:none;border:none;color:#fff;font-size:17px;line-height:1;cursor:pointer;padding:0;';
+            close.onclick = () => { t.style.opacity = '0'; };
+            t.appendChild(close);
+            t.style.opacity = '1';
+        }
+
         async function saveDraft() {
             if (!selectedMonth) return;
             // Sync any edits from active contenteditable divs before saving
@@ -11843,7 +11888,16 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                         savedBy: userEmail
                     })
                 });
-                console.log('[Draft] Saved');
+                if (resp.ok) {
+                    console.log('[Draft] Saved');
+                    showToast('Draft saved ✓');
+                } else if (resp.status === 401) {
+                    console.warn('[Draft] Save failed: session expired (401)');
+                    showSaveError('session');
+                } else {
+                    console.warn('[Draft] Save failed:', resp.status);
+                    showSaveError('network');
+                }
                 // Only refresh the drafts grid if it's actually on-screen. During
                 // editing/autosave the grid is hidden, so re-listing it (which reads
                 // every draft blob from GCS) would be wasted work on each keystroke pause.
@@ -11853,6 +11907,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                 }
             } catch (e) {
                 console.error('[Draft] Save failed:', e);
+                showSaveError('network');
             }
         }
 
