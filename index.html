@@ -3331,6 +3331,16 @@
             return div.innerHTML;
         }
 
+        // Safe URL for href/src attributes: allow only http(s) (blocks javascript:,
+        // data:, etc.) and escape attribute-breaking chars. escapeHTML() alone does
+        // not escape quotes, so it is not sufficient inside an attribute value.
+        function safeUrl(u) {
+            const s = String(u == null ? '' : u).trim();
+            if (!/^https?:\/\//i.test(s)) return '#';
+            return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
         // Sanitize untrusted HTML (LLM output, API data) - strips scripts, allows safe markup
         function sanitizeHTML(html) {
             if (typeof DOMPurify !== 'undefined') {
@@ -3439,7 +3449,7 @@
             list.classList.add('show');
             container.innerHTML = links.map((link, i) => `
                 <div class="added-link-item">
-                    <span>${link.title || link.url}</span>
+                    <span>${escapeHTML(link.title || link.url)}</span>
                     <span class="added-link-remove" onclick="removeCustomLink(${i})">×</span>
                 </div>
             `).join('');
@@ -3616,8 +3626,8 @@
             container.innerHTML = sanitizeHTML(savedArticlesCache.map((article, i) => `
                 <div class="saved-article-card">
                     <div class="sa-info">
-                        <div class="sa-title">${article.title || article.url}</div>
-                        <div class="sa-meta">${article.publisher || ''} ${article.dateSaved ? '· Saved ' + new Date(article.dateSaved).toLocaleDateString() : ''}</div>
+                        <div class="sa-title">${escapeHTML(article.title || article.url)}</div>
+                        <div class="sa-meta">${escapeHTML(article.publisher || '')} ${article.dateSaved ? '· Saved ' + new Date(article.dateSaved).toLocaleDateString() : ''}</div>
                     </div>
                     <div class="sa-actions">
                         <button class="sa-use-btn" onclick="useSavedArticle(${i})">Use</button>
@@ -5173,7 +5183,7 @@
             const sourcesEditable = document.getElementById('spotlightSourcesEditable');
             if (content.sources && content.sources.length > 0) {
                 sourcesEditable.innerHTML = sanitizeHTML(content.sources.map(source =>
-                    `<a href="${source.url}" target="_blank" style="color: #008181; text-decoration: none; margin-right: 15px;">${source.title || source.publisher} ↗</a>`
+                    `<a href="${safeUrl(source.url)}" target="_blank" style="color: #008181; text-decoration: none; margin-right: 15px;">${escapeHTML(source.title || source.publisher)} ↗</a>`
                 ).join(''));
             } else {
                 sourcesEditable.innerHTML = '<span style="color: #999;">No sources listed</span>';
@@ -5336,10 +5346,10 @@
                 const card = document.createElement('div');
                 card.className = 'topic-card';
                 card.innerHTML = sanitizeHTML(`
-                    <div class="title">💡 ${topic.title}</div>
-                    ${topic.age ? `<div style="color: #666; font-size: 0.85em; margin-top: 4px;">Published: ${topic.age}</div>` : ''}
-                    <div class="description">${topic.description}</div>
-                    ${topic.source_url ? `<a href="${topic.source_url}" target="_blank" class="source" onclick="event.stopPropagation()">Read source article →</a>` : ''}
+                    <div class="title">💡 ${escapeHTML(topic.title)}</div>
+                    ${topic.age ? `<div style="color: #666; font-size: 0.85em; margin-top: 4px;">Published: ${escapeHTML(topic.age)}</div>` : ''}
+                    <div class="description">${escapeHTML(topic.description)}</div>
+                    ${topic.source_url ? `<a href="${safeUrl(topic.source_url)}" target="_blank" class="source" onclick="event.stopPropagation()">Read source article →</a>` : ''}
                 `);
                 card.onclick = () => selectTip(index, card);
                 container.appendChild(card);
@@ -5371,10 +5381,10 @@
                 const card = document.createElement('div');
                 card.className = 'topic-card';
                 card.innerHTML = sanitizeHTML(`
-                    <div class="title">📈 ${topic.title}</div>
-                    ${topic.age ? `<div style="color: #666; font-size: 0.85em; margin-top: 4px;">Published: ${topic.age}</div>` : ''}
-                    <div class="description">${topic.description}</div>
-                    ${topic.source_url ? `<a href="${topic.source_url}" target="_blank" class="source" onclick="event.stopPropagation()">Read source article →</a>` : ''}
+                    <div class="title">📈 ${escapeHTML(topic.title)}</div>
+                    ${topic.age ? `<div style="color: #666; font-size: 0.85em; margin-top: 4px;">Published: ${escapeHTML(topic.age)}</div>` : ''}
+                    <div class="description">${escapeHTML(topic.description)}</div>
+                    ${topic.source_url ? `<a href="${safeUrl(topic.source_url)}" target="_blank" class="source" onclick="event.stopPropagation()">Read source article →</a>` : ''}
                 `);
                 card.onclick = () => selectTrend(index, card);
                 container.appendChild(card);
@@ -5541,7 +5551,7 @@
                         '<input type="text" id="' + inputId + '-url" value="' + art.url.replace(/"/g, '&quot;') + '" ' +
                             'style="flex:1;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;font-family:monospace;color:#555;" />' +
                     '</div>' +
-                    '<a href="' + art.url + '" target="_blank" id="' + inputId + '-link" style="font-size:12px;margin-top:4px;display:inline-block;">Open link ↗</a>' +
+                    '<a href="' + safeUrl(art.url) + '" target="_blank" id="' + inputId + '-link" style="font-size:12px;margin-top:4px;display:inline-block;">Open link ↗</a>' +
                 '</div>';
             });
             container.innerHTML = html;
@@ -11823,7 +11833,13 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                     })
                 });
                 console.log('[Draft] Saved');
-                loadDrafts();
+                // Only refresh the drafts grid if it's actually on-screen. During
+                // editing/autosave the grid is hidden, so re-listing it (which reads
+                // every draft blob from GCS) would be wasted work on each keystroke pause.
+                const _draftsGrid = document.getElementById('draftsGrid');
+                if (_draftsGrid && _draftsGrid.offsetParent !== null) {
+                    loadDrafts();
+                }
             } catch (e) {
                 console.error('[Draft] Save failed:', e);
             }

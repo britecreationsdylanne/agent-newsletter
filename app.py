@@ -107,7 +107,10 @@ def fix_em_dashes(text):
     text = re.sub(r'—(\S)', r'— \1', text)
     return text
 
-app = Flask(__name__, static_folder='.')
+# static_folder disabled: a root-mapped '.' static folder would serve source
+# files (app.py, config, etc.) unauthenticated, outside the /api/* auth gate.
+# The frontend uses only absolute/data URLs; index.html is served by serve_demo().
+app = Flask(__name__, static_folder=None)
 CORS(app)
 
 # Fix for running behind Cloud Run's proxy - ensures correct HTTPS URLs
@@ -159,6 +162,21 @@ def require_auth():
         if 'user' not in session:
             return jsonify({'error': 'Authentication required'}), 401
     return None
+
+def filter_allowed_recipients(recipients):
+    """Keep only @ALLOWED_DOMAIN recipients so the SendGrid endpoints cannot be
+    used to email arbitrary external addresses from our sending domain.
+    Returns (allowed, rejected)."""
+    allowed, rejected = [], []
+    for r in (recipients or []):
+        addr = (r or '').strip()
+        if not addr:
+            continue
+        if addr.lower().endswith('@' + ALLOWED_DOMAIN.lower()):
+            allowed.append(addr)
+        else:
+            rejected.append(addr)
+    return allowed, rejected
 
 def validate_gcs_filename(filename, allowed_prefixes):
     """Validate GCS blob filename to prevent path traversal and unauthorized access"""
@@ -2556,7 +2574,7 @@ Output the complete story as flowing prose, not as labeled sections."""
         if roundup_topics and len(roundup_topics) > 0:
             safe_print(f"  - Researching {len(roundup_topics)} roundup articles...")
             roundup_items = []
-            for topic in roundup_topics[:5]:
+            def process_roundup_topic(topic):
                 safe_print(f"    - {topic.get('title', 'Unknown')[:50]}...")
                 source_name = topic.get('publisher', 'Source')
                 url = topic.get('url', '#')
@@ -2608,11 +2626,27 @@ Output ONLY the bullet text, nothing else."""
                                 end += 1
                             result.append(text[i:end]); display_count += 1; i = end
                     return ''.join(result).rstrip(',.;:- ')
-                roundup_items.append({
+                return {
                     'summary': truncate_headline(raw_summary),
                     'url': url,
                     'source': source_name
-                })
+                }
+
+            # Generate roundup bullets concurrently — each is an independent Opus
+            # call, so fan them out instead of running up to 5 in series. Order is
+            # preserved by index; a single failure skips only that bullet.
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            _roundup_topics = roundup_topics[:5]
+            _roundup_slots = [None] * len(_roundup_topics)
+            with ThreadPoolExecutor(max_workers=min(5, len(_roundup_topics) or 1)) as _ex:
+                _futs = {_ex.submit(process_roundup_topic, t): i for i, t in enumerate(_roundup_topics)}
+                for _f in as_completed(_futs):
+                    _i = _futs[_f]
+                    try:
+                        _roundup_slots[_i] = _f.result()
+                    except Exception as _e:
+                        safe_print(f"    Roundup bullet {_i} failed: {_e}")
+            roundup_items = [x for x in _roundup_slots if x]
             research_results['roundup'] = roundup_items
             print(f"    Roundup research complete: {len(roundup_items)} items")
 
@@ -3104,7 +3138,8 @@ def generate_image_prompts():
 
         prompts = {}
 
-        for section_name, section_data in sections.items():
+        def _gen_prompt(item):
+            section_name, section_data = item
             print(f"  - Creating image prompt for {section_name}")
 
             title = section_data.get('title', '')
@@ -3132,10 +3167,24 @@ Output ONLY the image generation prompt, nothing else."""
                 max_tokens=150
             )
 
-            prompts[section_name] = {
+            return section_name, {
                 'prompt': prompt_result['content'].strip(),
                 'title': title
             }
+
+        # Generate the per-section image prompts concurrently — each is an
+        # independent Opus call and order is irrelevant (keyed by section name).
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        _prompt_items = list(sections.items())
+        if _prompt_items:
+            with ThreadPoolExecutor(max_workers=min(6, len(_prompt_items))) as _ex:
+                _futs = [_ex.submit(_gen_prompt, it) for it in _prompt_items]
+                for _f in as_completed(_futs):
+                    try:
+                        _name, _val = _f.result()
+                        prompts[_name] = _val
+                    except Exception as _e:
+                        safe_print(f"  - Image prompt failed: {_e}")
 
         print(f"[API] Generated {len(prompts)} image prompts")
 
@@ -3757,6 +3806,9 @@ def send_preview():
     try:
         data = request.json
         recipients = data.get('recipients', [])
+        recipients, _rejected = filter_allowed_recipients(recipients)
+        if _rejected:
+            safe_print(f"[SEND] Blocked non-@{ALLOWED_DOMAIN} recipients: {_rejected}")
         subject = data.get('subject', 'BriteCo Brief Preview')
         html_content = data.get('html', '')
 
@@ -3864,6 +3916,9 @@ def export_to_docs():
         year = data.get('year', datetime.now().year)
         send_email = data.get('send_email', False)
         recipients = data.get('recipients', [])  # List of email addresses
+        recipients, _rejected = filter_allowed_recipients(recipients)
+        if _rejected:
+            safe_print(f"[SEND] Blocked non-@{ALLOWED_DOMAIN} recipients: {_rejected}")
 
         # Google Drive folder ID for saving documents
         GOOGLE_DRIVE_FOLDER_ID = '1P4f_5lsvk-AKiSuZ9pks8LhcuUbvVP2m'
@@ -4272,6 +4327,9 @@ def send_doc_email():
         month = data.get('month', '')
         year = data.get('year', datetime.now().year)
         recipients = data.get('recipients', [])
+        recipients, _rejected = filter_allowed_recipients(recipients)
+        if _rejected:
+            safe_print(f"[SEND] Blocked non-@{ALLOWED_DOMAIN} recipients: {_rejected}")
 
         if not doc_url:
             return jsonify({"success": False, "error": "No document URL provided"}), 400
@@ -4884,7 +4942,8 @@ def clickup_search_tasks():
         resp = requests.get(
             f'https://api.clickup.com/api/v2/list/{CLICKUP_LIST_ID}/task',
             headers=headers,
-            params={'subtasks': 'false', 'statuses[]': 'to do'}
+            params={'subtasks': 'false', 'statuses[]': 'to do'},
+            timeout=15
         )
         resp.raise_for_status()
         tasks = resp.json().get('tasks', [])
@@ -4925,7 +4984,8 @@ def clickup_attach_draft():
         resp = requests.post(
             f'https://api.clickup.com/api/v2/task/{task_id}/field/{CLICKUP_LINK_FIELD_ID}',
             headers=headers,
-            json={'value': doc_url}
+            json={'value': doc_url},
+            timeout=15
         )
         resp.raise_for_status()
 
