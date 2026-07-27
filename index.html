@@ -5142,9 +5142,9 @@
                 // Clean up any stray ** that weren't part of a proper pair
                 text = text.replace(/\*\*/g, '');
                 // Convert markdown links [text](url) to HTML
-                text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #0066cc; text-decoration: underline;">$1</a>');
+                text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #008182; text-decoration: underline;">$1</a>');
                 // Style any existing <a> tags with blue color
-                text = text.replace(/<a\s+(?!style)/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
+                text = text.replace(/<a\s+(?!style)/gi, '<a style="color: #008182; text-decoration: underline;" ');
                 return text;
             }
 
@@ -5606,7 +5606,7 @@
             bullets.forEach((b, idx) => {
                 let text = b.summary || b.text || b.headline || (typeof b === 'string' ? b : '');
                 if (typeof text === 'string') {
-                    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #0066cc; text-decoration: underline;">$1</a>');
+                    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #008182; text-decoration: underline;">$1</a>');
                 }
                 const bulletId = prefix + sectionKey + '-bullet-' + idx;
                 const item = document.createElement('div');
@@ -5810,7 +5810,7 @@
                 if (!text || typeof text !== 'string') return '';
                 text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
                 text = text.replace(/<a\s+([^>]*?)style="[^"]*"([^>]*?)>/gi, '<a $1$2>');
-                text = text.replace(/<a\s+/gi, '<a style="color: #0066cc; text-decoration: underline;" ');
+                text = text.replace(/<a\s+/gi, '<a style="color: #008182; text-decoration: underline;" ');
                 return text;
             }
 
@@ -9324,7 +9324,19 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             // Clean up any stray ** that weren't part of a proper pair
             text = text.replace(/\*\*/g, '');
             // Convert [text](url) to <a href="url">text</a>
-            return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #008182; text-decoration: underline;">$1</a>');
+            text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #008182; text-decoration: underline;">$1</a>');
+            // Force teal on EVERY anchor: replace any explicit blue, and add inline
+            // color to anchors that have none. Gmail strips the <style> a{} rule, so a
+            // colorless link would otherwise render default blue in Gmail.
+            text = text.replace(/color:\s*#0066cc/gi, 'color: #008182');
+            text = text.replace(/<a\b([^>]*)>/gi, function(m, attrs) {
+                if (/\bcolor\s*:/i.test(attrs)) return m; // already colored
+                if (/\bstyle\s*=/i.test(attrs)) {
+                    return m.replace(/style\s*=\s*(["'])/i, 'style=$1color: #008182; text-decoration: underline; ');
+                }
+                return '<a' + attrs + ' style="color: #008182; text-decoration: underline;">';
+            });
+            return text;
         }
 
         function generateNewsletterHTML() {
