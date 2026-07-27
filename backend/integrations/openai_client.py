@@ -197,11 +197,13 @@ Do NOT include any of these URLs (previously used):
 {exclude_text}
 
 Return at least 25 candidate results if possible (we will dedupe/trim to {max_results} in code).
+Each "title" MUST be the article's real published headline (complete and capitalized), never a fragment of the summary.
 No extra keys. No commentary outside JSON."""
             else:
                 full_prompt = f"""{query}
 
 Return at least 25 candidate results if possible (we will dedupe/trim to {max_results} in code).
+Each "title" MUST be the article's real published headline (complete and capitalized), never a fragment of the summary.
 No extra keys. No commentary outside JSON."""
 
             # Use Responses API with web_search tool.
@@ -232,11 +234,11 @@ No extra keys. No commentary outside JSON."""
                                     "additionalProperties": False,
                                     "required": ["title", "url", "publisher", "published_date", "summary"],
                                     "properties": {
-                                        "title": {"type": "string"},
-                                        "url": {"type": "string"},
-                                        "publisher": {"type": "string"},
-                                        "published_date": {"type": ["string", "null"]},
-                                        "summary": {"type": "string"},
+                                        "title": {"type": "string", "description": "The article's actual published headline, as a complete and properly capitalized title (e.g. 'Global Commercial Insurance Prices Fell 0.5% in Q1 2026'). Never a sentence fragment, a lowercase mid-sentence phrase, or a slice of the summary."},
+                                        "url": {"type": "string", "description": "The article's canonical URL."},
+                                        "publisher": {"type": "string", "description": "The publishing outlet's name (e.g. 'Insurance Journal')."},
+                                        "published_date": {"type": ["string", "null"], "description": "Publication date as YYYY-MM-DD if known, else null."},
+                                        "summary": {"type": "string", "description": "1-2 sentences of the article's key facts and figures. Do NOT begin by repeating the title."},
                                     },
                                 },
                             }

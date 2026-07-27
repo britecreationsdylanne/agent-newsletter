@@ -4725,6 +4725,20 @@
         }
 
         // Display results in a specific container (for 3-card layout)
+        // If KEY DATA just repeats the headline (happens when a web result's "title"
+        // is a fragment of its own summary), drop the duplicated prefix so the card
+        // doesn't show the same words twice.
+        function stripDuplicateHeadline(text, headline) {
+            if (!text) return '';
+            if (!headline || headline === 'Untitled') return String(text).trim();
+            const t = String(text).trim();
+            const h = String(headline).trim().replace(/[.:,;\s]+$/, '');
+            if (h && t.toLowerCase().startsWith(h.toLowerCase())) {
+                return t.slice(h.length).replace(/^[\s.:,;–—-]+/, '').trim();
+            }
+            return t;
+        }
+
         function displaySpotlightResults(results, containerId, append = false) {
             const container = document.getElementById(containerId);
             if (!append) {
@@ -4741,7 +4755,8 @@
 
                 const impact = result.impact || 'NEWS';
                 const headline = result.title || result.headline || 'Untitled';
-                const industryData = result.industry_data || result.key_data || result.snippet || '';
+                let industryData = result.industry_data || result.key_data || result.snippet || result.description || '';
+                industryData = stripDuplicateHeadline(industryData, headline);
                 const soWhat = result.so_what || result.action || '';
 
                 const impactColors = {
@@ -10363,7 +10378,8 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
 
                 // Extract the three sections
                 const headline = result.headline || result.title || 'Untitled';
-                const industryData = result.industry_data || result.snippet || result.description || '';
+                let industryData = result.industry_data || result.snippet || result.description || '';
+                industryData = stripDuplicateHeadline(industryData, headline);
                 const soWhat = result.so_what || result.agent_implications || '';
 
                 const isSaved = savedArticlesCache.some(sa => sa.url === result.url);
