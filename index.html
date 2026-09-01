@@ -8745,7 +8745,7 @@ ${items.map((item, index) => `<tr>
                 if (!items || !Array.isArray(items) || items.length === 0) return '';
                 return items.map((item, index) => `
                     <tr>
-                        <td style="padding-right:12px;vertical-align:top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
+                        <td style="padding-right:12px;padding-top:3px;vertical-align:top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
                         <td style="padding-bottom:${index === items.length - 1 ? '0' : '16px'};padding-top:19px;vertical-align:top;" valign="top">
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.summary || item}</p>
                         </td>
@@ -8783,7 +8783,7 @@ ${items.map((item, index) => `<tr>
                 return items.map((item, index) => `
                     <tr>
                         <td style="padding-right:12px;vertical-align:top;" valign="top" width="76"><img alt="✓" src="https://storage.googleapis.com/stay-in-the-loupe-images/assets/checkmark-new.png" style="display:block;width:72px;height:auto;" width="72" /></td>
-                        <td style="padding-bottom:${index === items.length - 1 ? '0' : '18px'};padding-top:19px;vertical-align:top;" valign="top">
+                        <td style="padding-bottom:${index === items.length - 1 ? '0' : '18px'};padding-top:22px;vertical-align:top;" valign="top">
                             <p class="dark-text" style="margin: 0 0 4px 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 22px; font-weight: 600; color: #008182;">${item.title || ''}</p>
                             <p class="dark-text-secondary" style="margin: 0; font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 28px; font-weight: 400; color: #3B3B3B;">${item.tip || item.description || item}</p>
                         </td>
