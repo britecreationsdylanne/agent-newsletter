@@ -2685,7 +2685,10 @@ VOICE & STYLE:
 
 === REAL EXAMPLES (match this voice exactly) ===
 
-EXAMPLE 1 - "3 Tips for Staying in Business with Small Business":
+EXAMPLE 1:
+[HEADLINE]
+3 Tips for Staying in Business with Small Business
+
 [INTRO]
 When J.D. Power released its 2025 U.S. Small Commercial Insurance Study, one big statistic stood out: Only 55% of small business owners said they "definitely will" renew insurance policies with their current provider. Just a year ago, that threshold was 61%.
 
@@ -2696,7 +2699,10 @@ When J.D. Power released its 2025 U.S. Small Commercial Insurance Study, one big
 
 3. **Individualized attention is a game-changer.** Insurers who know the nuances of a customer's specific business have a significant advantage, leading to a 37% year-over-year renewal rate.
 
-EXAMPLE 2 - "Making the Right Call: 5 Ways to Better Connect with Clients":
+EXAMPLE 2:
+[HEADLINE]
+Making the Right Call: 5 Ways to Better Connect with Clients
+
 [INTRO]
 Policyholders often feel blindsided when a claim is denied, especially if the first notice is a formal letter they didn't anticipate receiving. Claims Journal says a simple phone call before the letter goes out can dramatically reduce misunderstandings, mistrust, and even lawsuits.
 
@@ -2715,6 +2721,9 @@ Summary: {topic.get('description', topic.get('snippet', ''))}
 Source: {topic.get('publisher', 'Industry Source')}
 
 OUTPUT FORMAT:
+[HEADLINE]
+A catchy section subtitle (5-10 words, e.g. "3 Tips for Staying in Business with Small Business").
+
 [INTRO]
 2-4 sentences with a specific stat hook from the article.
 
@@ -2724,7 +2733,7 @@ Supporting sentences with specifics and quotes.
 
 (3-5 tips total)
 
-Output ONLY the intro and tips in this format, nothing else."""
+Output ONLY the headline, intro, and tips in this format, nothing else."""
 
                 tips_result = claude_client.generate_content(
                     prompt=tips_prompt,
@@ -2733,10 +2742,17 @@ Output ONLY the intro and tips in this format, nothing else."""
                     max_tokens=800
                 )
 
-                # Parse the response into intro and tips
+                # Parse the response into subheader, intro, and tips
                 content = tips_result['content'].strip()
+                subheader = ""
                 intro = ""
                 tips_items = []
+
+                # Extract headline/subheader section (everything between [HEADLINE] and [INTRO])
+                if '[HEADLINE]' in content:
+                    head_split = content.split('[INTRO]', 1)
+                    subheader = head_split[0].replace('[HEADLINE]', '').strip().strip('#').strip('*').strip()
+                    content = '[INTRO]' + head_split[1] if len(head_split) > 1 else content.replace('[HEADLINE]', '').strip()
 
                 # Extract intro section
                 if '[INTRO]' in content:
@@ -2770,12 +2786,13 @@ Output ONLY the intro and tips in this format, nothing else."""
                     })
 
                 research_results['agent_tips'] = {
+                    'subheader': subheader,
                     'intro': intro,
                     'tips': tips_items,
                     'source_url': topic.get('url', ''),
                     'source_title': topic.get('title', '')
                 }
-                print(f"    Agent Advantage complete: intro + {len(tips_items)} tips")
+                print(f"    Agent Advantage complete: subheader + intro + {len(tips_items)} tips")
 
         print(f"[API] Research complete")
 

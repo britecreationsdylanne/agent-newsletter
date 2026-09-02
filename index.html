@@ -2366,6 +2366,10 @@
                     <div class="sandbox-body" contenteditable="true" id="sandbox-tips-body"></div>
                 </div>
                 <div class="field-group">
+                    <label class="field-label">Subheader</label>
+                    <div class="editable editable-sm" contenteditable="true" id="review-tips-subheader"></div>
+                </div>
+                <div class="field-group">
                     <label class="field-label">Intro</label>
                     <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('review-tips-intro')" type="button">🔗 Insert Link</button></div>
                     <div class="link-popover" id="lp-review-tips-intro">
@@ -2735,6 +2739,10 @@
 
             <div class="content-section">
                 <h3>Agent Advantage</h3>
+                <div class="field-group">
+                    <label class="field-label">Subheader</label>
+                    <div class="editable editable-sm" contenteditable="true" id="fc-tips-subheader"></div>
+                </div>
                 <div class="field-group">
                     <label class="field-label">Intro</label>
                     <div class="link-toolbar"><button class="link-toolbar-btn" onclick="showLinkPopover('fc-tips-intro')" type="button">🔗 Insert Link</button></div>
@@ -5939,7 +5947,11 @@
             if (skippedResearch && skippedResearch.tips) {
                 const te = document.getElementById('review-tips-intro');
                 if (te) te.innerHTML = '<em style="color: #92400e;">Section skipped</em>';
+                const tse = document.getElementById('review-tips-subheader');
+                if (tse) tse.textContent = '';
             } else {
+                const tipsSubheaderEl = document.getElementById('review-tips-subheader');
+                if (tipsSubheaderEl) tipsSubheaderEl.textContent = generatedTipsContent?.subheader || '';
                 const tipsIntroEl = document.getElementById('review-tips-intro');
                 let tips = [];
                 if (generatedTipsContent && generatedTipsContent.intro) {
@@ -6162,7 +6174,8 @@
                         if (el.innerHTML.trim()) spotlightText += ' ' + el.innerHTML.trim();
                     });
                 }
-                let tipsText = document.getElementById('review-tips-intro')?.innerHTML || '';
+                let tipsText = document.getElementById('review-tips-subheader')?.innerText || '';
+                tipsText += ' ' + (document.getElementById('review-tips-intro')?.innerHTML || '');
                 const tipsContainer = document.getElementById('review-tips-container');
                 if (tipsContainer) {
                     tipsContainer.querySelectorAll('.dynamic-field-item .editable[contenteditable]').forEach(el => {
@@ -6629,7 +6642,7 @@
                 syncContentFromDOM();
                 const reviewHTML = { _layout: 'labeled' };
                 const prefix = document.querySelector('.step.active')?.id === 'step7b' ? 'fc-' : 'review-';
-                ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-subheader', 'tips-intro'].forEach(field => {
                     const el = document.getElementById(prefix + field);
                     if (el) reviewHTML[field] = el.innerHTML;
                 });
@@ -8585,6 +8598,7 @@
                 spotlightImage = '',
                 spotlightH2s = [],
                 tipsImage = '',
+                tipsSubheader = '',
                 tipsIntro = '',
                 tipsItems = [],
                 ctaUrl = 'https://brite.co/agent/',
@@ -9204,11 +9218,11 @@ ${ssPosition === 'after-spotlight' ? specialSectionHtml : ''}
 </table>
 
 <!-- Subheader -->
-${data.tipsSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+${tipsSubheader ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
 <tbody>
 <tr>
 <td style="padding:0 15px;">
-<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#272D3F;">${data.tipsSubheader}</h2>
+<h2 class="dark-text" style="margin:0 0 12px 0;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;line-height:28px;font-weight:700;color:#272D3F;">${tipsSubheader}</h2>
 </td>
 </tr>
 </tbody>
@@ -9422,9 +9436,12 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
             const spotlightText = spotlightH2s.length > 0 ? '' : (generatedSpotlightContent?.body || (typeof generatedSpotlightContent === 'string' ? generatedSpotlightContent : ''));
 
             // Tips (skip if skippedResearch.tips)
+            let tipsSubheader = '';
             let tipsIntro = '';
             let tipsItems = [];
             if (!skippedResearch.tips) {
+                const tsEl = document.getElementById('fc-tips-subheader') || document.getElementById('review-tips-subheader');
+                tipsSubheader = tsEl ? tsEl.innerText.trim() : (generatedTipsContent?.subheader || '');
                 const tiEl = document.getElementById('fc-tips-intro') || document.getElementById('review-tips-intro');
                 tipsIntro = tiEl ? tiEl.innerHTML : (generatedTipsContent?.intro || '');
                 const tc = document.getElementById('fc-tips-container') || document.getElementById('review-tips-container');
@@ -9472,6 +9489,7 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                     body: convertMarkdownLinksToHTML(h2.body || h2.content || '')
                 })),
                 tipsImage: generatedImages.tips?.url || '',
+                tipsSubheader,
                 tipsIntro: convertMarkdownLinksToHTML(tipsIntro),
                 tipsItems: tipsItems.map(tip => ({
                     title: tip.title,
@@ -11679,6 +11697,10 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                 generatedSpotlightContent = gc.spotlight || '';
                 generatedSpotlightSubheader = rhStrip(rh['spotlight-subheader']) || gc.spotlightSubheader || '';
                 generatedTipsContent = gc.tips || '';
+                const tipsSubFromRH = rhStrip(rh['tips-subheader']);
+                if (tipsSubFromRH && generatedTipsContent && typeof generatedTipsContent === 'object' && !Array.isArray(generatedTipsContent)) {
+                    generatedTipsContent = Object.assign({}, generatedTipsContent, { subheader: tipsSubFromRH });
+                }
                 generatedIntroContent = gc.intro || '';
                 generatedImages = d.generatedImages || { meme: null, briteSpot: null, claims: null, spotlight: null, tips: null };
                 skippedResearch = d.skippedResearch || { claims: false, roundup: false, tips: false };
@@ -11694,7 +11716,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                 const mirrorFields = [
                     'britespot-title', 'britespot-paragraph',
                     'claims-title', 'claims-copy',
-                    'spotlight-subheader', 'tips-intro', 'headerIntro'
+                    'spotlight-subheader', 'tips-subheader', 'tips-intro', 'headerIntro'
                 ];
                 const mirroredOriginals = {};
                 mirrorFields.forEach(field => {
@@ -11817,7 +11839,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
             const prefix = onFinalCopy ? 'fc-' : 'review-';
 
             // Simple fields
-            ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+            ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-subheader', 'tips-intro'].forEach(field => {
                 const el = document.getElementById(prefix + field);
                 if (el) reviewHTML[field] = el.innerHTML;
             });
@@ -12077,7 +12099,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                 if (savedHTML._layout === 'labeled') {
                     console.log('[Draft] Restoring from labeled reviewHTML');
                     // Simple fields
-                    ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-intro'].forEach(field => {
+                    ['headerIntro', 'britespot-title', 'britespot-paragraph', 'claims-title', 'claims-copy', 'spotlight-subheader', 'tips-subheader', 'tips-intro'].forEach(field => {
                         const el = document.getElementById('review-' + field);
                         if (el && savedHTML[field] !== undefined) el.innerHTML = savedHTML[field];
                     });
@@ -12319,7 +12341,8 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
             if (selectedSpotlight && spotSourceTitle) selectedSpotlight.title = spotSourceTitle.value;
             if (selectedSpotlight && spotSourceUrl) selectedSpotlight.url = spotSourceUrl.value;
 
-            // Agent Advantage - intro + dynamic tips
+            // Agent Advantage - subheader + intro + dynamic tips
+            const tipsSubheader = getText(prefix + 'tips-subheader');
             const tipsIntro = getHTML(prefix + 'tips-intro');
             const tipsContainer = document.getElementById(prefix + 'tips-container');
             if (tipsContainer) {
@@ -12335,7 +12358,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                         });
                     }
                 });
-                generatedTipsContent = {intro: tipsIntro, tips: tips};
+                generatedTipsContent = {subheader: tipsSubheader, intro: tipsIntro, tips: tips};
             }
 
             // Sync edited tips source URL back into selectedTips
@@ -12367,6 +12390,7 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
             copyField('review-claims-title', 'fc-claims-title');
             copyField('review-claims-copy', 'fc-claims-copy');
             copyField('review-spotlight-subheader', 'fc-spotlight-subheader');
+            copyField('review-tips-subheader', 'fc-tips-subheader');
             copyField('review-tips-intro', 'fc-tips-intro');
 
             // Brite Spot bullets: read from review, render into fc
