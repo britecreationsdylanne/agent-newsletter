@@ -2719,6 +2719,9 @@ ARTICLE:
 Title: {topic.get('title', 'Unknown')}
 Summary: {topic.get('description', topic.get('snippet', ''))}
 Source: {topic.get('publisher', 'Industry Source')}
+Source URL: {topic.get('url', 'N/A')}
+
+You MUST embed the Source URL as a markdown link [link text](url) naturally within the INTRO. Pick a meaningful 2-5 word phrase — usually the publication name (e.g., "[Insurance Journal](url) makes the case...") or a key finding. Do NOT add a separate "Read more" line or "Source:" footer — the link must be inline and feel organic to the prose. Use this exact source URL: {topic.get('url', 'N/A')}
 
 OUTPUT FORMAT:
 [HEADLINE]

@@ -9446,12 +9446,14 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 tipsIntro = tiEl ? tiEl.innerHTML : (generatedTipsContent?.intro || '');
                 const tc = document.getElementById('fc-tips-container') || document.getElementById('review-tips-container');
                 if (tc) {
-                    tc.querySelectorAll('.dynamic-field-item').forEach(item => {
+                    const prevTips = (generatedTipsContent && !Array.isArray(generatedTipsContent) && generatedTipsContent.tips) || [];
+                    tc.querySelectorAll('.dynamic-field-item').forEach((item, idx) => {
                         const titleEl = item.querySelector('.editable-sm');
                         const contentEl = item.querySelector('.editable:not(.editable-sm)');
                         tipsItems.push({
                             title: titleEl ? titleEl.innerText.trim() : '',
-                            tip: contentEl ? contentEl.innerHTML.trim() : ''
+                            tip: contentEl ? contentEl.innerHTML.trim() : '',
+                            source_url: (prevTips[idx] && (prevTips[idx].source_url || prevTips[idx].url)) || (selectedTips && selectedTips.url) || ''
                         });
                     });
                 }
@@ -9493,7 +9495,8 @@ ${ssPosition === 'after-tips' ? specialSectionHtml : ''}
                 tipsIntro: convertMarkdownLinksToHTML(tipsIntro),
                 tipsItems: tipsItems.map(tip => ({
                     title: tip.title,
-                    tip: convertMarkdownLinksToHTML(tip.tip)
+                    tip: convertMarkdownLinksToHTML(tip.tip),
+                    source_url: tip.source_url || ''
                 })),
                 ctaUrl: 'https://brite.co/agent/',
                 ctaText: getCtaButtonText(),
@@ -12347,6 +12350,9 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
             const tipsContainer = document.getElementById(prefix + 'tips-container');
             if (tipsContainer) {
                 const items = tipsContainer.querySelectorAll('.dynamic-field-item');
+                // Preserve source_url: the DOM fields only hold title + body, so carry
+                // the URL over from the previous tips state (or the selected article).
+                const prevTips = (generatedTipsContent && !Array.isArray(generatedTipsContent) && generatedTipsContent.tips) || [];
                 const tips = [];
                 items.forEach((item, idx) => {
                     const titleEl = document.getElementById(prefix + 'tip-' + idx + '-title');
@@ -12354,7 +12360,8 @@ u + .body .section-header, u + .body .section-header font, u + .body .section-he
                     if (titleEl || contentEl) {
                         tips.push({
                             title: titleEl ? titleEl.textContent.trim() : '',
-                            tip: contentEl ? contentEl.innerHTML.trim() : ''
+                            tip: contentEl ? contentEl.innerHTML.trim() : '',
+                            source_url: (prevTips[idx] && (prevTips[idx].source_url || prevTips[idx].url)) || (selectedTips && selectedTips.url) || ''
                         });
                     }
                 });
