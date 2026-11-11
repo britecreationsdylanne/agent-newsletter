@@ -134,8 +134,8 @@ providers:
         cost_per_1m_output: 0.60
 
       # Image generation (OpenAI) - primary image model
-      - id: "gpt-image-2"
-        name: "GPT Image 2"
+      - id: "gpt-image-2.6-sunburst"
+        name: "GPT Image 2.6 Sunburst"
         tier: "frontier"
         image_generation: true
         status: "active"
@@ -315,7 +315,7 @@ task_assignments:
   # Image Generation (newsletter section images, memes)
   meme_generation:
     description: "Generate newsletter/meme images with text overlays"
-    model: "gpt-image-2"
+    model: "gpt-image-2.6-sunburst"
     fallback: "gemini-2.5-flash-image"
     tier: "frontier"
-    notes: "GPT Image 2 primary (strong in-image text); Gemini image as fallback."
+    notes: "GPT Image 2.6 Sunburst primary (strong in-image text); Gemini image as fallback."

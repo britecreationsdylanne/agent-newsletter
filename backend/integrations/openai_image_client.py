@@ -1,5 +1,5 @@
 """
-OpenAI image generation integration (GPT Image 2)
+OpenAI image generation integration (GPT Image 2.6 Sunburst)
 Drop-in replacement for the Gemini image path. Returns base64 PNG image data
 in the same shape the app's /api/generate-images endpoints expect.
 """
@@ -10,7 +10,7 @@ from typing import Dict, Optional
 from openai import OpenAI
 
 
-# Map app-level aspect ratios to GPT Image 2 supported sizes.
+# Map app-level aspect ratios to GPT Image 2.6 Sunburst supported sizes.
 # The newsletter pipeline resizes to exact dimensions afterward, so we just
 # pick the closest supported aspect.
 _ASPECT_TO_SIZE = {
@@ -31,17 +31,17 @@ _QUALITY_COST = {
 
 
 class OpenAIImageClient:
-    """Wrapper for OpenAI image generation (GPT Image 2)."""
+    """Wrapper for OpenAI image generation (GPT Image 2.6 Sunburst)."""
 
     def __init__(self, api_key: Optional[str] = None):
         # Support Secret Manager underscore-prefixed fallback, like the other clients.
         self.api_key = api_key or os.getenv("OPENAI_API_KEY") or os.getenv("_OPENAI_API_KEY")
         self.client = OpenAI(api_key=self.api_key) if self.api_key else None
-        self.default_model = os.getenv("DEFAULT_IMAGE_MODEL", "gpt-image-2")
+        self.default_model = os.getenv("DEFAULT_IMAGE_MODEL", "gpt-image-2.6-sunburst")
         self.default_quality = os.getenv("DEFAULT_IMAGE_QUALITY", "medium")
 
         if self.client:
-            print("[OK] OpenAI image client initialized (GPT Image 2)")
+            print("[OK] OpenAI image client initialized (GPT Image 2.6 Sunburst)")
         else:
             print("[WARNING] OPENAI_API_KEY not set - image generation disabled")
 
@@ -63,7 +63,7 @@ class OpenAIImageClient:
 
         Args:
             prompt: Image description prompt
-            model: Model to use (default: gpt-image-2)
+            model: Model to use (default: gpt-image-2.6-sunburst)
             aspect_ratio: '16:9', '1:1', '9:16', etc. (mapped to a supported size)
             image_size: Unused (kept for interface parity with the Gemini client)
             number_of_images: Number of images to generate (n)
@@ -74,13 +74,13 @@ class OpenAIImageClient:
                 "image_data": "<base64 PNG>",
                 "image_base64": "<base64 PNG>",   # alias for compatibility
                 "prompt": "...",
-                "model": "gpt-image-2",
+                "model": "gpt-image-2.6-sunburst",
                 "cost_estimate": "$0.06",
                 "generation_time_ms": 1234
             }
         """
         if not self.is_available():
-            print("[GPT Image 2] API not available - skipping image generation")
+            print("[GPT Image 2.6 Sunburst] API not available - skipping image generation")
             return None
 
         model_name = model or self.default_model

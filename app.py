@@ -282,7 +282,7 @@ def html_to_plain_text(html_content):
 
 # Initialize AI clients
 openai_client = OpenAIClient()
-image_client = OpenAIImageClient()  # GPT Image 2 (primary image generation)
+image_client = OpenAIImageClient()  # GPT Image 2.6 Sunburst (primary image generation)
 if not image_client.is_available():
     print("[WARNING] Image generation not available - add OPENAI_API_KEY to .env")
 
@@ -3232,7 +3232,7 @@ def generate_image():
         print(f"\n[API] Generating image for {section}...")
         safe_print(f"  Prompt: {prompt[:100]}...")
 
-        # Generate image using GPT Image 2
+        # Generate image using GPT Image 2.6 Sunburst
         result = image_client.generate_image(
             prompt=prompt,
             aspect_ratio="16:9"
@@ -3357,7 +3357,7 @@ def generate_images():
             # All section images are now full-width landscape (16:9)
             aspect_ratio = "16:9"
 
-            # Generate with GPT Image 2
+            # Generate with GPT Image 2.6 Sunburst
             print(f"  [{section_name.upper()}] Calling GPT Image 2...")
             image_result = image_client.generate_image(
                 prompt=prompt,
